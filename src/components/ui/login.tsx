@@ -29,36 +29,49 @@ const Login = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
 
-  const handleSignIn = async (e) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     
     try {
-      // Sign in with Firebase
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
-      
-      // Sync with MongoDB backend
-      const response = await loginUser(firebaseUser.uid, firebaseUser.email || email);
-      
-      if (response.success && response.user) {
-        setUserRole(response.user.role);
-        setSuccess('Successfully signed in!');
-        setShowWelcome(true);
+      if (auth) {
+        // Sign in with Firebase if configured
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const firebaseUser = userCredential.user;
+        
+        try {
+          const response = await loginUser(firebaseUser.uid, firebaseUser.email || email);
+          if (response.success && response.user) {
+            setUserRole(response.user.role);
+          } else {
+            setUserRole('hr');
+          }
+        } catch {
+          setUserRole('hr');
+        }
       } else {
-        throw new Error(response.error || 'Login failed');
+        // Local / Demo Mode when Firebase credentials are not configured
+        const savedUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
+        const existing = savedUsers.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
+        const detectedRole = existing ? existing.role : (email.toLowerCase().includes('candidate') ? 'employee' : 'hr');
+        setUserRole(detectedRole);
       }
+
+      setSuccess('Successfully signed in!');
+      setShowWelcome(true);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
+      } else {
+        setError('Login failed. Please check credentials.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSignUp = async (e) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
@@ -81,36 +94,44 @@ const Login = () => {
     setLoading(true);
     
     try {
-      // Create user in Firebase
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
-      
-      // Register in MongoDB backend with role
-      const response = await registerUser(
-        firebaseUser.uid,
-        firebaseUser.email || email,
-        name,
-        role as 'hr' | 'employee',
-        role === 'hr' ? company : null,
-        phone || null
-      );
-      
-      if (response.success) {
-        setSuccess('Account created successfully! You can now sign in.');
-        setActiveTab('signin');
-        // Clear form
-        setEmail('');
-        setPassword('');
-        setName('');
-        setRole('');
-        setCompany('');
-        setPhone('');
+      if (auth) {
+        // Create user in Firebase if configured
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const firebaseUser = userCredential.user;
+        
+        try {
+          await registerUser(
+            firebaseUser.uid,
+            firebaseUser.email || email,
+            name,
+            role as 'hr' | 'employee',
+            role === 'hr' ? company : null,
+            phone || null
+          );
+        } catch (err) {
+          console.warn("MongoDB sync skipped:", err);
+        }
       } else {
-        throw new Error(response.error || 'Registration failed');
+        // Local / Demo Mode storage
+        const savedUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
+        savedUsers.push({ email, name, role, company, phone });
+        localStorage.setItem('registered_users', JSON.stringify(savedUsers));
       }
+
+      setSuccess('Account created successfully! You can now sign in.');
+      setActiveTab('signin');
+      // Clear form
+      setEmail('');
+      setPassword('');
+      setName('');
+      setRole('');
+      setCompany('');
+      setPhone('');
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
+      } else {
+        setError('Registration failed.');
       }
     } finally {
       setLoading(false);
@@ -119,7 +140,9 @@ const Login = () => {
 
   const handleLogout = async () => {
     try {
-      await auth.signOut();
+      if (auth) {
+        await auth.signOut();
+      }
       setShowWelcome(false);
       navigate('/');
     } catch (error) {
@@ -131,7 +154,7 @@ const Login = () => {
 
   const handleGetStarted = () => {
     if (userRole === 'hr') {
-      navigate('/hr-resume-analysis');
+      navigate('/dashboard');
     } else {
       navigate('/employee-resume-analysis');
     }
@@ -165,25 +188,28 @@ const Login = () => {
                 Your account is ready to use
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4 justify-center">
-                <Button 
-                  onClick={handleGetStarted}
-                  className="w-full text-bold bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-slate-950 font-semibold"
-                >
-                  Get Started as {userRole === 'hr' ? 'HR' : 'Employee'}
-                </Button>
-              </div>
+            <CardContent className="space-y-3">
               <Button 
-                variant="outline" 
-                onClick={handleLogout}
-                className={`w-full ${
-                  theme === 'dark'
-                    ? 'border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-slate-950'
-                    : 'border-cyan-600 text-cyan-600 hover:bg-cyan-600 hover:text-white'
+                onClick={() => navigate('/dashboard')}
+                className="w-full text-bold bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-slate-950 font-semibold"
+              >
+                Go to Recruiter Dashboard
+              </Button>
+              <Button 
+                onClick={handleGetStarted}
+                variant="outline"
+                className={`w-full font-semibold ${
+                  theme === 'dark' ? 'border-cyan-400 text-cyan-300' : 'border-cyan-600 text-cyan-700'
                 }`}
               >
-                <LogOut className="mr-2 h-4 w-4" />
+                Go to {userRole === 'hr' ? 'HR Resume Analyzer' : 'Candidate Portal'}
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={handleLogout}
+                className="w-full text-xs text-slate-500"
+              >
+                <LogOut className="mr-2 h-3.5 w-3.5" />
                 Logout
               </Button>
             </CardContent>
@@ -221,6 +247,60 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Quick 1-Click Demo Login Banner */}
+            <div className={`mb-6 p-3 rounded-xl border flex flex-col gap-2 ${
+              theme === 'dark' 
+                ? 'bg-cyan-950/40 border-cyan-500/30' 
+                : 'bg-cyan-50 border-cyan-200'
+            }`}>
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <span className={theme === 'dark' ? 'text-cyan-300' : 'text-cyan-800'}>
+                  ⚡ Instant Demo Access
+                </span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-400/20 text-cyan-600 dark:text-cyan-300 font-mono">
+                  1-Click
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setUserRole('hr');
+                    setSuccess('Logged in as HR Demo User');
+                    setShowWelcome(true);
+                  }}
+                  className={`text-xs font-semibold h-8 ${
+                    theme === 'dark'
+                      ? 'border-cyan-500/40 hover:bg-cyan-500/20 text-cyan-200'
+                      : 'border-cyan-600/40 hover:bg-cyan-100 text-cyan-800'
+                  }`}
+                >
+                  <Briefcase className="w-3.5 h-3.5 mr-1" />
+                  HR Recruiter
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setUserRole('employee');
+                    setSuccess('Logged in as Candidate Demo User');
+                    setShowWelcome(true);
+                  }}
+                  className={`text-xs font-semibold h-8 ${
+                    theme === 'dark'
+                      ? 'border-blue-500/40 hover:bg-blue-500/20 text-blue-200'
+                      : 'border-blue-600/40 hover:bg-blue-100 text-blue-800'
+                  }`}
+                >
+                  <UserCircle className="w-3.5 h-3.5 mr-1" />
+                  Candidate
+                </Button>
+              </div>
+            </div>
+
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-8">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>

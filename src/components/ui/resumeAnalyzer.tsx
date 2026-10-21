@@ -400,7 +400,7 @@ const ResumeAnalyzer: React.FC = () => {
         // Step 3: Inform backend of acceptances for logging/recording
         if (action === 'accept') {
           try {
-            const firebaseUser = auth.currentUser;
+            const firebaseUser = auth?.currentUser;
             if (!firebaseUser || !firebaseUser.email) {
               console.warn('[send-acceptance] Missing authenticated Firebase user; skipping backend selection logging');
             } else {
