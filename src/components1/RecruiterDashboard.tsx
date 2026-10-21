@@ -122,6 +122,11 @@ const RecruiterDashboard: React.FC = () => {
   // Modal states
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedCandidateForScorecard, setSelectedCandidateForScorecard] = useState<CandidateRecord | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("llama-3.3-70b-versatile");
+  const [meetBotAutoJoin, setMeetBotAutoJoin] = useState(true);
 
   // Resume Analyzer Modal state
   const [jobTitleInput, setJobTitleInput] = useState("Machine Learning Engineer");
@@ -375,11 +380,17 @@ const RecruiterDashboard: React.FC = () => {
         {/* Bottom Recruiter Profile & Settings */}
         <div className="p-3 flex flex-col gap-2">
           <div className="space-y-0.5">
-            <button className="w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-sm text-[#3f484f] hover:bg-[#e9e6f4] hover:text-[#1b1b24] transition-colors">
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-sm text-[#3f484f] hover:bg-[#e9e6f4] hover:text-[#1b1b24] transition-colors"
+            >
               <span className="material-symbols-outlined text-[20px]">settings</span>
               <span>Settings</span>
             </button>
-            <button className="w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-sm text-[#3f484f] hover:bg-[#e9e6f4] hover:text-[#1b1b24] transition-colors">
+            <button
+              onClick={() => setIsHelpOpen(true)}
+              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-sm text-[#3f484f] hover:bg-[#e9e6f4] hover:text-[#1b1b24] transition-colors"
+            >
               <span className="material-symbols-outlined text-[20px]">help</span>
               <span>Help & Support</span>
             </button>
@@ -436,13 +447,44 @@ const RecruiterDashboard: React.FC = () => {
               />
             </div>
 
-            <button
-              aria-label="Notifications"
-              className="relative w-9 h-9 rounded-lg bg-white border border-[#bec8d0]/30 flex items-center justify-center text-[#3f484f] hover:text-[#006389] transition-colors shadow-sm"
-            >
-              <span className="material-symbols-outlined text-[20px]">notifications</span>
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                aria-label="Notifications"
+                className="relative w-9 h-9 rounded-lg bg-white border border-[#bec8d0]/30 flex items-center justify-center text-[#3f484f] hover:text-[#006389] transition-colors shadow-sm"
+              >
+                <span className="material-symbols-outlined text-[20px]">notifications</span>
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
+              </button>
+
+              {isNotificationsOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-[#bec8d0]/30 p-3 z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#bec8d0]/20 mb-2">
+                    <span className="text-xs font-bold text-[#1b1b24]">Notifications</span>
+                    <button
+                      onClick={() => setIsNotificationsOpen(false)}
+                      className="text-[10px] text-[#006389] hover:underline"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="space-y-2 text-xs">
+                    <div className="p-2 rounded-lg bg-[#f5f2ff] hover:bg-[#ece8fa] transition-colors cursor-pointer">
+                      <p className="font-semibold text-[#1b1b24]">Priya Mehta completed interview</p>
+                      <p className="text-[10px] text-[#6f7880]">Score: 91/100 · 10m ago</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-[#f5f2ff] hover:bg-[#ece8fa] transition-colors cursor-pointer">
+                      <p className="font-semibold text-[#1b1b24]">AI Screening Engine Online</p>
+                      <p className="text-[10px] text-[#6f7880]">Google Meet Bot verified · 1h ago</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-[#f5f2ff] hover:bg-[#ece8fa] transition-colors cursor-pointer">
+                      <p className="font-semibold text-[#1b1b24]">Aarav Sharma evaluated</p>
+                      <p className="text-[10px] text-[#6f7880]">Score: 82/100 · 2h ago</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Primary Action Button: + New Interview / Upload */}
             <button
@@ -464,14 +506,26 @@ const RecruiterDashboard: React.FC = () => {
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <h1 className="font-['Plus_Jakarta_Sans',sans-serif] text-2xl lg:text-3xl text-[#1b1b24] font-extrabold tracking-tight">
-                  Good morning, Recruiter.
+                  {activeTab === "overview" && "Good morning, Recruiter."}
+                  {activeTab === "candidates" && "Candidate Directory & Screening"}
+                  {activeTab === "interviews" && "AI Video Interviews & Live Rooms"}
+                  {activeTab === "reports" && "Recruitment Intelligence & Reports"}
+                  {activeTab === "job-roles" && "Active Job Roles & Openings"}
                 </h1>
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#c6e7ff] text-[#001e2d] text-[0.6875rem] font-bold font-mono">
-                  LIVE HUD
+                  {activeTab === "overview" && "LIVE HUD"}
+                  {activeTab === "candidates" && `${candidates.length} CANDIDATES`}
+                  {activeTab === "interviews" && "AI BOT READY"}
+                  {activeTab === "reports" && "AI ANALYTICS"}
+                  {activeTab === "job-roles" && "4 OPENINGS"}
                 </span>
               </div>
               <p className="text-sm text-[#3f484f]">
-                Here's what's happening across your interview pipeline today.
+                {activeTab === "overview" && "Here's what's happening across your interview pipeline today."}
+                {activeTab === "candidates" && "Review candidate match scores, filter by skill, and launch AI interview rooms."}
+                {activeTab === "interviews" && "Monitor active Google Meet sessions, bot connectivity, and conduct live candidate evaluations."}
+                {activeTab === "reports" && "Comprehensive analytical reports, candidate competencies, and screening velocity."}
+                {activeTab === "job-roles" && "Manage position requirements, target skill profiles, and applicant volumes."}
               </p>
             </div>
 
@@ -496,6 +550,7 @@ const RecruiterDashboard: React.FC = () => {
           {/* ─────────────────────────────────────────────────────────────
               SECTION 2: DASHBOARD KPI METRIC CARDS (4-Column Bento Grid)
           ───────────────────────────────────────────────────────────── */}
+          {(activeTab === "overview" || activeTab === "reports") && (
           <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {/* Metric 1: Total Candidates */}
             <div className="p-5 bg-white rounded-2xl shadow-sm border border-[#bec8d0]/20 flex flex-col justify-between hover:shadow-md transition-all">
@@ -613,10 +668,12 @@ const RecruiterDashboard: React.FC = () => {
               </div>
             </div>
           </section>
+          )}
 
           {/* ─────────────────────────────────────────────────────────────
               SECTION 3: ACTIVE JOB ROLES
           ───────────────────────────────────────────────────────────── */}
+          {(activeTab === "overview" || activeTab === "job-roles") && (
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -769,10 +826,12 @@ const RecruiterDashboard: React.FC = () => {
               </div>
             </div>
           </section>
+          )}
 
           {/* ─────────────────────────────────────────────────────────────
               SECTION 4: CANDIDATE SCREENING & MANAGEMENT TABLE
           ───────────────────────────────────────────────────────────── */}
+          {(activeTab === "overview" || activeTab === "candidates") && (
           <section className="p-6 bg-white rounded-2xl shadow-sm border border-[#bec8d0]/20 flex flex-col gap-5">
             {/* Table Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -930,10 +989,12 @@ const RecruiterDashboard: React.FC = () => {
               </table>
             </div>
           </section>
+          )}
 
           {/* ─────────────────────────────────────────────────────────────
               SECTION 5: ANALYTICS & AI INSIGHTS ROW (3-Column Bento Grid)
           ───────────────────────────────────────────────────────────── */}
+          {(activeTab === "overview" || activeTab === "reports") && (
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Chart Column: Interview Activity */}
             <div className="p-6 bg-white rounded-2xl shadow-sm border border-[#bec8d0]/20 flex flex-col justify-between">
@@ -1060,6 +1121,140 @@ const RecruiterDashboard: React.FC = () => {
               </div>
             </div>
           </section>
+          )}
+
+          {/* ─────────────────────────────────────────────────────────────
+              SECTION: INTERVIEWS VIEW (when activeTab === "interviews")
+          ───────────────────────────────────────────────────────────── */}
+          {activeTab === "interviews" && (
+            <div className="flex flex-col gap-6">
+              {/* Bot Status Banner */}
+              <div className="p-6 bg-white rounded-2xl border border-[#bec8d0]/20 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#c6e7ff] text-[#006389] flex items-center justify-center">
+                    <span className="material-symbols-outlined text-2xl">smart_toy</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-base text-[#1b1b24]">Autonomous Google Meet Bot</h3>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold font-mono">
+                        ONLINE · FASTAPI:8001
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#6f7880] mt-0.5">
+                      Deepgram Nova-2 STT & Groq Question Generation are calibrated and ready to join meetings.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => navigate("/interview")}
+                    className="px-4 py-2 bg-[#006389] hover:bg-[#004c6b] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">videocam</span>
+                    <span>Start Test Interview</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Interview Rooms Grid */}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-[#1b1b24]">Candidate Interview Sessions</h2>
+                  <span className="text-xs font-mono text-[#6f7880]">{candidates.length} Sessions Available</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {candidates.map((cand) => (
+                    <div key={cand.id} className="p-5 bg-white rounded-2xl border border-[#bec8d0]/20 shadow-sm flex flex-col justify-between gap-4 hover:shadow-md transition-all">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${cand.avatarBg || "bg-[#c6e7ff] text-[#001e2d]"}`}>
+                            {cand.initials || cand.name.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-sm text-[#1b1b24]">{cand.name}</h4>
+                            <p className="text-xs text-[#6f7880]">{cand.role}</p>
+                          </div>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
+                          cand.status === "Completed" ? "bg-emerald-100 text-emerald-800" :
+                          cand.status === "Live Video" ? "bg-blue-100 text-blue-800 animate-pulse" :
+                          "bg-amber-100 text-amber-800"
+                        }`}>
+                          {cand.status}
+                        </span>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-[#f5f2ff] text-xs flex flex-col gap-1.5">
+                        <div className="flex justify-between text-[#6f7880]">
+                          <span>AI Match Score:</span>
+                          <span className="font-bold font-mono text-[#006389]">{cand.score}%</span>
+                        </div>
+                        <div className="flex justify-between text-[#6f7880]">
+                          <span>Session Time:</span>
+                          <span className="font-mono">{cand.completedAt}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1 border-t border-[#bec8d0]/10">
+                        <button
+                          onClick={() => setSelectedCandidateForScorecard(cand)}
+                          className="flex-1 py-1.5 px-3 rounded-lg border border-[#bec8d0]/40 text-xs font-semibold text-[#3f484f] hover:bg-[#f5f2ff] transition-colors"
+                        >
+                          Scorecard
+                        </button>
+                        <button
+                          onClick={() => handleLaunchInterview(cand)}
+                          className="flex-1 py-1.5 px-3 rounded-lg bg-[#006389] hover:bg-[#004c6b] text-white text-xs font-semibold flex items-center justify-center gap-1 transition-colors shadow-sm"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">videocam</span>
+                          <span>Launch</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─────────────────────────────────────────────────────────────
+              SECTION: REPORTS VIEW EXTRA EXPORT ACTION
+          ───────────────────────────────────────────────────────────── */}
+          {activeTab === "reports" && (
+            <div className="p-6 bg-white rounded-2xl border border-[#bec8d0]/20 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-bold text-sm text-[#1b1b24]">Export Recruitment Audit Report</h3>
+                <p className="text-xs text-[#6f7880]">Download complete PDF and CSV records for all candidate interviews.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    toast({
+                      title: "Exporting CSV...",
+                      description: "Downloading candidates_export.csv"
+                    });
+                  }}
+                  className="px-4 py-2 border border-[#bec8d0]/40 text-[#3f484f] hover:bg-[#f5f2ff] rounded-lg text-xs font-semibold transition-colors"
+                >
+                  Download CSV
+                </button>
+                <button
+                  onClick={() => {
+                    toast({
+                      title: "Exporting PDF Report...",
+                      description: "Generated InterviewAI_Analytics_Report.pdf"
+                    });
+                  }}
+                  className="px-4 py-2 bg-[#006389] hover:bg-[#004c6b] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+                >
+                  <span className="material-symbols-outlined text-sm">download</span>
+                  <span>Export PDF</span>
+                </button>
+              </div>
+            </div>
+          )}
         </main>
       </div>
 
@@ -1663,6 +1858,151 @@ const RecruiterDashboard: React.FC = () => {
               >
                 <span className="material-symbols-outlined text-sm">videocam</span>
                 <span>Launch Live Interview Room</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          SECTION: RECRUITER SETTINGS MODAL
+      ───────────────────────────────────────────────────────────── */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-[#bec8d0]/30 flex flex-col gap-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-[#bec8d0]/20">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#006389] text-white flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[18px]">settings</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[#1b1b24]">Workspace Settings</h3>
+                  <p className="text-xs text-[#6f7880]">InterviewAI Engine Preferences</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="w-7 h-7 rounded-lg hover:bg-[#f5f2ff] text-[#6f7880] flex items-center justify-center"
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div>
+                <label className="font-semibold text-[#1b1b24] block mb-1">LLM Evaluation Model (Groq API)</label>
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="w-full h-9 px-3 bg-[#f5f2ff] border border-[#bec8d0]/40 rounded-lg text-xs outline-none focus:border-[#006389]"
+                >
+                  <option value="llama-3.3-70b-versatile">LLaMA 3.3 70B Versatile (Recommended)</option>
+                  <option value="llama-3.1-8b-instant">LLaMA 3.1 8B Instant (Ultra-fast)</option>
+                  <option value="mixtral-8x7b-32768">Mixtral 8x7B (High context)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-semibold text-[#1b1b24] block mb-1">Speech Engine</label>
+                <input
+                  type="text"
+                  disabled
+                  value="Deepgram Nova-2 (WebSocket Real-time)"
+                  className="w-full h-9 px-3 bg-gray-100 border border-[#bec8d0]/40 rounded-lg text-xs text-gray-500 cursor-not-allowed"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <div>
+                  <p className="font-semibold text-[#1b1b24]">Google Meet Autonomous Join</p>
+                  <p className="text-[10px] text-[#6f7880]">Allow Playwright bot to auto-admit candidates</p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={meetBotAutoJoin}
+                  onChange={(e) => setMeetBotAutoJoin(e.target.checked)}
+                  className="w-4 h-4 accent-[#006389] cursor-pointer"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#bec8d0]/20">
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="px-4 py-2 rounded-lg border border-[#bec8d0]/40 text-xs font-semibold text-[#6f7880] hover:bg-[#f5f2ff]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  toast({
+                    title: "Settings Saved",
+                    description: `Preferences updated: using ${selectedModel}`
+                  });
+                  setIsSettingsOpen(false);
+                }}
+                className="px-4 py-2 rounded-lg bg-[#006389] hover:bg-[#004c6b] text-white text-xs font-semibold shadow-sm"
+              >
+                Save Preferences
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          SECTION: HELP & SUPPORT MODAL
+      ───────────────────────────────────────────────────────────── */}
+      {isHelpOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-[#bec8d0]/30 flex flex-col gap-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-[#bec8d0]/20">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#58568f] text-white flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[18px]">help</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[#1b1b24]">Help & System Guide</h3>
+                  <p className="text-xs text-[#6f7880]">InterviewAI Architecture & Troubleshooting</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsHelpOpen(false)}
+                className="w-7 h-7 rounded-lg hover:bg-[#f5f2ff] text-[#6f7880] flex items-center justify-center"
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-[#3f484f]">
+              <div className="p-3 rounded-xl bg-[#f5f2ff]">
+                <h4 className="font-bold text-[#1b1b24] mb-1">1. How Resume Screening Works</h4>
+                <p className="text-[11px] leading-relaxed">
+                  Upload candidate PDFs in the Intake Funnel. The system parses text with spaCy/pdfminer and evaluates cosine similarity against your target job description.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#f5f2ff]">
+                <h4 className="font-bold text-[#1b1b24] mb-1">2. Google Meet Bot Join</h4>
+                <p className="text-[11px] leading-relaxed">
+                  The automated interview bot uses headless Playwright on port 8001. When a meeting link is generated, it joins as host and asks questions via Deepgram TTS.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#f5f2ff]">
+                <h4 className="font-bold text-[#1b1b24] mb-1">3. Live Video Interview Room</h4>
+                <p className="text-[11px] leading-relaxed">
+                  Click <strong>Launch Direct Room</strong> or <strong>Start Interview</strong> next to any candidate to test the interactive camera, speech evaluation, and question generator.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end pt-2 border-t border-[#bec8d0]/20">
+              <button
+                onClick={() => setIsHelpOpen(false)}
+                className="px-5 py-2 rounded-lg bg-[#006389] hover:bg-[#004c6b] text-white text-xs font-semibold shadow-sm"
+              >
+                Got It
               </button>
             </div>
           </div>
