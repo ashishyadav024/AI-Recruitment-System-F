@@ -390,16 +390,15 @@ const Index = () => {
         <section ref={homeRef} className="pt-40 pb-20 px-4">
           <div className="container mx-auto flex flex-col md:flex-row items-center gap-16">
             <motion.div 
-              ref={homeRef}
-              initial={{ opacity: 0, y: 50 }}
-              animate={isHeroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="md:w-1/2 space-y-8"
             >
               <div className="space-y-6">
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
-                  animate={isHeroInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.2 }}
                 >
                   <Badge variant="secondary" className="text-lg px-4 py-1 bg-cyan-400/10 text-cyan-400 border border-cyan-400/20">
@@ -411,7 +410,7 @@ const Index = () => {
                     theme === 'dark' ? 'text-white' : 'text-slate-900'
                   }`}
                   initial={{ opacity: 0, y: 20 }}
-                  animate={isHeroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.3 }}
                 >
                   Streamline Your Hiring Process
@@ -421,7 +420,7 @@ const Index = () => {
                     theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
                   }`}
                   initial={{ opacity: 0, y: 20 }}
-                  animate={isHeroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.4 }}
                 >
                   Get instant insights and make data-driven decisions with our advanced resume screening technology.
@@ -430,7 +429,7 @@ const Index = () => {
               <motion.div 
                 className="flex gap-4"
                 initial={{ opacity: 0, y: 20 }}
-                animate={isHeroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.5 }}
               >
                 <Button 
@@ -452,19 +451,23 @@ const Index = () => {
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={isHeroInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
               className="md:w-1/2"
             >
               <div className="flex items-center gap-4">
-                <h1 className="text-2xl text-white font-bold sans-serif gap m-auto mb-10">
-                  Get deep insights about your resume through chat !!
-                </h1>
-                
+                <h2 className={`text-2xl font-bold sans-serif mb-6 text-center w-full ${
+                  theme === 'dark' ? 'text-white' : 'text-slate-900'
+                }`}>
+                  Get deep insights about your resume through chat!
+                </h2>
               </div>
               
-              
-              <Card className="overflow-hidden border-0 bg-slate-1100/50 backdrop-blur-sm shadow-2xl">
+              <Card className={`overflow-hidden border shadow-2xl rounded-3xl transition-colors ${
+                theme === 'dark' 
+                  ? 'border-slate-800 bg-slate-900/60 backdrop-blur-sm' 
+                  : 'border-slate-200 bg-white/90 backdrop-blur-sm shadow-slate-200/50'
+              }`}>
                 <CardContent className="p-0">
                   <Chatbot 
                     messages={[
@@ -485,8 +488,8 @@ const Index = () => {
           <motion.div 
             className="container mx-auto mt-20 text-center"
             initial={{ opacity: 0 }}
-            animate={isHeroInView ? { opacity: 1 } : { opacity: 0 }}
-            transition={{ duration: 0.5, delay: 0.8 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
           >
             <motion.div 
               animate={{ y: [0, 10, 0] }}
@@ -498,7 +501,9 @@ const Index = () => {
         </section>
 
         {/* Features Section */}
-        <section ref={featuresRef} className="py-20 px-4 bg-slate-900/50 relative z-10">
+        <section ref={featuresRef} className={`py-20 px-4 relative z-10 transition-colors duration-300 ${
+          theme === 'dark' ? 'bg-slate-900/50' : 'bg-slate-100/70 border-y border-slate-200/80'
+        }`}>
           <div className="container mx-auto">
             <motion.div 
               className="text-center space-y-6 mb-16"
@@ -524,7 +529,11 @@ const Index = () => {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="relative z-10"
                 >
-                  <Card className="h-full hover:shadow-xl transition-all duration-300 border-0 bg-slate-800/50 backdrop-blur-sm hover:bg-slate-800/70">
+                  <Card className={`h-full hover:shadow-xl transition-all duration-300 border backdrop-blur-sm ${
+                    theme === 'dark'
+                      ? 'border-slate-800 bg-slate-800/50 hover:bg-slate-800/70'
+                      : 'border-slate-200 bg-white hover:bg-slate-50/80 shadow-sm'
+                  }`}>
                     <CardHeader>
                       <div className="w-14 h-14 rounded-xl bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center mb-4">
                         <div className="text-cyan-400">
@@ -802,7 +811,9 @@ const Index = () => {
               </motion.div>
               
               <motion.div 
-                className="md:w-1/2 bg-slate-800/50 p-8 rounded-xl shadow-md backdrop-blur-sm"
+                className={`md:w-1/2 p-8 rounded-xl shadow-md backdrop-blur-sm border transition-colors ${
+                  theme === 'dark' ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-slate-200/50'
+                }`}
                 initial={{ opacity: 0, x: 30 }}
                 animate={isContactInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 30 }}
                 transition={{ duration: 0.6, delay: 0.4 }}

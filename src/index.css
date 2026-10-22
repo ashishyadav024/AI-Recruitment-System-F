@@ -112,7 +112,7 @@
   }
 
   .team-card {
-    @apply bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+    @apply bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
   }
 
   .section-title {

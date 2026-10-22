@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
 
 interface Message {
   text: string;
@@ -30,6 +31,7 @@ export default function Chatbot({
   loop = true
 }: ChatbotProps) {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [isUserTyping, setIsUserTyping] = useState(false);
@@ -76,22 +78,28 @@ export default function Chatbot({
   }, [currentIndex, messages, delay, startDelay, restartDelay, loop]);
 
   return (
-    <div className="w-full max-w-sm mx-auto bg-cyan-900/30 backdrop-blur-md rounded-3xl overflow-hidden border border-cyan-600/30 shadow-xl">
-      <div className="p-4 bg-cyan-800/50 border-b border-cyan-600/30">
+    <div className={`w-full max-w-sm mx-auto backdrop-blur-md rounded-3xl overflow-hidden border shadow-xl transition-colors ${
+      theme === 'dark'
+        ? 'bg-cyan-950/40 border-cyan-600/30 shadow-cyan-950/50'
+        : 'bg-white border-cyan-100 shadow-slate-200/80'
+    }`}>
+      <div className={`p-4 border-b transition-colors ${
+        theme === 'dark' ? 'bg-cyan-900/50 border-cyan-600/30' : 'bg-cyan-50 border-cyan-100'
+      }`}>
         <div className="flex items-center justify-between">
           <h3 
-            className="text-lg font-semibold text-green-400 cursor-pointer hover:text-green-300 transition-colors"
+            className={`text-lg font-semibold cursor-pointer transition-colors ${
+              theme === 'dark' ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-700 hover:text-cyan-800'
+            }`}
             onClick={() => navigate('/login')}
           >
-            Click here
+            AI Assistant
           </h3>
           <button 
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-base font-medium rounded-lg transition-colors duration-300 flex items-center gap-2 shadow-lg hover:scale-105 transform"
+            className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white text-xs font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 shadow-md hover:scale-105 transform"
             onClick={() => navigate('/login')}
           >
-            <i className="fas fa-comment-dots"></i>
             Chat Now
-            <i className="fas fa-robot"></i>
           </button>
         </div>
       </div>
@@ -100,9 +108,13 @@ export default function Chatbot({
         {chatMessages.map((message, index) => (
           <div key={index} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
             <div
-              className={`max-w-[80%] p-3 rounded-2xl ${
-                message.isUser ? 'bg-green-600/80 text-white ml-4' : 'bg-cyan-800/50 text-cyan-50 mr-4'
-              } backdrop-blur-sm shadow-lg`}
+              className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                message.isUser 
+                  ? 'bg-blue-600 text-white ml-4 shadow-sm' 
+                  : theme === 'dark'
+                    ? 'bg-cyan-900/60 text-cyan-50 mr-4 border border-cyan-700/30'
+                    : 'bg-slate-100 text-slate-800 mr-4 border border-slate-200'
+              } backdrop-blur-sm shadow-md`}
             >
               {message.text}
             </div>
@@ -112,7 +124,9 @@ export default function Chatbot({
         {/* Bot typing indicator */}
         {isTyping && (
           <div className="flex justify-start">
-            <div className="bg-cyan-800/50 p-4 rounded-2xl flex space-x-2 backdrop-blur-sm">
+            <div className={`p-4 rounded-2xl flex space-x-2 backdrop-blur-sm ${
+              theme === 'dark' ? 'bg-cyan-800/50' : 'bg-slate-100'
+            }`}>
               <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"></div>
               <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
               <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
@@ -123,12 +137,12 @@ export default function Chatbot({
         {/* User typing indicator */}
         {isUserTyping && (
           <div className="flex justify-end">
-            <div className="bg-green-600/50 p-2 rounded-2xl flex items-center gap-1 backdrop-blur-sm">
-              <div className="text-xs text-green-300">typing</div>
+            <div className="bg-blue-600/50 p-2 rounded-2xl flex items-center gap-1 backdrop-blur-sm">
+              <div className="text-xs text-blue-200">typing</div>
               <div className="flex space-x-1">
-                <div className="w-1.5 h-1.5 bg-green-300 rounded-full animate-bounce"></div>
-                <div className="w-1.5 h-1.5 bg-green-300 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                <div className="w-1.5 h-1.5 bg-green-300 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                <div className="w-1.5 h-1.5 bg-blue-200 rounded-full animate-bounce"></div>
+                <div className="w-1.5 h-1.5 bg-blue-200 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                <div className="w-1.5 h-1.5 bg-blue-200 rounded-full animate-bounce [animation-delay:0.4s]"></div>
               </div>
             </div>
           </div>
