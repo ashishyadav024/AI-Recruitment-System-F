@@ -282,11 +282,11 @@ const RecruiterDashboard: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#fbf8ff] min-h-screen font-['Chivo',sans-serif] text-[#1b1b24] antialiased">
+    <div className="bg-[#f8fafc] min-h-screen font-['Chivo',sans-serif] text-[#1b1b24] antialiased">
       {/* ─────────────────────────────────────────────────────────────
           SIDEBAR NAVIGATION (Stitch Spec: 288px fixed left)
       ───────────────────────────────────────────────────────────── */}
-      <aside className="fixed left-0 top-0 h-screen w-72 bg-[#f5f2ff] flex flex-col justify-between z-50 shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-r border-[#bec8d0]/20">
+      <aside className="fixed left-0 top-0 h-screen w-72 bg-white flex flex-col justify-between z-50 shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-r border-slate-200">
         <div className="flex flex-col flex-1">
           {/* Brand Logo & Header */}
           <div className="p-5 flex items-center gap-3">
@@ -313,8 +313,8 @@ const RecruiterDashboard: React.FC = () => {
               onClick={() => setActiveTab("overview")}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === "overview"
-                  ? "bg-[#706ea9] text-white font-semibold shadow-sm"
-                  : "text-[#3f484f] hover:bg-[#e9e6f4] hover:text-[#1b1b24]"
+                  ? "bg-[#006389] text-white font-semibold shadow-sm"
+                  : "text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24]"
               }`}
             >
               <span className="material-symbols-outlined text-[20px]">grid_view</span>
@@ -325,8 +325,8 @@ const RecruiterDashboard: React.FC = () => {
               onClick={() => setActiveTab("candidates")}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === "candidates"
-                  ? "bg-[#706ea9] text-white font-semibold shadow-sm"
-                  : "text-[#3f484f] hover:bg-[#e9e6f4] hover:text-[#1b1b24]"
+                  ? "bg-[#006389] text-white font-semibold shadow-sm"
+                  : "text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24]"
               }`}
             >
               <span className="material-symbols-outlined text-[20px]">group</span>
@@ -340,8 +340,8 @@ const RecruiterDashboard: React.FC = () => {
               onClick={() => setActiveTab("interviews")}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === "interviews"
-                  ? "bg-[#706ea9] text-white font-semibold shadow-sm"
-                  : "text-[#3f484f] hover:bg-[#e9e6f4] hover:text-[#1b1b24]"
+                  ? "bg-[#006389] text-white font-semibold shadow-sm"
+                  : "text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24]"
               }`}
             >
               <span className="material-symbols-outlined text-[20px]">video_camera_front</span>
@@ -355,8 +355,8 @@ const RecruiterDashboard: React.FC = () => {
               onClick={() => setActiveTab("reports")}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === "reports"
-                  ? "bg-[#706ea9] text-white font-semibold shadow-sm"
-                  : "text-[#3f484f] hover:bg-[#e9e6f4] hover:text-[#1b1b24]"
+                  ? "bg-[#006389] text-white font-semibold shadow-sm"
+                  : "text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24]"
               }`}
             >
               <span className="material-symbols-outlined text-[20px]">analytics</span>
@@ -367,8 +367,8 @@ const RecruiterDashboard: React.FC = () => {
               onClick={() => setActiveTab("job-roles")}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === "job-roles"
-                  ? "bg-[#706ea9] text-white font-semibold shadow-sm"
-                  : "text-[#3f484f] hover:bg-[#e9e6f4] hover:text-[#1b1b24]"
+                  ? "bg-[#006389] text-white font-semibold shadow-sm"
+                  : "text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24]"
               }`}
             >
               <span className="material-symbols-outlined text-[20px]">work</span>
@@ -382,14 +382,14 @@ const RecruiterDashboard: React.FC = () => {
           <div className="space-y-0.5">
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-sm text-[#3f484f] hover:bg-[#e9e6f4] hover:text-[#1b1b24] transition-colors"
+              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-sm text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24] transition-colors"
             >
               <span className="material-symbols-outlined text-[20px]">settings</span>
               <span>Settings</span>
             </button>
             <button
               onClick={() => setIsHelpOpen(true)}
-              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-sm text-[#3f484f] hover:bg-[#e9e6f4] hover:text-[#1b1b24] transition-colors"
+              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-sm text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24] transition-colors"
             >
               <span className="material-symbols-outlined text-[20px]">help</span>
               <span>Help & Support</span>
@@ -399,7 +399,7 @@ const RecruiterDashboard: React.FC = () => {
           <div className="h-[1px] w-full bg-[#bec8d0]/30 my-1" />
 
           {/* Recruiter Identity Pill */}
-          <div className="flex items-center justify-between p-2 rounded-xl bg-white/70 border border-[#bec8d0]/20 hover:bg-white transition-colors">
+          <div className="flex items-center justify-between p-2 rounded-xl bg-white/70 border border-slate-200/80 hover:bg-white transition-colors">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-full bg-[#007dac] text-white flex items-center justify-center font-bold text-xs shadow-sm">
                 AM
@@ -419,7 +419,7 @@ const RecruiterDashboard: React.FC = () => {
       ───────────────────────────────────────────────────────────── */}
       <div className="pl-72 flex flex-col min-h-screen">
         {/* TOP BAR / HEADER */}
-        <header className="fixed top-0 left-72 right-0 h-16 bg-[#fbf8ff]/85 backdrop-blur-xl z-40 flex items-center justify-between px-8 border-b border-[#bec8d0]/20 shadow-[0_1px_8px_rgba(0,0,0,0.03)]">
+        <header className="fixed top-0 left-72 right-0 h-16 bg-white/85 backdrop-blur-xl z-40 flex items-center justify-between px-8 border-b border-slate-200/80 shadow-[0_1px_8px_rgba(0,0,0,0.03)]">
           {/* Breadcrumb Status */}
           <div className="flex items-center gap-3">
             <span className="text-xs uppercase text-[#6f7880] font-semibold tracking-wider font-mono">
@@ -443,7 +443,7 @@ const RecruiterDashboard: React.FC = () => {
                 placeholder="Search candidate, role, skill..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9 pl-9 pr-3 bg-white rounded-lg text-xs text-[#1b1b24] placeholder:text-[#6f7880] outline-none shadow-sm border border-[#bec8d0]/30 focus:border-[#006389] focus:ring-1 focus:ring-[#006389] w-64 transition-all"
+                className="h-9 pl-9 pr-3 bg-white rounded-lg text-xs text-[#1b1b24] placeholder:text-[#6f7880] outline-none shadow-sm border border-slate-200 focus:border-[#006389] focus:ring-1 focus:ring-[#006389] w-64 transition-all"
               />
             </div>
 
@@ -451,15 +451,15 @@ const RecruiterDashboard: React.FC = () => {
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                 aria-label="Notifications"
-                className="relative w-9 h-9 rounded-lg bg-white border border-[#bec8d0]/30 flex items-center justify-center text-[#3f484f] hover:text-[#006389] transition-colors shadow-sm"
+                className="relative w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[#3f484f] hover:text-[#006389] transition-colors shadow-sm"
               >
                 <span className="material-symbols-outlined text-[20px]">notifications</span>
                 <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
               </button>
 
               {isNotificationsOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-[#bec8d0]/30 p-3 z-50 animate-in fade-in slide-in-from-top-2">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#bec8d0]/20 mb-2">
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 p-3 z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/80 mb-2">
                     <span className="text-xs font-bold text-[#1b1b24]">Notifications</span>
                     <button
                       onClick={() => setIsNotificationsOpen(false)}
@@ -469,15 +469,15 @@ const RecruiterDashboard: React.FC = () => {
                     </button>
                   </div>
                   <div className="space-y-2 text-xs">
-                    <div className="p-2 rounded-lg bg-[#f5f2ff] hover:bg-[#ece8fa] transition-colors cursor-pointer">
+                    <div className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
                       <p className="font-semibold text-[#1b1b24]">Priya Mehta completed interview</p>
                       <p className="text-[10px] text-[#6f7880]">Score: 91/100 · 10m ago</p>
                     </div>
-                    <div className="p-2 rounded-lg bg-[#f5f2ff] hover:bg-[#ece8fa] transition-colors cursor-pointer">
+                    <div className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
                       <p className="font-semibold text-[#1b1b24]">AI Screening Engine Online</p>
                       <p className="text-[10px] text-[#6f7880]">Google Meet Bot verified · 1h ago</p>
                     </div>
-                    <div className="p-2 rounded-lg bg-[#f5f2ff] hover:bg-[#ece8fa] transition-colors cursor-pointer">
+                    <div className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
                       <p className="font-semibold text-[#1b1b24]">Aarav Sharma evaluated</p>
                       <p className="text-[10px] text-[#6f7880]">Score: 82/100 · 2h ago</p>
                     </div>
@@ -532,7 +532,7 @@ const RecruiterDashboard: React.FC = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsUploadModalOpen(true)}
-                className="px-4 py-2 bg-[#e3e1ef] hover:bg-[#d5d2e4] text-[#1b1b24] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#1b1b24] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
               >
                 <span className="material-symbols-outlined text-[18px]">upload_file</span>
                 <span>Upload Resumes</span>
@@ -553,7 +553,7 @@ const RecruiterDashboard: React.FC = () => {
           {(activeTab === "overview" || activeTab === "reports") && (
           <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {/* Metric 1: Total Candidates */}
-            <div className="p-5 bg-white rounded-2xl shadow-sm border border-[#bec8d0]/20 flex flex-col justify-between hover:shadow-md transition-all">
+            <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between hover:shadow-md transition-all">
               <div className="flex items-start justify-between">
                 <div className="flex flex-col">
                   <span className="text-[0.6875rem] text-[#6f7880] uppercase tracking-wider font-semibold font-mono">
@@ -576,7 +576,7 @@ const RecruiterDashboard: React.FC = () => {
             </div>
 
             {/* Metric 2: Video Interviews Completed */}
-            <div className="p-5 bg-white rounded-2xl shadow-sm border border-[#bec8d0]/20 flex flex-col justify-between hover:shadow-md transition-all">
+            <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between hover:shadow-md transition-all">
               <div className="flex items-start justify-between">
                 <div className="flex flex-col">
                   <span className="text-[0.6875rem] text-[#6f7880] uppercase tracking-wider font-semibold font-mono">
@@ -599,7 +599,7 @@ const RecruiterDashboard: React.FC = () => {
             </div>
 
             {/* Metric 3: Avg Interview Score */}
-            <div className="p-5 bg-white rounded-2xl shadow-sm border border-[#bec8d0]/20 flex flex-col justify-between hover:shadow-md transition-all">
+            <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between hover:shadow-md transition-all">
               <div className="flex items-start justify-between">
                 <div className="flex flex-col">
                   <span className="text-[0.6875rem] text-[#6f7880] uppercase tracking-wider font-semibold font-mono">
@@ -612,13 +612,13 @@ const RecruiterDashboard: React.FC = () => {
                     <span className="text-xs text-[#6f7880] font-mono">/ 100</span>
                   </div>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-[#e2dfff]/60 text-[#58568f] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#e2dfff]/60 text-[#0284c7] flex items-center justify-center">
                   <span className="material-symbols-outlined text-[22px]">stars</span>
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-between">
                 <span className="text-[0.6875rem] text-[#6f7880]">Across AI interviews</span>
-                <div className="w-16 h-2 bg-[#e9e6f4] rounded-full overflow-hidden">
+                <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[#006389] rounded-full"
                     style={{ width: `${Math.min(100, parseFloat(avgScore) || 75)}%` }}
@@ -628,7 +628,7 @@ const RecruiterDashboard: React.FC = () => {
             </div>
 
             {/* Metric 4: Completion Rate */}
-            <div className="p-5 bg-white rounded-2xl shadow-sm border border-[#bec8d0]/20 flex flex-col justify-between hover:shadow-md transition-all">
+            <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between hover:shadow-md transition-all">
               <div className="flex items-start justify-between">
                 <div className="flex flex-col">
                   <span className="text-[0.6875rem] text-[#6f7880] uppercase tracking-wider font-semibold font-mono">
@@ -641,7 +641,7 @@ const RecruiterDashboard: React.FC = () => {
                 <div className="relative w-10 h-10 flex items-center justify-center">
                   <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
                     <path
-                      className="text-[#e9e6f4]"
+                      className="text-slate-200"
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
                       stroke="currentColor"
@@ -680,7 +680,7 @@ const RecruiterDashboard: React.FC = () => {
                 <h2 className="font-['Plus_Jakarta_Sans',sans-serif] text-lg font-bold text-[#1b1b24]">
                   Active Job Roles
                 </h2>
-                <span className="px-2 py-0.5 rounded-full bg-[#e9e6f4] text-[#3f484f] text-xs font-semibold font-mono">
+                <span className="px-2 py-0.5 rounded-full bg-slate-200 text-[#3f484f] text-xs font-semibold font-mono">
                   4 Openings
                 </span>
               </div>
@@ -699,7 +699,7 @@ const RecruiterDashboard: React.FC = () => {
                 className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                   selectedRoleFilter === "Machine Learning Engineer"
                     ? "bg-[#c6e7ff]/20 border-[#006389] ring-2 ring-[#006389]/20"
-                    : "bg-white border-[#bec8d0]/20 hover:shadow-md"
+                    : "bg-white border-slate-200/80 hover:shadow-md"
                 }`}
               >
                 <div className="flex flex-col gap-1">
@@ -720,7 +720,7 @@ const RecruiterDashboard: React.FC = () => {
                     <span>18 / 42 Interviews</span>
                     <span className="font-bold text-[#006389]">43%</span>
                   </div>
-                  <div className="w-full h-1.5 bg-[#e9e6f4] rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-[#006389] rounded-full" style={{ width: "43%" }} />
                   </div>
                 </div>
@@ -732,7 +732,7 @@ const RecruiterDashboard: React.FC = () => {
                 className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                   selectedRoleFilter === "Frontend Developer"
                     ? "bg-[#c6e7ff]/20 border-[#006389] ring-2 ring-[#006389]/20"
-                    : "bg-white border-[#bec8d0]/20 hover:shadow-md"
+                    : "bg-white border-slate-200/80 hover:shadow-md"
                 }`}
               >
                 <div className="flex flex-col gap-1">
@@ -753,7 +753,7 @@ const RecruiterDashboard: React.FC = () => {
                     <span>24 / 56 Interviews</span>
                     <span className="font-bold text-[#006389]">43%</span>
                   </div>
-                  <div className="w-full h-1.5 bg-[#e9e6f4] rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-[#006389] rounded-full" style={{ width: "43%" }} />
                   </div>
                 </div>
@@ -765,7 +765,7 @@ const RecruiterDashboard: React.FC = () => {
                 className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                   selectedRoleFilter === "Backend Engineer"
                     ? "bg-[#c6e7ff]/20 border-[#006389] ring-2 ring-[#006389]/20"
-                    : "bg-white border-[#bec8d0]/20 hover:shadow-md"
+                    : "bg-white border-slate-200/80 hover:shadow-md"
                 }`}
               >
                 <div className="flex flex-col gap-1">
@@ -786,7 +786,7 @@ const RecruiterDashboard: React.FC = () => {
                     <span>15 / 38 Interviews</span>
                     <span className="font-bold text-[#006389]">39%</span>
                   </div>
-                  <div className="w-full h-1.5 bg-[#e9e6f4] rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-[#006389] rounded-full" style={{ width: "39%" }} />
                   </div>
                 </div>
@@ -798,7 +798,7 @@ const RecruiterDashboard: React.FC = () => {
                 className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                   selectedRoleFilter === "Data Analyst"
                     ? "bg-[#c6e7ff]/20 border-[#006389] ring-2 ring-[#006389]/20"
-                    : "bg-white border-[#bec8d0]/20 hover:shadow-md"
+                    : "bg-white border-slate-200/80 hover:shadow-md"
                 }`}
               >
                 <div className="flex flex-col gap-1">
@@ -819,7 +819,7 @@ const RecruiterDashboard: React.FC = () => {
                     <span>12 / 31 Interviews</span>
                     <span className="font-bold text-[#006389]">38%</span>
                   </div>
-                  <div className="w-full h-1.5 bg-[#e9e6f4] rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-[#006389] rounded-full" style={{ width: "38%" }} />
                   </div>
                 </div>
@@ -832,7 +832,7 @@ const RecruiterDashboard: React.FC = () => {
               SECTION 4: CANDIDATE SCREENING & MANAGEMENT TABLE
           ───────────────────────────────────────────────────────────── */}
           {(activeTab === "overview" || activeTab === "candidates") && (
-          <section className="p-6 bg-white rounded-2xl shadow-sm border border-[#bec8d0]/20 flex flex-col gap-5">
+          <section className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col gap-5">
             {/* Table Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div>
@@ -849,7 +849,7 @@ const RecruiterDashboard: React.FC = () => {
                 <select
                   value={selectedRoleFilter}
                   onChange={(e) => setSelectedRoleFilter(e.target.value)}
-                  className="h-8 px-2.5 bg-[#f5f2ff] border border-[#bec8d0]/30 rounded-lg text-xs text-[#1b1b24] outline-none"
+                  className="h-8 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-[#1b1b24] outline-none"
                 >
                   <option value="All Roles">All Roles</option>
                   <option value="Machine Learning Engineer">Machine Learning Engineer</option>
@@ -861,7 +861,7 @@ const RecruiterDashboard: React.FC = () => {
                 <select
                   value={selectedStatusFilter}
                   onChange={(e) => setSelectedStatusFilter(e.target.value)}
-                  className="h-8 px-2.5 bg-[#f5f2ff] border border-[#bec8d0]/30 rounded-lg text-xs text-[#1b1b24] outline-none"
+                  className="h-8 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-[#1b1b24] outline-none"
                 >
                   <option value="All">All Statuses</option>
                   <option value="Completed">Completed</option>
@@ -876,7 +876,7 @@ const RecruiterDashboard: React.FC = () => {
             <div className="overflow-x-auto -mx-6 px-6">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#f5f2ff]/80 text-[#3f484f] font-mono text-[0.6875rem] uppercase tracking-wider">
+                  <tr className="bg-slate-50/80 text-[#3f484f] font-mono text-[0.6875rem] uppercase tracking-wider">
                     <th className="py-3 px-4 rounded-l-xl font-bold">Candidate</th>
                     <th className="py-3 px-4 font-bold">Role</th>
                     <th className="py-3 px-4 font-bold">Status</th>
@@ -894,7 +894,7 @@ const RecruiterDashboard: React.FC = () => {
                     </tr>
                   ) : (
                     filteredCandidates.map((cand) => (
-                      <tr key={cand.id} className="hover:bg-[#f5f2ff]/40 transition-colors group">
+                      <tr key={cand.id} className="hover:bg-slate-50/40 transition-colors group">
                         {/* Candidate Cell */}
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
@@ -931,7 +931,7 @@ const RecruiterDashboard: React.FC = () => {
                           )}
                           {cand.status === "Live Video" && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#e2dfff] text-[#16134a] text-[0.6875rem] font-bold">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#58568f] animate-pulse" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#0284c7] animate-pulse" />
                               Live Video
                             </span>
                           )}
@@ -942,7 +942,7 @@ const RecruiterDashboard: React.FC = () => {
                             </span>
                           )}
                           {cand.status === "Screened" && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#e9e6f4] text-[#3f484f] text-[0.6875rem] font-bold">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-200 text-[#3f484f] text-[0.6875rem] font-bold">
                               <span className="w-1.5 h-1.5 rounded-full bg-[#007dac]" />
                               Screened
                             </span>
@@ -952,7 +952,7 @@ const RecruiterDashboard: React.FC = () => {
                         {/* AI Score */}
                         <td className="py-3.5 px-4">
                           {cand.score > 0 ? (
-                            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#e9e6f4] text-[#1b1b24] font-bold font-mono text-xs">
+                            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-200 text-[#1b1b24] font-bold font-mono text-xs">
                               <span>{cand.score}</span>
                               <span className="text-[#6f7880] font-normal">/100</span>
                             </div>
@@ -997,13 +997,13 @@ const RecruiterDashboard: React.FC = () => {
           {(activeTab === "overview" || activeTab === "reports") && (
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Chart Column: Interview Activity */}
-            <div className="p-6 bg-white rounded-2xl shadow-sm border border-[#bec8d0]/20 flex flex-col justify-between">
+            <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
                   <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#1b1b24]">
                     Interview Activity
                   </h3>
-                  <span className="text-[0.6875rem] font-mono px-2 py-0.5 rounded bg-[#f5f2ff] text-[#6f7880]">
+                  <span className="text-[0.6875rem] font-mono px-2 py-0.5 rounded bg-slate-50 text-[#6f7880]">
                     Last 30 Days
                   </span>
                 </div>
@@ -1047,7 +1047,7 @@ const RecruiterDashboard: React.FC = () => {
             </div>
 
             {/* AI Hiring Insights Column */}
-            <div className="p-6 bg-white rounded-2xl shadow-sm border border-[#bec8d0]/20 flex flex-col justify-between">
+            <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
                   <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#1b1b24]">
@@ -1059,7 +1059,7 @@ const RecruiterDashboard: React.FC = () => {
               </div>
 
               <div className="my-3 flex flex-col gap-2.5">
-                <div className="p-3 rounded-xl bg-[#f5f2ff] flex items-start gap-3">
+                <div className="p-3 rounded-xl bg-slate-50 flex items-start gap-3">
                   <div className="w-7 h-7 rounded bg-[#9ad6fd] text-[#155e7f] flex items-center justify-center shrink-0 mt-0.5">
                     <span className="material-symbols-outlined text-[16px]">record_voice_over</span>
                   </div>
@@ -1071,8 +1071,8 @@ const RecruiterDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-[#f5f2ff] flex items-start gap-3">
-                  <div className="w-7 h-7 rounded bg-[#e2dfff] text-[#58568f] flex items-center justify-center shrink-0 mt-0.5">
+                <div className="p-3 rounded-xl bg-slate-50 flex items-start gap-3">
+                  <div className="w-7 h-7 rounded bg-[#e2dfff] text-[#0284c7] flex items-center justify-center shrink-0 mt-0.5">
                     <span className="material-symbols-outlined text-[16px]">dynamic_form</span>
                   </div>
                   <div className="flex flex-col">
@@ -1129,7 +1129,7 @@ const RecruiterDashboard: React.FC = () => {
           {activeTab === "interviews" && (
             <div className="flex flex-col gap-6">
               {/* Bot Status Banner */}
-              <div className="p-6 bg-white rounded-2xl border border-[#bec8d0]/20 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-[#c6e7ff] text-[#006389] flex items-center justify-center">
                     <span className="material-symbols-outlined text-2xl">smart_toy</span>
@@ -1166,7 +1166,7 @@ const RecruiterDashboard: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {candidates.map((cand) => (
-                    <div key={cand.id} className="p-5 bg-white rounded-2xl border border-[#bec8d0]/20 shadow-sm flex flex-col justify-between gap-4 hover:shadow-md transition-all">
+                    <div key={cand.id} className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between gap-4 hover:shadow-md transition-all">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${cand.avatarBg || "bg-[#c6e7ff] text-[#001e2d]"}`}>
@@ -1186,7 +1186,7 @@ const RecruiterDashboard: React.FC = () => {
                         </span>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-[#f5f2ff] text-xs flex flex-col gap-1.5">
+                      <div className="p-3 rounded-xl bg-slate-50 text-xs flex flex-col gap-1.5">
                         <div className="flex justify-between text-[#6f7880]">
                           <span>AI Match Score:</span>
                           <span className="font-bold font-mono text-[#006389]">{cand.score}%</span>
@@ -1197,10 +1197,10 @@ const RecruiterDashboard: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 pt-1 border-t border-[#bec8d0]/10">
+                      <div className="flex items-center gap-2 pt-1 border-t border-slate-200/10">
                         <button
                           onClick={() => setSelectedCandidateForScorecard(cand)}
-                          className="flex-1 py-1.5 px-3 rounded-lg border border-[#bec8d0]/40 text-xs font-semibold text-[#3f484f] hover:bg-[#f5f2ff] transition-colors"
+                          className="flex-1 py-1.5 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-[#3f484f] hover:bg-slate-50 transition-colors"
                         >
                           Scorecard
                         </button>
@@ -1223,7 +1223,7 @@ const RecruiterDashboard: React.FC = () => {
               SECTION: REPORTS VIEW EXTRA EXPORT ACTION
           ───────────────────────────────────────────────────────────── */}
           {activeTab === "reports" && (
-            <div className="p-6 bg-white rounded-2xl border border-[#bec8d0]/20 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h3 className="font-bold text-sm text-[#1b1b24]">Export Recruitment Audit Report</h3>
                 <p className="text-xs text-[#6f7880]">Download complete PDF and CSV records for all candidate interviews.</p>
@@ -1236,7 +1236,7 @@ const RecruiterDashboard: React.FC = () => {
                       description: "Downloading candidates_export.csv"
                     });
                   }}
-                  className="px-4 py-2 border border-[#bec8d0]/40 text-[#3f484f] hover:bg-[#f5f2ff] rounded-lg text-xs font-semibold transition-colors"
+                  className="px-4 py-2 border border-slate-200 text-[#3f484f] hover:bg-slate-50 rounded-lg text-xs font-semibold transition-colors"
                 >
                   Download CSV
                 </button>
@@ -1264,9 +1264,9 @@ const RecruiterDashboard: React.FC = () => {
       ───────────────────────────────────────────────────────────── */}
       {isUploadModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#f8f9ff] rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-[#bec8d0]/30 flex flex-col my-auto">
+          <div className="bg-[#f8f9ff] rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 flex flex-col my-auto">
             {/* Modal Header & Intake Funnel Stepper */}
-            <div className="p-6 bg-white border-b border-[#bec8d0]/20 flex flex-col gap-4">
+            <div className="p-6 bg-white border-b border-slate-200/80 flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#006389] text-white">
@@ -1318,7 +1318,7 @@ const RecruiterDashboard: React.FC = () => {
             <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Left Column: Drag & Drop Zone */}
               <div className="lg:col-span-6 flex flex-col gap-4">
-                <div className="bg-white rounded-xl p-5 border border-[#bec8d0]/20 flex flex-col gap-3">
+                <div className="bg-white rounded-xl p-5 border border-slate-200/80 flex flex-col gap-3">
                   <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#0b1c30]">
                     Target Role & Job Description
                   </h3>
@@ -1327,14 +1327,14 @@ const RecruiterDashboard: React.FC = () => {
                     value={jobTitleInput}
                     onChange={(e) => setJobTitleInput(e.target.value)}
                     placeholder="Job Title (e.g. Machine Learning Engineer)"
-                    className="h-9 px-3 bg-[#eff4ff] border border-[#bec8d0]/30 rounded-lg text-xs outline-none focus:border-[#006389]"
+                    className="h-9 px-3 bg-[#eff4ff] border border-slate-200 rounded-lg text-xs outline-none focus:border-[#006389]"
                   />
                   <textarea
                     rows={3}
                     value={jobDescriptionInput}
                     onChange={(e) => setJobDescriptionInput(e.target.value)}
                     placeholder="Job Description / Key Requirements..."
-                    className="p-3 bg-[#eff4ff] border border-[#bec8d0]/30 rounded-lg text-xs outline-none focus:border-[#006389] resize-none"
+                    className="p-3 bg-[#eff4ff] border border-slate-200 rounded-lg text-xs outline-none focus:border-[#006389] resize-none"
                   />
                   <div className="flex items-center justify-between text-xs text-[#464555]">
                     <span>Similarity Threshold:</span>
@@ -1358,7 +1358,7 @@ const RecruiterDashboard: React.FC = () => {
                     e.preventDefault();
                     handleFileDropOrChange(e.dataTransfer.files);
                   }}
-                  className="rounded-xl p-6 bg-[#eff4ff] border-2 border-dashed border-[#bec8d0] hover:border-[#006389] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+                  className="rounded-xl p-6 bg-[#eff4ff] border-2 border-dashed border-slate-200 hover:border-[#006389] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
                 >
                   <div className="w-12 h-12 rounded-xl bg-[#dae2fd] text-[#006389] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                     <span className="material-symbols-outlined text-2xl">upload_file</span>
@@ -1389,7 +1389,7 @@ const RecruiterDashboard: React.FC = () => {
                     {uploadedFiles.map((file, idx) => (
                       <div
                         key={idx}
-                        className="p-2.5 rounded-lg bg-white border border-[#bec8d0]/20 flex items-center justify-between text-xs"
+                        className="p-2.5 rounded-lg bg-white border border-slate-200/80 flex items-center justify-between text-xs"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="material-symbols-outlined text-red-500 text-lg">picture_as_pdf</span>
@@ -1410,7 +1410,7 @@ const RecruiterDashboard: React.FC = () => {
                 )}
 
                 {/* SOC2 Privacy Assurance Card */}
-                <div className="p-3 rounded-xl bg-white border border-[#bec8d0]/20 flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-white border border-slate-200/80 flex items-center gap-3">
                   <span className="material-symbols-outlined text-[#006389] text-xl shrink-0">encrypted</span>
                   <p className="text-[0.6875rem] text-[#464555] leading-relaxed">
                     Resume parsing is strictly isolated to personalize the interview experience. Encrypted at rest & in transit.
@@ -1420,7 +1420,7 @@ const RecruiterDashboard: React.FC = () => {
 
               {/* Right Column: 6 Intelligence Vectors & Extraction Telemetry */}
               <div className="lg:col-span-6 flex flex-col gap-4">
-                <div className="bg-white rounded-xl p-5 border border-[#bec8d0]/20 flex flex-col gap-3">
+                <div className="bg-white rounded-xl p-5 border border-slate-200/80 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#0b1c30]">
                       What InterviewAI Understands
@@ -1506,7 +1506,7 @@ const RecruiterDashboard: React.FC = () => {
                       <div className="h-full bg-[#006389] w-[45%]" title="Skills" />
                       <div className="h-full bg-[#007dac] w-[30%]" title="Experience" />
                       <div className="h-full bg-[#9ad6fd] w-[15%]" title="Projects" />
-                      <div className="h-full bg-[#58568f] w-[10%]" title="Academia" />
+                      <div className="h-full bg-[#0284c7] w-[10%]" title="Academia" />
                     </div>
                     <div className="flex items-center gap-3 text-[0.6875rem] font-mono text-[#6f7880]">
                       <span className="flex items-center gap-1">
@@ -1519,14 +1519,14 @@ const RecruiterDashboard: React.FC = () => {
                         <span className="w-2 h-2 rounded-full bg-[#9ad6fd]" />Projects 15%
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-[#58568f]" />Academia 10%
+                        <span className="w-2 h-2 rounded-full bg-[#0284c7]" />Academia 10%
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Recruiter Tip Callout */}
-                <div className="p-4 rounded-xl bg-white border border-[#bec8d0]/20 flex items-start gap-3">
+                <div className="p-4 rounded-xl bg-white border border-slate-200/80 flex items-start gap-3">
                   <span className="material-symbols-outlined text-[#006389] text-xl mt-0.5">tips_and_updates</span>
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-[#0b1c30]">Adaptive Generation Ready</span>
@@ -1539,7 +1539,7 @@ const RecruiterDashboard: React.FC = () => {
             </div>
 
             {/* Modal Footer Actions */}
-            <div className="p-4 bg-white border-t border-[#bec8d0]/20 flex items-center justify-between">
+            <div className="p-4 bg-white border-t border-slate-200/80 flex items-center justify-between">
               <button
                 onClick={() => setIsUploadModalOpen(false)}
                 className="px-4 py-2 text-xs text-[#464555] hover:underline font-semibold"
@@ -1572,7 +1572,7 @@ const RecruiterDashboard: React.FC = () => {
                     });
                     setIsUploadModalOpen(false);
                   }}
-                  className="px-4 py-2 bg-[#f5f2ff] hover:bg-[#e9e6f4] text-[#1b1b24] rounded-lg text-xs font-semibold transition-colors"
+                  className="px-4 py-2 bg-slate-50 hover:bg-slate-200 text-[#1b1b24] rounded-lg text-xs font-semibold transition-colors"
                 >
                   Load Sample Candidate
                 </button>
@@ -1606,9 +1606,9 @@ const RecruiterDashboard: React.FC = () => {
       ───────────────────────────────────────────────────────────── */}
       {selectedCandidateForScorecard && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#fbf8ff] rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-[#bec8d0]/30 flex flex-col my-auto">
+          <div className="bg-[#f8fafc] rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 flex flex-col my-auto">
             {/* Scorecard Header */}
-            <div className="p-5 bg-white border-b border-[#bec8d0]/20 flex items-center justify-between">
+            <div className="p-5 bg-white border-b border-slate-200/80 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#006389] text-white font-bold text-xs">
                   IA
@@ -1631,7 +1631,7 @@ const RecruiterDashboard: React.FC = () => {
 
               <button
                 onClick={() => setSelectedCandidateForScorecard(null)}
-                className="w-8 h-8 rounded-lg bg-[#f5f2ff] hover:bg-[#e9e6f4] text-[#3f484f] flex items-center justify-center"
+                className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-200 text-[#3f484f] flex items-center justify-center"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
@@ -1640,13 +1640,13 @@ const RecruiterDashboard: React.FC = () => {
             {/* Scorecard Content */}
             <div className="p-6 flex flex-col gap-6">
               {/* Overall Performance Card (Hero Centerpiece) */}
-              <div className="p-6 bg-white rounded-2xl border border-[#bec8d0]/20 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              <div className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 {/* Circular Gauge */}
                 <div className="md:col-span-6 flex items-center gap-5">
                   <div className="relative w-32 h-32 flex-shrink-0 flex items-center justify-center">
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                       <path
-                        className="text-[#e9e6f4]"
+                        className="text-slate-200"
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                         fill="none"
                         stroke="currentColor"
@@ -1687,22 +1687,22 @@ const RecruiterDashboard: React.FC = () => {
 
                 {/* Stat Pills */}
                 <div className="md:col-span-6 grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-[#f5f2ff] border border-[#bec8d0]/20 flex flex-col">
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col">
                     <span className="text-[0.6875rem] font-mono font-bold uppercase text-[#6f7880]">Video Stream</span>
                     <span className="text-sm font-bold text-[#1b1b24]">24 min HD</span>
                     <span className="text-[0.6875rem] text-[#6f7880] font-mono">100% verified</span>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#f5f2ff] border border-[#bec8d0]/20 flex flex-col">
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col">
                     <span className="text-[0.6875rem] font-mono font-bold uppercase text-[#6f7880]">Responses</span>
                     <span className="text-sm font-bold text-[#1b1b24]">8 Evaluated</span>
                     <span className="text-[0.6875rem] text-[#6f7880] font-mono">All questions answered</span>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#f5f2ff] border border-[#bec8d0]/20 flex flex-col">
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col">
                     <span className="text-[0.6875rem] font-mono font-bold uppercase text-[#6f7880]">Real-Time Probes</span>
-                    <span className="text-sm font-bold text-[#58568f]">5 Dynamic</span>
+                    <span className="text-sm font-bold text-[#0284c7]">5 Dynamic</span>
                     <span className="text-[0.6875rem] text-[#6f7880] font-mono">AI follow-ups</span>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#f5f2ff] border border-[#bec8d0]/20 flex flex-col">
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col">
                     <span className="text-[0.6875rem] font-mono font-bold uppercase text-[#6f7880]">Focus Areas</span>
                     <span className="text-sm font-bold text-[#206586]">6 Explored</span>
                     <span className="text-[0.6875rem] text-[#6f7880] font-mono">Full rubric depth</span>
@@ -1711,7 +1711,7 @@ const RecruiterDashboard: React.FC = () => {
               </div>
 
               {/* Core Competencies Breakdown */}
-              <div className="bg-white rounded-2xl p-6 border border-[#bec8d0]/20 shadow-sm flex flex-col gap-4">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-[0.6875rem] uppercase font-bold tracking-wider text-[#006389] font-mono">
@@ -1726,49 +1726,49 @@ const RecruiterDashboard: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   {/* Metric 1 */}
-                  <div className="p-3.5 rounded-xl bg-[#f5f2ff] flex flex-col gap-2">
+                  <div className="p-3.5 rounded-xl bg-slate-50 flex flex-col gap-2">
                     <div className="flex justify-between items-center text-xs font-bold">
                       <span>Technical Depth</span>
                       <span className="text-[#006389] font-mono">84%</span>
                     </div>
-                    <div className="w-full bg-[#e9e6f4] rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
                       <div className="bg-[#006389] h-full rounded-full" style={{ width: "84%" }} />
                     </div>
                     <p className="text-[0.6875rem] text-[#6f7880]">Good understanding of core concepts.</p>
                   </div>
 
                   {/* Metric 2 */}
-                  <div className="p-3.5 rounded-xl bg-[#f5f2ff] flex flex-col gap-2">
+                  <div className="p-3.5 rounded-xl bg-slate-50 flex flex-col gap-2">
                     <div className="flex justify-between items-center text-xs font-bold">
                       <span>Problem Solving</span>
                       <span className="text-[#206586] font-mono">79%</span>
                     </div>
-                    <div className="w-full bg-[#e9e6f4] rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
                       <div className="bg-[#206586] h-full rounded-full" style={{ width: "79%" }} />
                     </div>
                     <p className="text-[0.6875rem] text-[#6f7880]">Approached challenges logically.</p>
                   </div>
 
                   {/* Metric 3 */}
-                  <div className="p-3.5 rounded-xl bg-[#f5f2ff] flex flex-col gap-2">
+                  <div className="p-3.5 rounded-xl bg-slate-50 flex flex-col gap-2">
                     <div className="flex justify-between items-center text-xs font-bold">
                       <span>Verbal Articulation</span>
                       <span className="text-[#006389] font-mono">88%</span>
                     </div>
-                    <div className="w-full bg-[#e9e6f4] rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
                       <div className="bg-[#006389] h-full rounded-full" style={{ width: "88%" }} />
                     </div>
                     <p className="text-[0.6875rem] text-[#6f7880]">Coherent delivery and audio clarity.</p>
                   </div>
 
                   {/* Metric 4 */}
-                  <div className="p-3.5 rounded-xl bg-[#f5f2ff] flex flex-col gap-2">
+                  <div className="p-3.5 rounded-xl bg-slate-50 flex flex-col gap-2">
                     <div className="flex justify-between items-center text-xs font-bold">
                       <span>Practical Experience</span>
-                      <span className="text-[#58568f] font-mono">81%</span>
+                      <span className="text-[#0284c7] font-mono">81%</span>
                     </div>
-                    <div className="w-full bg-[#e9e6f4] rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-[#58568f] h-full rounded-full" style={{ width: "81%" }} />
+                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-[#0284c7] h-full rounded-full" style={{ width: "81%" }} />
                     </div>
                     <p className="text-[0.6875rem] text-[#6f7880]">Real-world codebase exposure.</p>
                   </div>
@@ -1778,7 +1778,7 @@ const RecruiterDashboard: React.FC = () => {
               {/* Strengths & Growth Areas Two-Column Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Strengths */}
-                <div className="p-5 rounded-2xl bg-white border border-[#bec8d0]/20 shadow-sm flex flex-col gap-3">
+                <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex flex-col gap-3">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#006389] text-[20px]">verified</span>
                     <h4 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#1b1b24]">
@@ -1808,7 +1808,7 @@ const RecruiterDashboard: React.FC = () => {
                 </div>
 
                 {/* Areas to Strengthen */}
-                <div className="p-5 rounded-2xl bg-white border border-[#bec8d0]/20 shadow-sm flex flex-col gap-3">
+                <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex flex-col gap-3">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#206586] text-[20px]">lightbulb</span>
                     <h4 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#1b1b24]">
@@ -1840,7 +1840,7 @@ const RecruiterDashboard: React.FC = () => {
             </div>
 
             {/* Scorecard Footer Actions */}
-            <div className="p-5 bg-white border-t border-[#bec8d0]/20 flex items-center justify-between">
+            <div className="p-5 bg-white border-t border-slate-200/80 flex items-center justify-between">
               <button
                 onClick={() => setSelectedCandidateForScorecard(null)}
                 className="px-4 py-2 text-xs text-[#6f7880] hover:underline font-semibold"
@@ -1869,8 +1869,8 @@ const RecruiterDashboard: React.FC = () => {
       ───────────────────────────────────────────────────────────── */}
       {isSettingsOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-[#bec8d0]/30 flex flex-col gap-5 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-[#bec8d0]/20">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-[#006389] text-white flex items-center justify-center">
                   <span className="material-symbols-outlined text-[18px]">settings</span>
@@ -1882,7 +1882,7 @@ const RecruiterDashboard: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsSettingsOpen(false)}
-                className="w-7 h-7 rounded-lg hover:bg-[#f5f2ff] text-[#6f7880] flex items-center justify-center"
+                className="w-7 h-7 rounded-lg hover:bg-slate-50 text-[#6f7880] flex items-center justify-center"
               >
                 <span className="material-symbols-outlined text-sm">close</span>
               </button>
@@ -1894,7 +1894,7 @@ const RecruiterDashboard: React.FC = () => {
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-full h-9 px-3 bg-[#f5f2ff] border border-[#bec8d0]/40 rounded-lg text-xs outline-none focus:border-[#006389]"
+                  className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-[#006389]"
                 >
                   <option value="llama-3.3-70b-versatile">LLaMA 3.3 70B Versatile (Recommended)</option>
                   <option value="llama-3.1-8b-instant">LLaMA 3.1 8B Instant (Ultra-fast)</option>
@@ -1908,7 +1908,7 @@ const RecruiterDashboard: React.FC = () => {
                   type="text"
                   disabled
                   value="Deepgram Nova-2 (WebSocket Real-time)"
-                  className="w-full h-9 px-3 bg-gray-100 border border-[#bec8d0]/40 rounded-lg text-xs text-gray-500 cursor-not-allowed"
+                  className="w-full h-9 px-3 bg-gray-100 border border-slate-200 rounded-lg text-xs text-gray-500 cursor-not-allowed"
                 />
               </div>
 
@@ -1926,10 +1926,10 @@ const RecruiterDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#bec8d0]/20">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200/80">
               <button
                 onClick={() => setIsSettingsOpen(false)}
-                className="px-4 py-2 rounded-lg border border-[#bec8d0]/40 text-xs font-semibold text-[#6f7880] hover:bg-[#f5f2ff]"
+                className="px-4 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-[#6f7880] hover:bg-slate-50"
               >
                 Cancel
               </button>
@@ -1955,10 +1955,10 @@ const RecruiterDashboard: React.FC = () => {
       ───────────────────────────────────────────────────────────── */}
       {isHelpOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-[#bec8d0]/30 flex flex-col gap-5 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-[#bec8d0]/20">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[#58568f] text-white flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-[#0284c7] text-white flex items-center justify-center">
                   <span className="material-symbols-outlined text-[18px]">help</span>
                 </div>
                 <div>
@@ -1968,28 +1968,28 @@ const RecruiterDashboard: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsHelpOpen(false)}
-                className="w-7 h-7 rounded-lg hover:bg-[#f5f2ff] text-[#6f7880] flex items-center justify-center"
+                className="w-7 h-7 rounded-lg hover:bg-slate-50 text-[#6f7880] flex items-center justify-center"
               >
                 <span className="material-symbols-outlined text-sm">close</span>
               </button>
             </div>
 
             <div className="space-y-3 text-xs text-[#3f484f]">
-              <div className="p-3 rounded-xl bg-[#f5f2ff]">
+              <div className="p-3 rounded-xl bg-slate-50">
                 <h4 className="font-bold text-[#1b1b24] mb-1">1. How Resume Screening Works</h4>
                 <p className="text-[11px] leading-relaxed">
                   Upload candidate PDFs in the Intake Funnel. The system parses text with spaCy/pdfminer and evaluates cosine similarity against your target job description.
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-[#f5f2ff]">
+              <div className="p-3 rounded-xl bg-slate-50">
                 <h4 className="font-bold text-[#1b1b24] mb-1">2. Google Meet Bot Join</h4>
                 <p className="text-[11px] leading-relaxed">
                   The automated interview bot uses headless Playwright on port 8001. When a meeting link is generated, it joins as host and asks questions via Deepgram TTS.
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-[#f5f2ff]">
+              <div className="p-3 rounded-xl bg-slate-50">
                 <h4 className="font-bold text-[#1b1b24] mb-1">3. Live Video Interview Room</h4>
                 <p className="text-[11px] leading-relaxed">
                   Click <strong>Launch Direct Room</strong> or <strong>Start Interview</strong> next to any candidate to test the interactive camera, speech evaluation, and question generator.
@@ -1997,7 +1997,7 @@ const RecruiterDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end pt-2 border-t border-[#bec8d0]/20">
+            <div className="flex items-center justify-end pt-2 border-t border-slate-200/80">
               <button
                 onClick={() => setIsHelpOpen(false)}
                 className="px-5 py-2 rounded-lg bg-[#006389] hover:bg-[#004c6b] text-white text-xs font-semibold shadow-sm"
