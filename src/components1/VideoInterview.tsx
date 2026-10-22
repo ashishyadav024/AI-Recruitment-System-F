@@ -592,8 +592,9 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
             </div>
 
             <div className="text-center pt-2">
-              <p className="text-xs text-slate-400 dark:text-slate-500">
-                Connected to FastAPI backend at port 8001
+              <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                <span>Interactive AI Evaluation Engine • Voice TTS & Live Webcam Ready</span>
               </p>
             </div>
           </CardContent>
@@ -716,6 +717,12 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {interviewId.startsWith("sim-") && (
+              <Badge variant="outline" className="text-xs px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Interactive AI Mode
+              </Badge>
+            )}
             <Badge variant="outline" className="uppercase font-semibold tracking-wider text-xs px-2.5 py-1 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800">
               Stage: {currentStage}
             </Badge>
