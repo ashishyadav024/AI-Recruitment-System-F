@@ -80,9 +80,9 @@ const Index = () => {
         { ref: homeRef, id: 'home' },
         { ref: featuresRef, id: 'features' },
         { ref: galleryRef, id: 'gallery' },
-        { ref: aboutRef, id: 'about us' },
-        { ref: teamRef, id: 'our team' },
-        { ref: contactRef, id: 'contact us' }
+        { ref: aboutRef, id: 'about' },
+        { ref: teamRef, id: 'team' },
+        { ref: contactRef, id: 'contact' }
       ];
 
       // Find the current section
@@ -90,7 +90,7 @@ const Index = () => {
         const section = sections[i];
         if (section.ref.current) {
           const { top } = section.ref.current.getBoundingClientRect();
-          if (top <= 100) {
+          if (top <= 120) {
             setActiveSection(section.id);
             break;
           }
@@ -111,9 +111,35 @@ const Index = () => {
   const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
     setIsMenuOpen(false);
     if (ref && ref.current) {
-      ref.current.scrollIntoView({ behavior: 'smooth' });
+      const headerOffset = 88;
+      const elementPosition = ref.current.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
     }
   };
+
+  // Scroll to hash section if present in URL
+  useEffect(() => {
+    if (window.location.hash) {
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      const targetMap: Record<string, React.RefObject<HTMLDivElement>> = {
+        home: homeRef,
+        features: featuresRef,
+        gallery: galleryRef,
+        about: aboutRef,
+        team: teamRef,
+        contact: contactRef
+      };
+      if (targetMap[hash]?.current) {
+        setTimeout(() => {
+          scrollToSection(targetMap[hash]);
+        }, 200);
+      }
+    }
+  }, []);
 
   const handleGetStarted = () => {
     navigate('/login');
@@ -245,19 +271,19 @@ const Index = () => {
           <nav className="hidden md:flex items-center space-x-8">
             <ul className="flex space-x-8">
               {[
-                { name: 'Home', ref: homeRef },
-                { name: 'Features', ref: featuresRef },
-                { name: 'Gallery', ref: galleryRef },
-                { name: 'About Us', ref: aboutRef },
-                { name: 'Our Team', ref: teamRef },
-                { name: 'Contact Us', ref: contactRef }
+                { name: 'Home', id: 'home', ref: homeRef },
+                { name: 'Features', id: 'features', ref: featuresRef },
+                { name: 'Gallery', id: 'gallery', ref: galleryRef },
+                { name: 'About Us', id: 'about', ref: aboutRef },
+                { name: 'Our Team', id: 'team', ref: teamRef },
+                { name: 'Contact Us', id: 'contact', ref: contactRef }
               ].map((item) => (
                 <li key={item.name}>
                   <button 
                     onClick={() => scrollToSection(item.ref)}
                     className={`text-sm font-medium transition-colors hover:text-cyan-400 ${
-                      activeSection === item.name.toLowerCase().replace(' ', '') 
-                        ? 'text-cyan-400' 
+                      activeSection === item.id 
+                        ? 'text-cyan-500 font-semibold' 
                         : theme === 'dark' 
                           ? 'text-slate-300' 
                           : 'text-slate-600'
@@ -347,20 +373,22 @@ const Index = () => {
               <div className="px-4 py-6 space-y-4">
                 <ul className="space-y-4">
                   {[
-                    { name: 'Home', ref: homeRef },
-                    { name: 'Features', ref: featuresRef },
-                    { name: 'Gallery', ref: galleryRef },
-                    { name: 'About Us', ref: aboutRef },
-                    { name: 'Our Team', ref: teamRef },
-                    { name: 'Contact Us', ref: contactRef }
+                    { name: 'Home', id: 'home', ref: homeRef },
+                    { name: 'Features', id: 'features', ref: featuresRef },
+                    { name: 'Gallery', id: 'gallery', ref: galleryRef },
+                    { name: 'About Us', id: 'about', ref: aboutRef },
+                    { name: 'Our Team', id: 'team', ref: teamRef },
+                    { name: 'Contact Us', id: 'contact', ref: contactRef }
                   ].map((item) => (
                     <li key={item.name}>
                       <button 
                         onClick={() => scrollToSection(item.ref)}
                         className={`block w-full text-left px-4 py-2 rounded-md transition-colors ${
-                          theme === 'dark'
-                            ? 'text-slate-300 hover:bg-slate-800 hover:text-cyan-400'
-                            : 'text-slate-600 hover:bg-slate-100 hover:text-cyan-600'
+                          activeSection === item.id
+                            ? 'text-cyan-500 font-semibold bg-cyan-50/50 dark:bg-slate-800'
+                            : theme === 'dark'
+                              ? 'text-slate-300 hover:bg-slate-800 hover:text-cyan-400'
+                              : 'text-slate-600 hover:bg-slate-100 hover:text-cyan-600'
                         }`}
                       >
                         {item.name}
@@ -387,7 +415,7 @@ const Index = () => {
 
       <main>
         {/* Hero Section */}
-        <section ref={homeRef} className="pt-40 pb-20 px-4">
+        <section ref={homeRef} id="home" className="pt-36 pb-20 px-4 scroll-mt-24">
           <div className="container mx-auto flex flex-col md:flex-row items-center gap-16">
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
@@ -501,7 +529,7 @@ const Index = () => {
         </section>
 
         {/* Features Section */}
-        <section ref={featuresRef} className={`py-20 px-4 relative z-10 transition-colors duration-300 ${
+        <section ref={featuresRef} id="features" className={`py-20 px-4 relative z-10 transition-colors duration-300 scroll-mt-24 ${
           theme === 'dark' ? 'bg-slate-900/50' : 'bg-slate-100/70 border-y border-slate-200/80'
         }`}>
           <div className="container mx-auto">
@@ -557,7 +585,7 @@ const Index = () => {
         </section>
 
         {/* Gallery Section */}
-        <section ref={galleryRef} className="py-16 px-4">
+        <section ref={galleryRef} id="gallery" className="py-20 px-4 scroll-mt-24">
           <div className="container mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -601,7 +629,9 @@ const Index = () => {
         </section>
 
         {/* About Section */}
-        <section ref={aboutRef} className="py-16 px-4">
+        <section ref={aboutRef} id="about" className={`py-20 px-4 scroll-mt-24 ${
+          theme === 'dark' ? '' : 'bg-slate-100/40 border-y border-slate-200/60'
+        }`}>
           <div className="container mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -664,7 +694,7 @@ const Index = () => {
         </section>
 
         {/* Team Section */}
-        <section ref={teamRef} className="py-16 px-4">
+        <section ref={teamRef} id="team" className="py-20 px-4 scroll-mt-24">
           <div className="container mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -730,7 +760,9 @@ const Index = () => {
         </section>
 
         {/* Contact Section */}
-        <section ref={contactRef} className="py-16 px-4">
+        <section ref={contactRef} id="contact" className={`py-20 px-4 scroll-mt-24 ${
+          theme === 'dark' ? 'bg-slate-900/40' : 'bg-slate-100/50 border-t border-slate-200/80'
+        }`}>
           <div className="container mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -764,7 +796,11 @@ const Index = () => {
                       <input
                         type="text"
                         id="name"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+                        className={`w-full px-4 py-2.5 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
+                          theme === 'dark'
+                            ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500'
+                            : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                        }`}
                         placeholder="Your name"
                       />
                     </div>
@@ -775,7 +811,11 @@ const Index = () => {
                       <input
                         type="email"
                         id="email"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+                        className={`w-full px-4 py-2.5 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
+                          theme === 'dark'
+                            ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500'
+                            : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                        }`}
                         placeholder="your.email@example.com"
                       />
                     </div>
@@ -787,7 +827,11 @@ const Index = () => {
                     <input
                       type="text"
                       id="subject"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+                      className={`w-full px-4 py-2.5 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
+                        theme === 'dark'
+                          ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500'
+                          : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                      }`}
                       placeholder="How can we help you?"
                     />
                   </div>
@@ -798,12 +842,19 @@ const Index = () => {
                     <textarea
                       id="message"
                       rows={4}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+                      className={`w-full px-4 py-2.5 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
+                        theme === 'dark'
+                          ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500'
+                          : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                      }`}
                       placeholder="Your message here..."
                     ></textarea>
                   </div>
                   <div>
-                    <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-medium py-2.5 rounded-lg shadow transition-all duration-150"
+                    >
                       Send Message
                     </Button>
                   </div>
@@ -864,23 +915,25 @@ const Index = () => {
                     </div>
                   </div>
                   <div className="pt-4">
-                    <h4 className="font-medium mb-3">Follow Us</h4>
-                    <div className="flex space-x-4">
-                      <a href="#" className={`bg-white p-2 rounded-full text-primary hover:bg-primary hover:text-white transition-colors ${
-                        theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
-                      }`}>
-                        <Twitter size={20} />
-                      </a>
-                      <a href="#" className={`bg-white p-2 rounded-full text-primary hover:bg-primary hover:text-white transition-colors ${
-                        theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
-                      }`}>
-                        <Linkedin size={20} />
-                      </a>
-                      <a href="#" className={`bg-white p-2 rounded-full text-primary hover:bg-primary hover:text-white transition-colors ${
-                        theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
-                      }`}>
-                        <Github size={20} />
-                      </a>
+                    <h4 className={`font-medium mb-3 ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>Follow Us</h4>
+                    <div className="flex space-x-3">
+                      {[
+                        { icon: <Twitter size={18} />, href: "#" },
+                        { icon: <Linkedin size={18} />, href: "#" },
+                        { icon: <Github size={18} />, href: "#" }
+                      ].map((social, idx) => (
+                        <a 
+                          key={idx} 
+                          href={social.href} 
+                          className={`p-2.5 rounded-full border transition-all ${
+                            theme === 'dark'
+                              ? 'bg-slate-800 border-slate-700 text-slate-300 hover:text-cyan-400 hover:border-cyan-500/50 hover:bg-slate-700'
+                              : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-cyan-600 hover:border-cyan-400 hover:bg-white shadow-sm'
+                          }`}
+                        >
+                          {social.icon}
+                        </a>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -893,41 +946,40 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-950 border-t border-slate-800">
+      <footer className="bg-slate-950 border-t border-slate-800 text-slate-300">
         <div className="container mx-auto px-4 py-12">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-6 md:mb-0">
-              <h2 className={`text-2xl font-bold ${
-                theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
-              }`}>ResumeAI</h2>
-              <p className={`${
-                theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
-              } mt-2`}>Revolutionizing recruitment through AI</p>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="text-center md:text-left">
+              <span className="font-bold text-2xl bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+                ResumeAI
+              </span>
+              <p className="text-slate-400 mt-2 text-sm">Revolutionizing recruitment through AI</p>
             </div>
-            <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-8">
-              {['Home', 'Features', 'Gallery', 'About', 'Team', 'Contact'].map((item) => (
-                <a 
-                  key={item}
-                  href={`#${item.toLowerCase()}`} 
-                  className={`${
-                    theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
-                  } hover:text-cyan-400 transition-colors`}
+            <div className="flex flex-wrap justify-center items-center gap-6">
+              {[
+                { name: 'Home', ref: homeRef },
+                { name: 'Features', ref: featuresRef },
+                { name: 'Gallery', ref: galleryRef },
+                { name: 'About', ref: aboutRef },
+                { name: 'Team', ref: teamRef },
+                { name: 'Contact', ref: contactRef }
+              ].map((item) => (
+                <button 
+                  key={item.name}
+                  onClick={() => scrollToSection(item.ref)} 
+                  className="text-slate-300 hover:text-cyan-400 transition-colors text-sm font-medium"
                 >
-                  {item}
-                </a>
+                  {item.name}
+                </button>
               ))}
             </div>
           </div>
           <Separator className="my-8 bg-slate-800" />
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-slate-400 text-sm">© 2023 ResumeAI. All rights reserved.</p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="#" className={`${
-                theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
-              } hover:text-cyan-400 transition-colors`}>Privacy Policy</a>
-              <a href="#" className={`${
-                theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
-              } hover:text-cyan-400 transition-colors`}>Terms of Service</a>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
+            <p className="text-slate-400">© 2026 ResumeAI. All rights reserved.</p>
+            <div className="flex space-x-6">
+              <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">Privacy Policy</a>
+              <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">Terms of Service</a>
             </div>
           </div>
         </div>
