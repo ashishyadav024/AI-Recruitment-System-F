@@ -5,8 +5,9 @@
 
 @layer base {
   :root {
-    --background: 240 100% 99%;
-    --foreground: 222.2 84% 4.9%;
+    /* Enterprise HR SaaS Palette - Greenhouse & Ashby Standard */
+    --background: 0 0% 100%; /* Pure Clean White #ffffff */
+    --foreground: 222.2 84% 4.9%; /* Slate 950 #020817 */
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -14,73 +15,75 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 240 60% 50%;
+    --primary: 224 76% 48%; /* Enterprise Trust Blue #1D4ED8 */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 273 100% 70%;
+    --secondary: 215 16% 47%; /* Slate 600 #475569 */
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 40% 96.1%; /* Slate 100 #f1f5f9 */
+    --muted-foreground: 215.4 16.3% 46.9%; /* Slate 500 #64748b */
 
-    --accent: 240 30% 96%;
+    --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
+    --border: 214.3 31.8% 91.4%; /* Slate 200 #e2e8f0 */
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 224 76% 48%;
 
-    --radius: 0.5rem;
+    --radius: 0.5rem; /* 8px refined border radius */
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-primary: 224 76% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 224 76% 48%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Refined Enterprise Charcoal Dark Mode (Linear / Stripe Standard) */
+    --background: 222 47% 7%; /* Charcoal #0B0F19 */
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 222 47% 9%; /* #0F1422 */
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 47% 9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 217 91% 60%; /* Balanced Blue #3B82F6 */
+    --primary-foreground: 222 47% 7%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 215 20% 65%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217 33% 14%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 217 33% 14%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
+    --border: 217 33% 18%; /* Crisp 1px Dark Border #1E293B */
+    --input: 217 33% 18%;
+    --ring: 217 91% 60%;
+
+    --sidebar-background: 222 47% 7%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent: 217 33% 14%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-border: 217 33% 18%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -89,50 +92,69 @@
     @apply border-border;
   }
 
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold;
+    @apply font-bold tracking-tight text-slate-900 dark:text-slate-100;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 
+  /* Enterprise text styles - clean single accent, no neon multi-color gradients */
   .hero-gradient {
-    @apply bg-gradient-to-r from-primary to-secondary;
+    @apply text-slate-900 dark:text-slate-100;
   }
 
   .text-gradient {
-    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+    @apply text-blue-700 dark:text-blue-400 font-semibold;
   }
 
   .feature-card {
-    @apply bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 overflow-hidden border-t-4 border-primary;
+    @apply bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-slate-200 dark:border-slate-800;
   }
 
   .team-card {
-    @apply bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+    @apply bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md;
   }
 
   .section-title {
-    @apply text-4xl font-bold mb-8 text-center relative;
+    @apply text-2xl sm:text-3xl font-bold mb-3 text-center text-slate-900 dark:text-slate-100;
   }
 
   .section-title::after {
     content: "";
-    @apply block w-20 h-1 bg-gradient-to-r from-primary to-secondary mx-auto mt-4 rounded-full;
+    @apply block w-10 h-0.5 bg-blue-600 dark:bg-blue-500 mx-auto mt-2.5 rounded-full;
   }
 }
 
+/* Crisp Enterprise Panels & Surfaces */
+.glass-panel {
+  @apply bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm;
+}
+
+.glass-panel-elevated {
+  @apply bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md;
+}
+
 .gallery-gradient {
-  @apply bg-gradient-to-b from-accent to-white;
+  @apply bg-slate-50 dark:bg-slate-950;
 }
 
 .animate-on-scroll {
   opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.6s ease-out;
+  transform: translateY(12px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .animate-on-scroll.visible {
@@ -141,6 +163,32 @@
 }
 
 .feature-icon-wrapper {
-  @apply p-3 rounded-lg text-white w-12 h-12 flex items-center justify-center;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  @apply p-2.5 rounded-lg text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-900/40 w-10 h-10 flex items-center justify-center;
+}
+
+/* Subtle, Calm Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
 }

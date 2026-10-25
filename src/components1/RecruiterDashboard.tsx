@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
+import { useTheme } from "../context/ThemeContext";
 
 interface CandidateRecord {
   id: string;
@@ -108,6 +109,7 @@ const INITIAL_CANDIDATES: CandidateRecord[] = [
 const RecruiterDashboard: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { theme, toggleTheme } = useTheme();
 
   // Candidates & filters state
   const [candidates, setCandidates] = useState<CandidateRecord[]>(INITIAL_CANDIDATES);
@@ -116,12 +118,20 @@ const RecruiterDashboard: React.FC = () => {
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("All");
   const [sortBy, setSortBy] = useState<"score" | "name">("score");
 
+  // Mobile menu drawer
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   // Active navigation tab
   const [activeTab, setActiveTab] = useState<"overview" | "candidates" | "interviews" | "reports" | "job-roles">("overview");
 
   // Modal states
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [selectedCandidateForScorecard, setSelectedCandidateForScorecard] = useState<CandidateRecord | null>(null);
+  const [selectedCandidateForScorecard, setSelectedCandidateForScorecard] = useState<CandidateRecord | null>(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('scorecard')) {
+      return INITIAL_CANDIDATES[0];
+    }
+    return null;
+  });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -282,96 +292,136 @@ const RecruiterDashboard: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#f8fafc] min-h-screen font-['Chivo',sans-serif] text-[#1b1b24] antialiased">
+    <div className={`min-h-screen font-sans antialiased transition-colors duration-200 ${
+      theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
+    }`}>
+      {/* Mobile Sidebar Overlay Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 lg:hidden animate-in fade-in"
+        />
+      )}
+
       {/* ─────────────────────────────────────────────────────────────
-          SIDEBAR NAVIGATION (Stitch Spec: 288px fixed left)
+          SIDEBAR NAVIGATION (Fixed Left, Collapsible on Mobile)
       ───────────────────────────────────────────────────────────── */}
-      <aside className="fixed left-0 top-0 h-screen w-72 bg-white flex flex-col justify-between z-50 shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-r border-slate-200">
+      <aside className={`fixed left-0 top-0 h-screen w-72 flex flex-col justify-between z-50 border-r transition-all duration-300 ${
+        theme === 'dark'
+          ? 'bg-slate-900/95 border-slate-800 text-slate-100 shadow-xl'
+          : 'bg-white border-slate-200 text-slate-900 shadow-sm'
+      } ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="flex flex-col flex-1">
           {/* Brand Logo & Header */}
-          <div className="p-5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#006389] to-[#007dac] text-white flex items-center justify-center shadow-md shadow-[#006389]/20">
-              <span className="material-symbols-outlined text-[24px]">psychology</span>
+          <div className="p-5 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-blue-700 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                R
+              </div>
+              <div className="flex flex-col">
+                <span className={`text-[1.05rem] tracking-tight font-bold ${
+                  theme === 'dark' ? 'text-white' : 'text-slate-900'
+                }`}>
+                  Resume<span className="text-blue-700 dark:text-blue-400">AI</span>
+                </span>
+                <span className="text-[0.625rem] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold font-mono">
+                  TALENT INTELLIGENCE
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="font-['Plus_Jakarta_Sans',sans-serif] text-[1.125rem] text-[#1b1b24] tracking-tight font-bold">
-                InterviewAI
-              </span>
-              <span className="text-[0.6875rem] text-[#006389] uppercase tracking-wider font-semibold font-mono">
-                RECRUITER WORKSPACE
-              </span>
-            </div>
+
+            {/* Close button for mobile */}
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-200"
+            >
+              <span className="material-symbols-outlined text-xl">close</span>
+            </button>
           </div>
 
           <div className="px-3 py-1">
-            <div className="h-[1px] w-full bg-[#bec8d0]/30" />
+            <div className={`h-[1px] w-full ${theme === 'dark' ? 'bg-slate-800' : 'bg-slate-200/80'}`} />
           </div>
 
           {/* Navigation Links */}
           <nav className="flex-1 px-3 py-3 space-y-1">
             <button
-              onClick={() => setActiveTab("overview")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              onClick={() => { setActiveTab("overview"); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 activeTab === "overview"
-                  ? "bg-[#006389] text-white font-semibold shadow-sm"
-                  : "text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24]"
+                  ? "bg-blue-700 text-white font-semibold shadow-xs"
+                  : theme === 'dark'
+                    ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span className="material-symbols-outlined text-[20px]">grid_view</span>
+              <span className="material-symbols-outlined text-[18px]">grid_view</span>
               <span>Overview</span>
             </button>
 
             <button
-              onClick={() => setActiveTab("candidates")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              onClick={() => { setActiveTab("candidates"); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 activeTab === "candidates"
-                  ? "bg-[#006389] text-white font-semibold shadow-sm"
-                  : "text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24]"
+                  ? "bg-blue-700 text-white font-semibold shadow-xs"
+                  : theme === 'dark'
+                    ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span className="material-symbols-outlined text-[20px]">group</span>
+              <span className="material-symbols-outlined text-[18px]">group</span>
               <span>Candidates</span>
-              <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-white/20 font-bold">
+              <span className={`ml-auto text-[11px] px-2 py-0.5 rounded-full font-bold ${
+                activeTab === "candidates" ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+              }`}>
                 {candidates.length}
               </span>
             </button>
 
             <button
-              onClick={() => setActiveTab("interviews")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              onClick={() => { setActiveTab("interviews"); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 activeTab === "interviews"
-                  ? "bg-[#006389] text-white font-semibold shadow-sm"
-                  : "text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24]"
+                  ? "bg-blue-700 text-white font-semibold shadow-xs"
+                  : theme === 'dark'
+                    ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span className="material-symbols-outlined text-[20px]">video_camera_front</span>
+              <span className="material-symbols-outlined text-[18px]">video_camera_front</span>
               <span>Interviews</span>
-              <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-[#c6e7ff] text-[#001e2d] font-semibold">
+              <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full font-semibold font-mono ${
+                activeTab === "interviews" ? "bg-white/20 text-white" : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+              }`}>
                 Live
               </span>
             </button>
 
             <button
-              onClick={() => setActiveTab("reports")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              onClick={() => { setActiveTab("reports"); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 activeTab === "reports"
-                  ? "bg-[#006389] text-white font-semibold shadow-sm"
-                  : "text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24]"
+                  ? "bg-blue-700 text-white font-semibold shadow-xs"
+                  : theme === 'dark'
+                    ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span className="material-symbols-outlined text-[20px]">analytics</span>
+              <span className="material-symbols-outlined text-[18px]">analytics</span>
               <span>Reports</span>
             </button>
 
             <button
-              onClick={() => setActiveTab("job-roles")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              onClick={() => { setActiveTab("job-roles"); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 activeTab === "job-roles"
-                  ? "bg-[#006389] text-white font-semibold shadow-sm"
-                  : "text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24]"
+                  ? "bg-blue-700 text-white font-semibold shadow-xs"
+                  : theme === 'dark'
+                    ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
-              <span className="material-symbols-outlined text-[20px]">work</span>
+              <span className="material-symbols-outlined text-[18px]">work</span>
               <span>Job Roles</span>
             </button>
           </nav>
@@ -382,60 +432,86 @@ const RecruiterDashboard: React.FC = () => {
           <div className="space-y-0.5">
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-sm text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24] transition-colors"
+              className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs transition-colors ${
+                theme === 'dark' ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
             >
-              <span className="material-symbols-outlined text-[20px]">settings</span>
+              <span className="material-symbols-outlined text-[18px]">settings</span>
               <span>Settings</span>
             </button>
             <button
               onClick={() => setIsHelpOpen(true)}
-              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-sm text-[#3f484f] hover:bg-slate-200 hover:text-[#1b1b24] transition-colors"
+              className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs transition-colors ${
+                theme === 'dark' ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
             >
-              <span className="material-symbols-outlined text-[20px]">help</span>
+              <span className="material-symbols-outlined text-[18px]">help</span>
               <span>Help & Support</span>
             </button>
           </div>
 
-          <div className="h-[1px] w-full bg-[#bec8d0]/30 my-1" />
+          <div className={`h-[1px] w-full my-1 ${theme === 'dark' ? 'bg-slate-800' : 'bg-slate-200/80'}`} />
 
           {/* Recruiter Identity Pill */}
-          <div className="flex items-center justify-between p-2 rounded-xl bg-white/70 border border-slate-200/80 hover:bg-white transition-colors">
+          <div className={`flex items-center justify-between p-2 rounded-lg border transition-colors ${
+            theme === 'dark'
+              ? 'bg-slate-800/60 border-slate-700/80 hover:bg-slate-800'
+              : 'bg-slate-50 border-slate-200/80 hover:bg-white'
+          }`}>
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-[#007dac] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-xs shadow-xs">
                 AM
               </div>
               <div className="flex flex-col text-left leading-tight">
-                <span className="text-sm font-semibold text-[#1b1b24]">Alex Morgan</span>
-                <span className="text-[0.6875rem] text-[#6f7880]">Hiring Manager</span>
+                <span className={`text-xs font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Alex Morgan</span>
+                <span className={`text-[0.625rem] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Talent Lead</span>
               </div>
             </div>
-            <span className="material-symbols-outlined text-[#bec8d0] text-[18px]">unfold_more</span>
+            <span className="material-symbols-outlined text-slate-400 text-[18px]">unfold_more</span>
           </div>
         </div>
       </aside>
 
       {/* ─────────────────────────────────────────────────────────────
-          MAIN CONTENT AREA (Offset by 288px)
+          MAIN CONTENT AREA (Offset on Desktop)
       ───────────────────────────────────────────────────────────── */}
-      <div className="pl-72 flex flex-col min-h-screen">
+      <div className="lg:pl-72 flex flex-col min-h-screen">
         {/* TOP BAR / HEADER */}
-        <header className="fixed top-0 left-72 right-0 h-16 bg-white/85 backdrop-blur-xl z-40 flex items-center justify-between px-8 border-b border-slate-200/80 shadow-[0_1px_8px_rgba(0,0,0,0.03)]">
-          {/* Breadcrumb Status */}
+        <header className={`fixed top-0 left-0 lg:left-72 right-0 h-16 backdrop-blur-xl z-40 flex items-center justify-between px-4 sm:px-8 border-b transition-colors duration-200 ${
+          theme === 'dark'
+            ? 'bg-slate-900/85 border-slate-800 text-slate-100 shadow-md shadow-slate-950/20'
+            : 'bg-white/85 border-slate-200 text-slate-900 shadow-xs'
+        }`}>
+          {/* Mobile hamburger & Breadcrumb Status */}
           <div className="flex items-center gap-3">
-            <span className="text-xs uppercase text-[#6f7880] font-semibold tracking-wider font-mono">
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className={`lg:hidden p-2 rounded-lg border transition-colors ${
+                theme === 'dark' ? 'border-slate-800 bg-slate-800 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-700'
+              }`}
+              aria-label="Open navigation menu"
+            >
+              <span className="material-symbols-outlined text-[20px]">menu</span>
+            </button>
+
+            <span className={`hidden sm:inline text-xs uppercase font-semibold tracking-wider font-mono ${
+              theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+            }`}>
               Workspace
             </span>
-            <span className="text-[#bec8d0]">/</span>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#c6e7ff] text-[#001e2d] text-xs font-medium shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#006389] animate-pulse" />
-              AI Evaluation Engine Active
+            <span className="hidden sm:inline text-slate-400">/</span>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-medium border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Evaluation Engine Active
             </div>
           </div>
 
-          {/* Search & Actions */}
-          <div className="flex items-center gap-3">
-            <div className="relative flex items-center">
-              <span className="material-symbols-outlined absolute left-3 text-[#6f7880] text-[18px]">
+          {/* Search, Theme Toggle & Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="relative hidden md:flex items-center">
+              <span className={`material-symbols-outlined absolute left-3 text-[18px] ${
+                theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+              }`}>
                 search
               </span>
               <input
@@ -443,43 +519,77 @@ const RecruiterDashboard: React.FC = () => {
                 placeholder="Search candidate, role, skill..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9 pl-9 pr-3 bg-white rounded-lg text-xs text-[#1b1b24] placeholder:text-[#6f7880] outline-none shadow-sm border border-slate-200 focus:border-[#006389] focus:ring-1 focus:ring-[#006389] w-64 transition-all"
+                className={`h-8 pl-9 pr-3 rounded-lg text-xs outline-none shadow-2xs border w-56 lg:w-64 transition-all ${
+                  theme === 'dark'
+                    ? 'bg-slate-800/70 border-slate-700 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                    : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-500 focus:border-blue-700 focus:ring-1 focus:ring-blue-700'
+                }`}
               />
             </div>
 
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle Theme"
+              className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all shadow-2xs ${
+                theme === 'dark'
+                  ? 'bg-slate-800 border-slate-700 text-amber-400 hover:text-amber-300 hover:bg-slate-700'
+                  : 'bg-white border-slate-200 text-slate-600 hover:text-blue-700 hover:bg-slate-50'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+              </span>
+            </button>
+
+            {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                 aria-label="Notifications"
-                className="relative w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[#3f484f] hover:text-[#006389] transition-colors shadow-sm"
+                className={`relative w-8 h-8 rounded-lg border flex items-center justify-center transition-colors shadow-2xs ${
+                  theme === 'dark'
+                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:text-blue-400'
+                    : 'bg-white border-slate-200 text-slate-600 hover:text-blue-700'
+                }`}
               >
-                <span className="material-symbols-outlined text-[20px]">notifications</span>
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
+                <span className="material-symbols-outlined text-[19px]">notifications</span>
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-900" />
               </button>
 
               {isNotificationsOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 p-3 z-50 animate-in fade-in slide-in-from-top-2">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/80 mb-2">
-                    <span className="text-xs font-bold text-[#1b1b24]">Notifications</span>
+                <div className={`absolute right-0 mt-2 w-80 rounded-xl shadow-xl border p-3 z-50 animate-in fade-in slide-in-from-top-2 ${
+                  theme === 'dark' ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+                }`}>
+                  <div className={`flex items-center justify-between pb-2 border-b mb-2 ${
+                    theme === 'dark' ? 'border-slate-800' : 'border-slate-100'
+                  }`}>
+                    <span className="text-xs font-bold">Notifications</span>
                     <button
                       onClick={() => setIsNotificationsOpen(false)}
-                      className="text-[10px] text-[#006389] hover:underline"
+                      className="text-[10px] text-blue-700 dark:text-blue-400 hover:underline"
                     >
                       Close
                     </button>
                   </div>
-                  <div className="space-y-2 text-xs">
-                    <div className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
-                      <p className="font-semibold text-[#1b1b24]">Priya Mehta completed interview</p>
-                      <p className="text-[10px] text-[#6f7880]">Score: 91/100 · 10m ago</p>
+                  <div className="space-y-1.5 text-xs">
+                    <div className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                      theme === 'dark' ? 'bg-slate-800/60 hover:bg-slate-800' : 'bg-slate-50 hover:bg-slate-100'
+                    }`}>
+                      <p className="font-semibold text-xs">Priya Mehta completed interview</p>
+                      <p className={`text-[10px] mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Score: 91/100 · 10m ago</p>
                     </div>
-                    <div className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
-                      <p className="font-semibold text-[#1b1b24]">AI Screening Engine Online</p>
-                      <p className="text-[10px] text-[#6f7880]">Google Meet Bot verified · 1h ago</p>
+                    <div className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                      theme === 'dark' ? 'bg-slate-800/60 hover:bg-slate-800' : 'bg-slate-50 hover:bg-slate-100'
+                    }`}>
+                      <p className="font-semibold text-xs">AI Screening Engine Online</p>
+                      <p className={`text-[10px] mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Google Meet Bot verified · 1h ago</p>
                     </div>
-                    <div className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
-                      <p className="font-semibold text-[#1b1b24]">Aarav Sharma evaluated</p>
-                      <p className="text-[10px] text-[#6f7880]">Score: 82/100 · 2h ago</p>
+                    <div className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                      theme === 'dark' ? 'bg-slate-800/60 hover:bg-slate-800' : 'bg-slate-50 hover:bg-slate-100'
+                    }`}>
+                      <p className="font-semibold text-xs">Aarav Sharma evaluated</p>
+                      <p className={`text-[10px] mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Score: 82/100 · 2h ago</p>
                     </div>
                   </div>
                 </div>
@@ -489,30 +599,33 @@ const RecruiterDashboard: React.FC = () => {
             {/* Primary Action Button: + New Interview / Upload */}
             <button
               onClick={() => setIsUploadModalOpen(true)}
-              className="h-9 px-4 bg-[#006389] hover:bg-[#004c6b] text-white rounded-lg font-['Plus_Jakarta_Sans',sans-serif] font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-[0.98]"
+              className="h-8 px-3.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg font-medium text-xs flex items-center gap-1.5 shadow-xs transition-colors"
             >
-              <span className="material-symbols-outlined text-[18px]">add_circle</span>
-              <span>+ New Interview</span>
+              <span className="material-symbols-outlined text-[17px]">add_circle</span>
+              <span className="hidden sm:inline">+ New Interview</span>
+              <span className="sm:hidden">New</span>
             </button>
           </div>
         </header>
 
         {/* MAIN BODY CONTAINER */}
-        <main className="pt-20 px-8 pb-14 max-w-[1440px] w-full mx-auto flex flex-col gap-8">
+        <main className="pt-20 px-4 sm:px-8 pb-14 max-w-[1440px] w-full mx-auto flex flex-col gap-8">
           {/* ─────────────────────────────────────────────────────────────
               GREETING & PIPELINE HERO BAR
           ───────────────────────────────────────────────────────────── */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
             <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <h1 className="font-['Plus_Jakarta_Sans',sans-serif] text-2xl lg:text-3xl text-[#1b1b24] font-extrabold tracking-tight">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className={`text-2xl lg:text-3xl font-extrabold tracking-tight ${
+                  theme === 'dark' ? 'text-white' : 'text-slate-900'
+                }`}>
                   {activeTab === "overview" && "Good morning, Recruiter."}
                   {activeTab === "candidates" && "Candidate Directory & Screening"}
                   {activeTab === "interviews" && "AI Video Interviews & Live Rooms"}
                   {activeTab === "reports" && "Recruitment Intelligence & Reports"}
                   {activeTab === "job-roles" && "Active Job Roles & Openings"}
                 </h1>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#c6e7ff] text-[#001e2d] text-[0.6875rem] font-bold font-mono">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25 text-[0.6875rem] font-bold font-mono">
                   {activeTab === "overview" && "LIVE HUD"}
                   {activeTab === "candidates" && `${candidates.length} CANDIDATES`}
                   {activeTab === "interviews" && "AI BOT READY"}
@@ -520,7 +633,7 @@ const RecruiterDashboard: React.FC = () => {
                   {activeTab === "job-roles" && "4 OPENINGS"}
                 </span>
               </div>
-              <p className="text-sm text-[#3f484f]">
+              <p className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
                 {activeTab === "overview" && "Here's what's happening across your interview pipeline today."}
                 {activeTab === "candidates" && "Review candidate match scores, filter by skill, and launch AI interview rooms."}
                 {activeTab === "interviews" && "Monitor active Google Meet sessions, bot connectivity, and conduct live candidate evaluations."}
@@ -529,19 +642,23 @@ const RecruiterDashboard: React.FC = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <button
                 onClick={() => setIsUploadModalOpen(true)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#1b1b24] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all shadow-2xs border ${
+                  theme === 'dark'
+                    ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-700'
+                    : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200'
+                }`}
               >
-                <span className="material-symbols-outlined text-[18px]">upload_file</span>
+                <span className="material-symbols-outlined text-[17px] text-blue-700 dark:text-blue-400">upload_file</span>
                 <span>Upload Resumes</span>
               </button>
               <button
                 onClick={() => navigate("/interview")}
-                className="px-4 py-2 border border-[#006389] text-[#006389] hover:bg-[#006389]/10 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+                className="px-3.5 py-1.5 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-blue-700 dark:hover:border-blue-500 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors shadow-2xs"
               >
-                <span className="material-symbols-outlined text-[18px]">videocam</span>
+                <span className="material-symbols-outlined text-[17px] text-slate-500">videocam</span>
                 <span>Launch Direct Room</span>
               </button>
             </div>
@@ -553,74 +670,86 @@ const RecruiterDashboard: React.FC = () => {
           {(activeTab === "overview" || activeTab === "reports") && (
           <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {/* Metric 1: Total Candidates */}
-            <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between hover:shadow-md transition-all">
+            <div className={`p-5 rounded-xl shadow-2xs border flex flex-col justify-between transition-all hover:shadow-xs ${
+              theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+            }`}>
               <div className="flex items-start justify-between">
                 <div className="flex flex-col">
-                  <span className="text-[0.6875rem] text-[#6f7880] uppercase tracking-wider font-semibold font-mono">
+                  <span className={`text-[0.6875rem] uppercase tracking-wider font-semibold font-mono ${
+                    theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                  }`}>
                     Total Candidates
                   </span>
-                  <div className="mt-1 font-['Plus_Jakarta_Sans',sans-serif] text-3xl font-extrabold text-[#1b1b24]">
+                  <div className={`mt-1 text-2xl sm:text-3xl font-extrabold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                     {totalCandidates}
                   </div>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-[#c6e7ff]/60 text-[#006389] flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[22px]">group</span>
+                <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/60">
+                  <span className="material-symbols-outlined text-[20px]">group</span>
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-1.5">
-                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#9ad6fd]/60 text-[#155e7f] text-[0.6875rem] font-bold">
+                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-[0.6875rem] font-bold border border-blue-200/60 dark:border-blue-800/60">
                   <span className="material-symbols-outlined text-[12px]">trending_up</span>+18%
                 </span>
-                <span className="text-[0.6875rem] text-[#6f7880]">this month</span>
+                <span className={`text-[0.6875rem] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>this month</span>
               </div>
             </div>
 
             {/* Metric 2: Video Interviews Completed */}
-            <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between hover:shadow-md transition-all">
+            <div className={`p-5 rounded-xl shadow-2xs border flex flex-col justify-between transition-all hover:shadow-xs ${
+              theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+            }`}>
               <div className="flex items-start justify-between">
                 <div className="flex flex-col">
-                  <span className="text-[0.6875rem] text-[#6f7880] uppercase tracking-wider font-semibold font-mono">
-                    Video Interviews Completed
+                  <span className={`text-[0.6875rem] uppercase tracking-wider font-semibold font-mono ${
+                    theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                  }`}>
+                    Interviews Completed
                   </span>
-                  <div className="mt-1 font-['Plus_Jakarta_Sans',sans-serif] text-3xl font-extrabold text-[#1b1b24]">
+                  <div className={`mt-1 text-2xl sm:text-3xl font-extrabold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                     {completedInterviews}
                   </div>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-[#9ad6fd]/50 text-[#206586] flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[22px]">video_call</span>
+                <div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 flex items-center justify-center border border-indigo-200/60 dark:border-indigo-800/60">
+                  <span className="material-symbols-outlined text-[20px]">video_call</span>
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-1.5">
-                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#9ad6fd]/60 text-[#155e7f] text-[0.6875rem] font-bold">
+                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-[0.6875rem] font-bold border border-indigo-200/60 dark:border-indigo-800/60">
                   <span className="material-symbols-outlined text-[12px]">trending_up</span>+12%
                 </span>
-                <span className="text-[0.6875rem] text-[#6f7880]">from previous cycle</span>
+                <span className={`text-[0.6875rem] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>from previous cycle</span>
               </div>
             </div>
 
             {/* Metric 3: Avg Interview Score */}
-            <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between hover:shadow-md transition-all">
+            <div className={`p-5 rounded-xl shadow-2xs border flex flex-col justify-between transition-all hover:shadow-xs ${
+              theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+            }`}>
               <div className="flex items-start justify-between">
                 <div className="flex flex-col">
-                  <span className="text-[0.6875rem] text-[#6f7880] uppercase tracking-wider font-semibold font-mono">
+                  <span className={`text-[0.6875rem] uppercase tracking-wider font-semibold font-mono ${
+                    theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                  }`}>
                     Avg Interview Score
                   </span>
                   <div className="mt-1 flex items-baseline gap-1">
-                    <span className="font-['Plus_Jakarta_Sans',sans-serif] text-3xl font-extrabold text-[#1b1b24]">
+                    <span className={`text-2xl sm:text-3xl font-extrabold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                       {avgScore}
                     </span>
-                    <span className="text-xs text-[#6f7880] font-mono">/ 100</span>
+                    <span className={`text-xs font-mono ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>/ 100</span>
                   </div>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-[#e2dfff]/60 text-[#0284c7] flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[22px]">stars</span>
+                <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center border border-emerald-200/60 dark:border-emerald-800/60">
+                  <span className="material-symbols-outlined text-[20px]">stars</span>
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-between">
-                <span className="text-[0.6875rem] text-[#6f7880]">Across AI interviews</span>
-                <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
+                <span className={`text-[0.6875rem] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Across AI interviews</span>
+                <div className={`w-16 h-1.5 rounded-full overflow-hidden ${theme === 'dark' ? 'bg-slate-800' : 'bg-slate-200'}`}>
                   <div
-                    className="h-full bg-[#006389] rounded-full"
+                    className="h-full bg-blue-700 dark:bg-blue-500 rounded-full"
                     style={{ width: `${Math.min(100, parseFloat(avgScore) || 75)}%` }}
                   />
                 </div>
@@ -628,27 +757,31 @@ const RecruiterDashboard: React.FC = () => {
             </div>
 
             {/* Metric 4: Completion Rate */}
-            <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between hover:shadow-md transition-all">
+            <div className={`p-5 rounded-xl shadow-2xs border flex flex-col justify-between transition-all hover:shadow-xs ${
+              theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+            }`}>
               <div className="flex items-start justify-between">
                 <div className="flex flex-col">
-                  <span className="text-[0.6875rem] text-[#6f7880] uppercase tracking-wider font-semibold font-mono">
+                  <span className={`text-[0.6875rem] uppercase tracking-wider font-semibold font-mono ${
+                    theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                  }`}>
                     Completion Rate
                   </span>
-                  <div className="mt-1 font-['Plus_Jakarta_Sans',sans-serif] text-3xl font-extrabold text-[#1b1b24]">
+                  <div className={`mt-1 text-2xl sm:text-3xl font-extrabold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                     {completionRate}%
                   </div>
                 </div>
-                <div className="relative w-10 h-10 flex items-center justify-center">
-                  <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
+                <div className="relative w-9 h-9 flex items-center justify-center">
+                  <svg className="w-9 h-9 -rotate-90" viewBox="0 0 36 36">
                     <path
-                      className="text-slate-200"
+                      className={theme === 'dark' ? 'text-slate-800' : 'text-slate-200'}
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="3"
                     />
                     <path
-                      className="text-[#006389]"
+                      className="text-blue-700 dark:text-blue-400"
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
                       stroke="currentColor"
@@ -657,14 +790,14 @@ const RecruiterDashboard: React.FC = () => {
                       strokeWidth="3.2"
                     />
                   </svg>
-                  <span className="material-symbols-outlined absolute text-[16px] text-[#006389]">
+                  <span className="material-symbols-outlined absolute text-[15px] text-blue-700 dark:text-blue-400">
                     verified
                   </span>
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-between">
-                <span className="text-[0.6875rem] text-[#6f7880]">Candidate participation</span>
-                <span className="text-[0.6875rem] text-[#006389] font-bold">Optimal</span>
+                <span className={`text-[0.6875rem] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Candidate participation</span>
+                <span className="text-[0.6875rem] text-blue-700 dark:text-blue-400 font-semibold">Optimal</span>
               </div>
             </div>
           </section>
@@ -677,16 +810,18 @@ const RecruiterDashboard: React.FC = () => {
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="font-['Plus_Jakarta_Sans',sans-serif] text-lg font-bold text-[#1b1b24]">
+                <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                   Active Job Roles
                 </h2>
-                <span className="px-2 py-0.5 rounded-full bg-slate-200 text-[#3f484f] text-xs font-semibold font-mono">
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold font-mono ${
+                  theme === 'dark' ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700'
+                }`}>
                   4 Openings
                 </span>
               </div>
               <button
                 onClick={() => setSelectedRoleFilter("All Roles")}
-                className="text-xs text-[#006389] hover:underline font-semibold flex items-center gap-1"
+                className="text-xs text-blue-700 dark:text-blue-400 hover:underline font-medium flex items-center gap-1"
               >
                 Clear Filter <span className="material-symbols-outlined text-[14px]">refresh</span>
               </button>
@@ -696,32 +831,38 @@ const RecruiterDashboard: React.FC = () => {
               {/* Role 1 */}
               <div
                 onClick={() => setSelectedRoleFilter("Machine Learning Engineer")}
-                className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                   selectedRoleFilter === "Machine Learning Engineer"
-                    ? "bg-[#c6e7ff]/20 border-[#006389] ring-2 ring-[#006389]/20"
-                    : "bg-white border-slate-200/80 hover:shadow-md"
+                    ? theme === 'dark'
+                      ? "bg-blue-950/40 border-blue-600 ring-1 ring-blue-500/30"
+                      : "bg-blue-50/70 border-blue-700 ring-1 ring-blue-700"
+                    : theme === 'dark'
+                      ? "bg-slate-900 border-slate-800 hover:border-slate-700"
+                      : "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
                 }`}
               >
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#9ad6fd]/40 text-[#155e7f] text-[0.6875rem] font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#206586] animate-pulse" />
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[0.6875rem] font-semibold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       Active
                     </span>
-                    <span className="material-symbols-outlined text-[#6f7880] text-[18px]">memory</span>
+                    <span className="material-symbols-outlined text-slate-400 text-[18px]">memory</span>
                   </div>
-                  <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#1b1b24] mt-1">
+                  <h3 className={`text-sm font-semibold mt-1 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                     Machine Learning Engineer
                   </h3>
-                  <span className="text-[0.6875rem] text-[#6f7880]">Core AI & Platform</span>
+                  <span className={`text-[0.6875rem] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Core AI & Platform</span>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center text-[0.6875rem] text-[#6f7880] font-mono">
+                  <div className={`flex justify-between items-center text-[0.6875rem] font-mono ${
+                    theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                  }`}>
                     <span>18 / 42 Interviews</span>
-                    <span className="font-bold text-[#006389]">43%</span>
+                    <span className="font-bold text-blue-700 dark:text-blue-400">43%</span>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#006389] rounded-full" style={{ width: "43%" }} />
+                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${theme === 'dark' ? 'bg-slate-800' : 'bg-slate-200'}`}>
+                    <div className="h-full bg-blue-700 dark:bg-blue-500 rounded-full" style={{ width: "43%" }} />
                   </div>
                 </div>
               </div>
@@ -729,32 +870,38 @@ const RecruiterDashboard: React.FC = () => {
               {/* Role 2 */}
               <div
                 onClick={() => setSelectedRoleFilter("Frontend Developer")}
-                className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                   selectedRoleFilter === "Frontend Developer"
-                    ? "bg-[#c6e7ff]/20 border-[#006389] ring-2 ring-[#006389]/20"
-                    : "bg-white border-slate-200/80 hover:shadow-md"
+                    ? theme === 'dark'
+                      ? "bg-blue-950/40 border-blue-600 ring-1 ring-blue-500/30"
+                      : "bg-blue-50/70 border-blue-700 ring-1 ring-blue-700"
+                    : theme === 'dark'
+                      ? "bg-slate-900 border-slate-800 hover:border-slate-700"
+                      : "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
                 }`}
               >
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#9ad6fd]/40 text-[#155e7f] text-[0.6875rem] font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#206586] animate-pulse" />
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[0.6875rem] font-semibold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       Active
                     </span>
-                    <span className="material-symbols-outlined text-[#6f7880] text-[18px]">code</span>
+                    <span className="material-symbols-outlined text-slate-400 text-[18px]">code</span>
                   </div>
-                  <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#1b1b24] mt-1">
+                  <h3 className={`text-sm font-semibold mt-1 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                     Frontend Developer
                   </h3>
-                  <span className="text-[0.6875rem] text-[#6f7880]">Design Systems & Web</span>
+                  <span className={`text-[0.6875rem] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Design Systems & Web</span>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center text-[0.6875rem] text-[#6f7880] font-mono">
+                  <div className={`flex justify-between items-center text-[0.6875rem] font-mono ${
+                    theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                  }`}>
                     <span>24 / 56 Interviews</span>
-                    <span className="font-bold text-[#006389]">43%</span>
+                    <span className="font-bold text-blue-700 dark:text-blue-400">43%</span>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#006389] rounded-full" style={{ width: "43%" }} />
+                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${theme === 'dark' ? 'bg-slate-800' : 'bg-slate-200'}`}>
+                    <div className="h-full bg-blue-700 dark:bg-blue-500 rounded-full" style={{ width: "43%" }} />
                   </div>
                 </div>
               </div>
@@ -762,32 +909,38 @@ const RecruiterDashboard: React.FC = () => {
               {/* Role 3 */}
               <div
                 onClick={() => setSelectedRoleFilter("Backend Engineer")}
-                className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                   selectedRoleFilter === "Backend Engineer"
-                    ? "bg-[#c6e7ff]/20 border-[#006389] ring-2 ring-[#006389]/20"
-                    : "bg-white border-slate-200/80 hover:shadow-md"
+                    ? theme === 'dark'
+                      ? "bg-blue-950/40 border-blue-600 ring-1 ring-blue-500/30"
+                      : "bg-blue-50/70 border-blue-700 ring-1 ring-blue-700"
+                    : theme === 'dark'
+                      ? "bg-slate-900 border-slate-800 hover:border-slate-700"
+                      : "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
                 }`}
               >
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#9ad6fd]/40 text-[#155e7f] text-[0.6875rem] font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#206586] animate-pulse" />
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[0.6875rem] font-semibold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       Active
                     </span>
-                    <span className="material-symbols-outlined text-[#6f7880] text-[18px]">dns</span>
+                    <span className="material-symbols-outlined text-slate-400 text-[18px]">dns</span>
                   </div>
-                  <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#1b1b24] mt-1">
+                  <h3 className={`text-sm font-semibold mt-1 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                     Backend Engineer
                   </h3>
-                  <span className="text-[0.6875rem] text-[#6f7880]">Distributed Systems</span>
+                  <span className={`text-[0.6875rem] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Distributed Systems</span>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center text-[0.6875rem] text-[#6f7880] font-mono">
+                  <div className={`flex justify-between items-center text-[0.6875rem] font-mono ${
+                    theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                  }`}>
                     <span>15 / 38 Interviews</span>
-                    <span className="font-bold text-[#006389]">39%</span>
+                    <span className="font-bold text-blue-700 dark:text-blue-400">39%</span>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#006389] rounded-full" style={{ width: "39%" }} />
+                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${theme === 'dark' ? 'bg-slate-800' : 'bg-slate-200'}`}>
+                    <div className="h-full bg-blue-700 dark:bg-blue-500 rounded-full" style={{ width: "39%" }} />
                   </div>
                 </div>
               </div>
@@ -795,32 +948,38 @@ const RecruiterDashboard: React.FC = () => {
               {/* Role 4 */}
               <div
                 onClick={() => setSelectedRoleFilter("Data Analyst")}
-                className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                   selectedRoleFilter === "Data Analyst"
-                    ? "bg-[#c6e7ff]/20 border-[#006389] ring-2 ring-[#006389]/20"
-                    : "bg-white border-slate-200/80 hover:shadow-md"
+                    ? theme === 'dark'
+                      ? "bg-blue-950/40 border-blue-600 ring-1 ring-blue-500/30"
+                      : "bg-blue-50/70 border-blue-700 ring-1 ring-blue-700"
+                    : theme === 'dark'
+                      ? "bg-slate-900 border-slate-800 hover:border-slate-700"
+                      : "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
                 }`}
               >
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#9ad6fd]/40 text-[#155e7f] text-[0.6875rem] font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#206586] animate-pulse" />
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[0.6875rem] font-semibold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       Active
                     </span>
-                    <span className="material-symbols-outlined text-[#6f7880] text-[18px]">query_stats</span>
+                    <span className="material-symbols-outlined text-slate-400 text-[18px]">query_stats</span>
                   </div>
-                  <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#1b1b24] mt-1">
+                  <h3 className={`text-sm font-semibold mt-1 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                     Data Analyst
                   </h3>
-                  <span className="text-[0.6875rem] text-[#6f7880]">Product Growth Insights</span>
+                  <span className={`text-[0.6875rem] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Product Growth Insights</span>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center text-[0.6875rem] text-[#6f7880] font-mono">
+                  <div className={`flex justify-between items-center text-[0.6875rem] font-mono ${
+                    theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                  }`}>
                     <span>12 / 31 Interviews</span>
-                    <span className="font-bold text-[#006389]">38%</span>
+                    <span className="font-bold text-blue-700 dark:text-blue-400">38%</span>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#006389] rounded-full" style={{ width: "38%" }} />
+                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${theme === 'dark' ? 'bg-slate-800' : 'bg-slate-200'}`}>
+                    <div className="h-full bg-blue-700 dark:bg-blue-500 rounded-full" style={{ width: "38%" }} />
                   </div>
                 </div>
               </div>
@@ -832,24 +991,30 @@ const RecruiterDashboard: React.FC = () => {
               SECTION 4: CANDIDATE SCREENING & MANAGEMENT TABLE
           ───────────────────────────────────────────────────────────── */}
           {(activeTab === "overview" || activeTab === "candidates") && (
-          <section className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col gap-5">
+          <section className={`p-6 rounded-2xl shadow-xs border flex flex-col gap-5 ${
+            theme === 'dark' ? 'bg-slate-900/80 border-slate-800/90' : 'bg-white border-slate-200/90'
+          }`}>
             {/* Table Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div>
-                <h2 className="font-['Plus_Jakarta_Sans',sans-serif] text-lg font-bold text-[#1b1b24]">
+                <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                   Recent Candidates
                 </h2>
-                <p className="text-xs text-[#6f7880]">
+                <p className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                   Review AI video interview recordings, scorecards, and real-time adaptive probes.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-[#6f7880]">Filter Role:</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Filter Role:</span>
                 <select
                   value={selectedRoleFilter}
                   onChange={(e) => setSelectedRoleFilter(e.target.value)}
-                  className="h-8 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-[#1b1b24] outline-none"
+                  className={`h-8 px-2.5 rounded-lg text-xs outline-none border transition-colors ${
+                    theme === 'dark' 
+                      ? 'bg-slate-800 border-slate-700 text-slate-200' 
+                      : 'bg-slate-50 border-slate-200 text-slate-800'
+                  }`}
                 >
                   <option value="All Roles">All Roles</option>
                   <option value="Machine Learning Engineer">Machine Learning Engineer</option>
@@ -861,7 +1026,11 @@ const RecruiterDashboard: React.FC = () => {
                 <select
                   value={selectedStatusFilter}
                   onChange={(e) => setSelectedStatusFilter(e.target.value)}
-                  className="h-8 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-[#1b1b24] outline-none"
+                  className={`h-8 px-2.5 rounded-lg text-xs outline-none border transition-colors ${
+                    theme === 'dark' 
+                      ? 'bg-slate-800 border-slate-700 text-slate-200' 
+                      : 'bg-slate-50 border-slate-200 text-slate-800'
+                  }`}
                 >
                   <option value="All">All Statuses</option>
                   <option value="Completed">Completed</option>
@@ -876,7 +1045,9 @@ const RecruiterDashboard: React.FC = () => {
             <div className="overflow-x-auto -mx-6 px-6">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50/80 text-[#3f484f] font-mono text-[0.6875rem] uppercase tracking-wider">
+                  <tr className={`font-mono text-[0.6875rem] uppercase tracking-wider ${
+                    theme === 'dark' ? 'bg-slate-800/60 text-slate-400' : 'bg-slate-50 text-slate-500'
+                  }`}>
                     <th className="py-3 px-4 rounded-l-xl font-bold">Candidate</th>
                     <th className="py-3 px-4 font-bold">Role</th>
                     <th className="py-3 px-4 font-bold">Status</th>
@@ -885,31 +1056,39 @@ const RecruiterDashboard: React.FC = () => {
                     <th className="py-3 px-4 text-right rounded-r-xl font-bold">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#e9e6f4]/60 text-xs">
+                <tbody className={`divide-y text-xs ${
+                  theme === 'dark' ? 'divide-slate-800/80 text-slate-300' : 'divide-slate-100 text-slate-700'
+                }`}>
                   {filteredCandidates.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-[#6f7880]">
+                      <td colSpan={6} className="py-8 text-center text-slate-400">
                         No candidates found matching filter criteria.
                       </td>
                     </tr>
                   ) : (
                     filteredCandidates.map((cand) => (
-                      <tr key={cand.id} className="hover:bg-slate-50/40 transition-colors group">
+                      <tr key={cand.id} className={`transition-colors group ${
+                        theme === 'dark' ? 'hover:bg-slate-800/40' : 'hover:bg-slate-50/70'
+                      }`}>
                         {/* Candidate Cell */}
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
                             <div
-                              className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                                cand.avatarBg || "bg-[#c6e7ff] text-[#001e2d]"
+                              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
+                                cand.avatarBg || "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
                               }`}
                             >
                               {cand.initials || cand.name.slice(0, 2).toUpperCase()}
                             </div>
                             <div className="flex flex-col min-w-0">
-                              <span className="font-['Plus_Jakarta_Sans',sans-serif] font-bold text-sm text-[#1b1b24] truncate">
+                              <span className={`font-semibold text-xs truncate ${
+                                theme === 'dark' ? 'text-white' : 'text-slate-900'
+                              }`}>
                                 {cand.name}
                               </span>
-                              <span className="text-[0.6875rem] text-[#6f7880] truncate font-mono">
+                              <span className={`text-[0.6875rem] truncate font-mono ${
+                                theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                              }`}>
                                 {cand.email}
                               </span>
                             </div>
@@ -917,68 +1096,92 @@ const RecruiterDashboard: React.FC = () => {
                         </td>
 
                         {/* Role */}
-                        <td className="py-3.5 px-4 text-[#1b1b24] font-medium">
+                        <td className={`py-3 px-4 font-medium text-xs ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
                           {cand.role}
                         </td>
 
                         {/* Status */}
-                        <td className="py-3.5 px-4">
+                        <td className="py-3 px-4">
                           {cand.status === "Completed" && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#9ad6fd]/40 text-[#155e7f] text-[0.6875rem] font-bold">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#206586]" />
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[0.6875rem] font-semibold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                               Completed
                             </span>
                           )}
                           {cand.status === "Live Video" && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#e2dfff] text-[#16134a] text-[0.6875rem] font-bold">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#0284c7] animate-pulse" />
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[0.6875rem] font-semibold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
                               Live Video
                             </span>
                           )}
                           {cand.status === "Pending Review" && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#c6e7ff] text-[#001e2d] text-[0.6875rem] font-bold">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#006389]" />
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[0.6875rem] font-semibold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                               Pending Review
                             </span>
                           )}
                           {cand.status === "Screened" && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-200 text-[#3f484f] text-[0.6875rem] font-bold">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#007dac]" />
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[0.6875rem] font-semibold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                               Screened
                             </span>
                           )}
                         </td>
 
                         {/* AI Score */}
-                        <td className="py-3.5 px-4">
+                        <td className="py-3 px-4">
                           {cand.score > 0 ? (
-                            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-200 text-[#1b1b24] font-bold font-mono text-xs">
-                              <span>{cand.score}</span>
-                              <span className="text-[#6f7880] font-normal">/100</span>
+                            <div className="flex items-center gap-2">
+                              <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-bold font-mono text-[11px] border ${
+                                cand.score >= 85
+                                  ? theme === 'dark'
+                                    ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30'
+                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  : cand.score >= 70
+                                  ? theme === 'dark'
+                                    ? 'bg-blue-950/40 text-blue-300 border-blue-500/30'
+                                    : 'bg-blue-50 text-blue-700 border-blue-200'
+                                  : theme === 'dark'
+                                  ? 'bg-amber-950/40 text-amber-300 border-amber-500/30'
+                                  : 'bg-amber-50 text-amber-700 border-amber-200'
+                              }`}>
+                                <span>{cand.score}</span>
+                                <span className="opacity-60 font-normal">/100</span>
+                              </div>
+                              <div className={`hidden sm:block w-12 h-1.5 rounded-full overflow-hidden ${
+                                theme === 'dark' ? 'bg-slate-800' : 'bg-slate-200'
+                              }`}>
+                                <div
+                                  className={`h-full rounded-full ${
+                                    cand.score >= 85 ? 'bg-emerald-500' : cand.score >= 70 ? 'bg-blue-700' : 'bg-amber-500'
+                                  }`}
+                                  style={{ width: `${cand.score}%` }}
+                                />
+                              </div>
                             </div>
                           ) : (
-                            <span className="text-[#6f7880] font-mono">—</span>
+                            <span className="text-slate-400 font-mono text-xs">—</span>
                           )}
                         </td>
 
                         {/* Completed At */}
-                        <td className="py-3.5 px-4 text-[#6f7880] text-[0.6875rem] font-mono">
+                        <td className={`py-3 px-4 text-[0.6875rem] font-mono ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                           {cand.completedAt}
                         </td>
 
                         {/* Action Buttons */}
-                        <td className="py-3.5 px-4 text-right space-x-2">
+                        <td className="py-3 px-4 text-right space-x-2 whitespace-nowrap">
                           <button
                             onClick={() => setSelectedCandidateForScorecard(cand)}
-                            className="inline-flex items-center gap-1 text-xs text-[#006389] hover:underline font-semibold"
+                            className="inline-flex items-center gap-1 text-xs text-blue-700 dark:text-blue-400 hover:underline font-medium"
                           >
-                            Scorecard <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                            Scorecard <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
                           </button>
                           <button
                             onClick={() => handleLaunchInterview(cand)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#006389] hover:bg-[#004c6b] text-white rounded text-[0.6875rem] font-semibold transition-all shadow-sm"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-medium transition-colors shadow-2xs active:scale-95"
                           >
-                            <span className="material-symbols-outlined text-[12px]">play_circle</span>
+                            <span className="material-symbols-outlined text-[13px]">play_circle</span>
                             <span>Start Interview</span>
                           </button>
                         </td>
@@ -997,49 +1200,49 @@ const RecruiterDashboard: React.FC = () => {
           {(activeTab === "overview" || activeTab === "reports") && (
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Chart Column: Interview Activity */}
-            <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
+            <div className="p-6 bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#1b1b24]">
+                  <h3 className="font-sans text-sm font-semibold text-slate-900 dark:text-slate-100">
                     Interview Activity
                   </h3>
-                  <span className="text-[0.6875rem] font-mono px-2 py-0.5 rounded bg-slate-50 text-[#6f7880]">
+                  <span className="text-[0.6875rem] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                     Last 30 Days
                   </span>
                 </div>
-                <p className="text-xs text-[#6f7880]">Interview completion trends across tracks.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Interview completion trends across calibrated hiring tracks.</p>
               </div>
 
               {/* Area SVG Chart */}
               <div className="my-4 flex flex-col justify-center">
                 <svg className="w-full h-36 overflow-visible" preserveAspectRatio="none" viewBox="0 0 320 150">
                   <defs>
-                    <linearGradient id="stitchAreaGradient" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="#006389" stopOpacity="0.3" />
-                      <stop offset="100%" stopColor="#006389" stopOpacity="0.0" />
+                    <linearGradient id="enterpriseChartGradient" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="#1D4ED8" stopOpacity="0.25" />
+                      <stop offset="100%" stopColor="#1D4ED8" stopOpacity="0.0" />
                     </linearGradient>
                   </defs>
-                  <line stroke="#bec8d0" strokeDasharray="3 3" strokeOpacity="0.3" x1="20" x2="300" y1="20" y2="20" />
-                  <line stroke="#bec8d0" strokeDasharray="3 3" strokeOpacity="0.3" x1="20" x2="300" y1="60" y2="60" />
-                  <line stroke="#bec8d0" strokeDasharray="3 3" strokeOpacity="0.3" x1="20" x2="300" y1="100" y2="100" />
-                  <path d="M 30,105 L 110,85 L 190,60 L 270,30 L 270,120 L 30,120 Z" fill="url(#stitchAreaGradient)" />
-                  <path d="M 30,105 L 110,85 L 190,60 L 270,30" fill="none" stroke="#006389" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
-                  <circle className="fill-white stroke-[#006389]" cx="30" cy="105" r="4" strokeWidth="2.5" />
-                  <circle className="fill-white stroke-[#006389]" cx="110" cy="85" r="4" strokeWidth="2.5" />
-                  <circle className="fill-white stroke-[#006389]" cx="190" cy="60" r="4" strokeWidth="2.5" />
-                  <circle className="fill-[#006389] stroke-white" cx="270" cy="30" r="5" strokeWidth="2.5" />
+                  <line stroke="currentColor" className="text-slate-200 dark:text-slate-800" strokeDasharray="3 3" x1="20" x2="300" y1="20" y2="20" />
+                  <line stroke="currentColor" className="text-slate-200 dark:text-slate-800" strokeDasharray="3 3" x1="20" x2="300" y1="60" y2="60" />
+                  <line stroke="currentColor" className="text-slate-200 dark:text-slate-800" strokeDasharray="3 3" x1="20" x2="300" y1="100" y2="100" />
+                  <path d="M 30,105 L 110,85 L 190,60 L 270,30 L 270,120 L 30,120 Z" fill="url(#enterpriseChartGradient)" />
+                  <path d="M 30,105 L 110,85 L 190,60 L 270,30" fill="none" stroke="#1D4ED8" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" />
+                  <circle className="fill-white dark:fill-slate-900 stroke-blue-700" cx="30" cy="105" r="4" strokeWidth="2" />
+                  <circle className="fill-white dark:fill-slate-900 stroke-blue-700" cx="110" cy="85" r="4" strokeWidth="2" />
+                  <circle className="fill-white dark:fill-slate-900 stroke-blue-700" cx="190" cy="60" r="4" strokeWidth="2" />
+                  <circle className="fill-blue-700 stroke-white dark:stroke-slate-900" cx="270" cy="30" r="5" strokeWidth="2" />
                 </svg>
-                <div className="flex justify-between text-[0.6875rem] font-mono text-[#6f7880] mt-1">
-                  <span>Week 1 (12)</span>
-                  <span>Week 2 (18)</span>
-                  <span>Week 3 (24)</span>
-                  <span className="font-bold text-[#006389]">Week 4 (32)</span>
+                <div className="flex justify-between text-[0.6875rem] font-mono text-slate-500 dark:text-slate-400 mt-2">
+                  <span>W1 (12)</span>
+                  <span>W2 (18)</span>
+                  <span>W3 (24)</span>
+                  <span className="font-bold text-blue-700 dark:text-blue-400">W4 (32)</span>
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-between text-xs text-[#6f7880]">
+              <div className="pt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#006389]" />
+                  <span className="w-2 h-2 rounded-full bg-blue-700" />
                   Velocity: +33% wk/wk
                 </span>
                 <span className="font-mono">Target: 30/wk</span>
@@ -1047,75 +1250,76 @@ const RecruiterDashboard: React.FC = () => {
             </div>
 
             {/* AI Hiring Insights Column */}
-            <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
+            <div className="p-6 bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#1b1b24]">
+                  <h3 className="font-sans text-sm font-semibold text-slate-900 dark:text-slate-100">
                     AI Hiring Insights
                   </h3>
-                  <span className="material-symbols-outlined text-[#006389] text-[20px]">psychology</span>
+                  <span className="material-symbols-outlined text-blue-700 dark:text-blue-400 text-[20px]">psychology</span>
                 </div>
-                <p className="text-xs text-[#6f7880]">Patterns identified across recent adaptive interviews.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Synthesis from recent structured evaluation transcripts.</p>
               </div>
 
               <div className="my-3 flex flex-col gap-2.5">
-                <div className="p-3 rounded-xl bg-slate-50 flex items-start gap-3">
-                  <div className="w-7 h-7 rounded bg-[#9ad6fd] text-[#155e7f] flex items-center justify-center shrink-0 mt-0.5">
+                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
                     <span className="material-symbols-outlined text-[16px]">record_voice_over</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-[#1b1b24]">Strong Technical Communication</span>
-                    <p className="text-[0.6875rem] text-[#3f484f] leading-snug mt-0.5">
-                      68% of evaluated candidates demonstrated clear conceptual clarity in architectural reasoning.
+                    <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">Strong Technical Communication</span>
+                    <p className="text-[0.6875rem] text-slate-600 dark:text-slate-400 leading-snug mt-0.5">
+                      68% of candidates demonstrated concise reasoning in architectural trade-off questions.
                     </p>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 flex items-start gap-3">
-                  <div className="w-7 h-7 rounded bg-[#e2dfff] text-[#0284c7] flex items-center justify-center shrink-0 mt-0.5">
+                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
                     <span className="material-symbols-outlined text-[16px]">dynamic_form</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-[#1b1b24]">Adaptive Probe Agility</span>
-                    <p className="text-[0.6875rem] text-[#3f484f] leading-snug mt-0.5">
-                      Real-time counterfactual follow-ups revealed depth of hands-on experience versus rote memorization.
+                    <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">Adaptive Probe Agility</span>
+                    <p className="text-[0.6875rem] text-slate-600 dark:text-slate-400 leading-snug mt-0.5">
+                      Real-time counterfactual follow-ups revealed production experience vs rote memorization.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="text-[0.6875rem] text-[#6f7880] font-mono">
-                Updated automatically by Groq Evaluation Engine
+              <div className="text-[0.6875rem] text-slate-400 font-mono">
+                Calibrated by Evaluation Engine
               </div>
             </div>
 
             {/* Quick Action Card Column */}
-            <div className="p-6 bg-gradient-to-br from-[#006389] to-[#007dac] text-white rounded-2xl shadow-md flex flex-col justify-between">
+            <div className="p-6 bg-slate-900 dark:bg-slate-800 text-white rounded-xl shadow-xs border border-slate-800 flex flex-col justify-between">
               <div className="flex flex-col gap-2">
-                <span className="text-xs font-mono uppercase tracking-wider text-white/80">
-                  Instant Candidate Pipeline
-                </span>
-                <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-xl font-extrabold leading-snug">
+                <div className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-blue-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                  <span>Pipeline Acceleration</span>
+                </div>
+                <h3 className="font-sans text-lg font-semibold leading-snug text-white">
                   Automated Resume to AI Interview in 60s
                 </h3>
-                <p className="text-xs text-white/90 leading-relaxed">
-                  Upload PDF resumes, calibrate semantic weights against job descriptions, and seamlessly invite top matches to live video interviews.
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Upload resumes, calibrate semantic weights against job specs, and dispatch structured live interview rooms instantly.
                 </p>
               </div>
 
-              <div className="pt-4 flex items-center gap-3">
+              <div className="pt-4 flex items-center gap-2.5">
                 <button
                   onClick={() => setIsUploadModalOpen(true)}
-                  className="px-4 py-2.5 bg-white text-[#006389] hover:bg-slate-50 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all"
+                  className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all"
                 >
-                  <span className="material-symbols-outlined text-[18px]">upload_file</span>
-                  <span>Upload Now</span>
+                  <span className="material-symbols-outlined text-[16px]">upload_file</span>
+                  <span>Upload Resumes</span>
                 </button>
                 <button
                   onClick={() => navigate("/interview/Aarav%20Sharma")}
-                  className="px-4 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all border border-slate-700"
                 >
-                  <span className="material-symbols-outlined text-[18px]">play_arrow</span>
+                  <span className="material-symbols-outlined text-[16px]">play_arrow</span>
                   <span>Demo Interview</span>
                 </button>
               </div>
@@ -1129,20 +1333,20 @@ const RecruiterDashboard: React.FC = () => {
           {activeTab === "interviews" && (
             <div className="flex flex-col gap-6">
               {/* Bot Status Banner */}
-              <div className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#c6e7ff] text-[#006389] flex items-center justify-center">
+                  <div className="w-11 h-11 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 flex items-center justify-center">
                     <span className="material-symbols-outlined text-2xl">smart_toy</span>
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-base text-[#1b1b24]">Autonomous Google Meet Bot</h3>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold font-mono">
+                      <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">Autonomous Interview Bot Engine</h3>
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[10px] font-semibold font-mono">
                         ONLINE · FASTAPI:8001
                       </span>
                     </div>
-                    <p className="text-xs text-[#6f7880] mt-0.5">
-                      Deepgram Nova-2 STT & Groq Question Generation are calibrated and ready to join meetings.
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Deepgram Nova-2 STT & Groq Question Generation are calibrated and ready for real-time video sessions.
                     </p>
                   </div>
                 </div>
@@ -1150,7 +1354,7 @@ const RecruiterDashboard: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => navigate("/interview")}
-                    className="px-4 py-2 bg-[#006389] hover:bg-[#004c6b] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+                    className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all"
                   >
                     <span className="material-symbols-outlined text-[16px]">videocam</span>
                     <span>Start Test Interview</span>
@@ -1161,52 +1365,52 @@ const RecruiterDashboard: React.FC = () => {
               {/* Interview Rooms Grid */}
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-[#1b1b24]">Candidate Interview Sessions</h2>
-                  <span className="text-xs font-mono text-[#6f7880]">{candidates.length} Sessions Available</span>
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Candidate Interview Sessions</h2>
+                  <span className="text-xs font-mono text-slate-500 dark:text-slate-400">{candidates.length} Sessions Available</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {candidates.map((cand) => (
-                    <div key={cand.id} className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between gap-4 hover:shadow-md transition-all">
+                    <div key={cand.id} className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between gap-4 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${cand.avatarBg || "bg-[#c6e7ff] text-[#001e2d]"}`}>
+                          <div className={`w-9 h-9 rounded-md flex items-center justify-center font-semibold text-xs ${cand.avatarBg || "bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300"}`}>
                             {cand.initials || cand.name.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <h4 className="font-bold text-sm text-[#1b1b24]">{cand.name}</h4>
-                            <p className="text-xs text-[#6f7880]">{cand.role}</p>
+                            <h4 className="font-semibold text-xs text-slate-900 dark:text-slate-100">{cand.name}</h4>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">{cand.role}</p>
                           </div>
                         </div>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
-                          cand.status === "Completed" ? "bg-emerald-100 text-emerald-800" :
-                          cand.status === "Live Video" ? "bg-blue-100 text-blue-800 animate-pulse" :
-                          "bg-amber-100 text-amber-800"
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold font-mono ${
+                          cand.status === "Completed" ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800" :
+                          cand.status === "Live Video" ? "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 animate-pulse" :
+                          "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
                         }`}>
                           {cand.status}
                         </span>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-slate-50 text-xs flex flex-col gap-1.5">
-                        <div className="flex justify-between text-[#6f7880]">
+                      <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs flex flex-col gap-1.5">
+                        <div className="flex justify-between text-slate-600 dark:text-slate-400">
                           <span>AI Match Score:</span>
-                          <span className="font-bold font-mono text-[#006389]">{cand.score}%</span>
+                          <span className="font-semibold font-mono text-blue-700 dark:text-blue-400">{cand.score}%</span>
                         </div>
-                        <div className="flex justify-between text-[#6f7880]">
+                        <div className="flex justify-between text-slate-600 dark:text-slate-400">
                           <span>Session Time:</span>
-                          <span className="font-mono">{cand.completedAt}</span>
+                          <span className="font-mono text-slate-700 dark:text-slate-300">{cand.completedAt}</span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 pt-1 border-t border-slate-200/10">
+                      <div className="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
                         <button
                           onClick={() => setSelectedCandidateForScorecard(cand)}
-                          className="flex-1 py-1.5 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-[#3f484f] hover:bg-slate-50 transition-colors"
+                          className="flex-1 py-1.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                         >
                           Scorecard
                         </button>
                         <button
                           onClick={() => handleLaunchInterview(cand)}
-                          className="flex-1 py-1.5 px-3 rounded-lg bg-[#006389] hover:bg-[#004c6b] text-white text-xs font-semibold flex items-center justify-center gap-1 transition-colors shadow-sm"
+                          className="flex-1 py-1.5 px-3 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold flex items-center justify-center gap-1 transition-colors shadow-xs"
                         >
                           <span className="material-symbols-outlined text-[14px]">videocam</span>
                           <span>Launch</span>
@@ -1223,10 +1427,10 @@ const RecruiterDashboard: React.FC = () => {
               SECTION: REPORTS VIEW EXTRA EXPORT ACTION
           ───────────────────────────────────────────────────────────── */}
           {activeTab === "reports" && (
-            <div className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="font-bold text-sm text-[#1b1b24]">Export Recruitment Audit Report</h3>
-                <p className="text-xs text-[#6f7880]">Download complete PDF and CSV records for all candidate interviews.</p>
+                <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">Export Recruitment Audit Report</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Download complete PDF and CSV records for all candidate interviews.</p>
               </div>
               <div className="flex items-center gap-3">
                 <button
@@ -1236,7 +1440,7 @@ const RecruiterDashboard: React.FC = () => {
                       description: "Downloading candidates_export.csv"
                     });
                   }}
-                  className="px-4 py-2 border border-slate-200 text-[#3f484f] hover:bg-slate-50 rounded-lg text-xs font-semibold transition-colors"
+                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors"
                 >
                   Download CSV
                 </button>
@@ -1247,7 +1451,7 @@ const RecruiterDashboard: React.FC = () => {
                       description: "Generated InterviewAI_Analytics_Report.pdf"
                     });
                   }}
-                  className="px-4 py-2 bg-[#006389] hover:bg-[#004c6b] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+                  className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all"
                 >
                   <span className="material-symbols-outlined text-sm">download</span>
                   <span>Export PDF</span>
@@ -1259,32 +1463,31 @@ const RecruiterDashboard: React.FC = () => {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          SECTION 6: STITCH RESUME UPLOAD & ANALYSIS MODAL
-          (Mirrors Screen 675157b2e05d4b0e9679b3f622b1d528)
+          SECTION 6: ENTERPRISE RESUME UPLOAD & ANALYSIS MODAL
       ───────────────────────────────────────────────────────────── */}
       {isUploadModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#f8f9ff] rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 flex flex-col my-auto">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-slate-50 dark:bg-slate-950 rounded-xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col my-auto">
             {/* Modal Header & Intake Funnel Stepper */}
-            <div className="p-6 bg-white border-b border-slate-200/80 flex flex-col gap-4">
+            <div className="p-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#006389] text-white">
+                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-700 text-white shadow-xs">
                     <span className="material-symbols-outlined text-sm">assignment_turned_in</span>
                   </span>
                   <div>
-                    <h2 className="font-['Plus_Jakarta_Sans',sans-serif] text-base font-bold text-[#0b1c30]">
-                      Candidate Intake Funnel
+                    <h2 className="font-sans text-base font-semibold text-slate-900 dark:text-slate-100">
+                      Candidate Intake & Calibration Funnel
                     </h2>
-                    <p className="text-xs text-[#464555] font-mono">
-                      Session #INT-{Date.now().toString().slice(-4)} · Resume Intelligence Pipeline
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                      Session #INT-{Date.now().toString().slice(-4)} · Structured Resume Analysis
                     </p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setIsUploadModalOpen(false)}
-                  className="w-8 h-8 rounded-lg bg-[#eff4ff] hover:bg-[#e5eeff] text-[#464555] flex items-center justify-center"
+                  className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors"
                 >
                   <span className="material-symbols-outlined text-[18px]">close</span>
                 </button>
@@ -1292,23 +1495,23 @@ const RecruiterDashboard: React.FC = () => {
 
               {/* Stepper Bar */}
               <div className="flex items-center gap-2 text-xs">
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#006389] text-white font-semibold">
-                  <span className="w-4 h-4 rounded-full bg-white text-[#006389] flex items-center justify-center text-[10px]">1</span>
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-blue-700 text-white font-medium">
+                  <span className="w-4 h-4 rounded-full bg-white text-blue-700 flex items-center justify-center text-[10px] font-bold">1</span>
                   <span>Upload Resume</span>
                 </div>
-                <span className="h-0.5 w-6 bg-[#006389] rounded-full" />
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#dae2fd] text-[#131b2e] font-medium">
-                  <span className="w-4 h-4 rounded-full bg-[#007dac] text-white flex items-center justify-center text-[10px]">2</span>
+                <span className="h-0.5 w-6 bg-blue-700 rounded-full" />
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 font-medium border border-blue-200 dark:border-blue-800">
+                  <span className="w-4 h-4 rounded-full bg-blue-700 text-white flex items-center justify-center text-[10px] font-bold">2</span>
                   <span>Analyze Candidate</span>
                 </div>
-                <span className="h-0.5 w-6 bg-[#d3e4fe] rounded-full" />
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#eff4ff] text-[#464555]">
-                  <span className="w-4 h-4 rounded-full bg-[#d3e4fe] flex items-center justify-center text-[10px]">3</span>
+                <span className="h-0.5 w-6 bg-slate-200 dark:bg-slate-800 rounded-full" />
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                  <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px]">3</span>
                   <span>Live Video Interview</span>
                 </div>
-                <span className="h-0.5 w-6 bg-[#d3e4fe] rounded-full" />
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#eff4ff] text-[#464555]">
-                  <span className="w-4 h-4 rounded-full bg-[#d3e4fe] flex items-center justify-center text-[10px]">4</span>
+                <span className="h-0.5 w-6 bg-slate-200 dark:bg-slate-800 rounded-full" />
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                  <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px]">4</span>
                   <span>Evaluation</span>
                 </div>
               </div>
@@ -1318,27 +1521,27 @@ const RecruiterDashboard: React.FC = () => {
             <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Left Column: Drag & Drop Zone */}
               <div className="lg:col-span-6 flex flex-col gap-4">
-                <div className="bg-white rounded-xl p-5 border border-slate-200/80 flex flex-col gap-3">
-                  <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#0b1c30]">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col gap-3">
+                  <h3 className="font-sans text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-100">
                     Target Role & Job Description
                   </h3>
                   <input
                     type="text"
                     value={jobTitleInput}
                     onChange={(e) => setJobTitleInput(e.target.value)}
-                    placeholder="Job Title (e.g. Machine Learning Engineer)"
-                    className="h-9 px-3 bg-[#eff4ff] border border-slate-200 rounded-lg text-xs outline-none focus:border-[#006389]"
+                    placeholder="Job Title (e.g. Senior Machine Learning Engineer)"
+                    className="h-9 px-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700 text-slate-900 dark:text-slate-100"
                   />
                   <textarea
                     rows={3}
                     value={jobDescriptionInput}
                     onChange={(e) => setJobDescriptionInput(e.target.value)}
-                    placeholder="Job Description / Key Requirements..."
-                    className="p-3 bg-[#eff4ff] border border-slate-200 rounded-lg text-xs outline-none focus:border-[#006389] resize-none"
+                    placeholder="Paste job description, responsibilities, or key technical qualifications..."
+                    className="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700 text-slate-900 dark:text-slate-100 resize-none"
                   />
-                  <div className="flex items-center justify-between text-xs text-[#464555]">
-                    <span>Similarity Threshold:</span>
-                    <span className="font-bold text-[#006389] font-mono">{thresholdInput}%</span>
+                  <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                    <span>Similarity Match Threshold:</span>
+                    <span className="font-semibold text-blue-700 dark:text-blue-400 font-mono">{thresholdInput}%</span>
                   </div>
                   <input
                     type="range"
@@ -1346,7 +1549,7 @@ const RecruiterDashboard: React.FC = () => {
                     max={90}
                     value={thresholdInput}
                     onChange={(e) => setThresholdInput(Number(e.target.value))}
-                    className="w-full accent-[#006389]"
+                    className="w-full accent-blue-700 cursor-pointer"
                   />
                 </div>
 
@@ -1358,15 +1561,15 @@ const RecruiterDashboard: React.FC = () => {
                     e.preventDefault();
                     handleFileDropOrChange(e.dataTransfer.files);
                   }}
-                  className="rounded-xl p-6 bg-[#eff4ff] border-2 border-dashed border-slate-200 hover:border-[#006389] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+                  className="rounded-xl p-6 bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-700 dark:hover:border-blue-500 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-[#dae2fd] text-[#006389] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
                     <span className="material-symbols-outlined text-2xl">upload_file</span>
                   </div>
-                  <p className="font-bold text-sm text-[#0b1c30]">Drag and drop resume here</p>
-                  <p className="text-xs text-[#464555] mb-3">or browse from your device</p>
-                  <span className="px-3 py-1.5 rounded-lg bg-[#006389] text-white text-xs font-semibold">
-                    Browse Files
+                  <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">Drag and drop resumes here</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">or browse from your local drive</p>
+                  <span className="px-3.5 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold shadow-xs">
+                    Browse PDF Files
                   </span>
                   <input
                     ref={fileInputRef}
@@ -1376,31 +1579,31 @@ const RecruiterDashboard: React.FC = () => {
                     className="hidden"
                     onChange={(e) => handleFileDropOrChange(e.target.files)}
                   />
-                  <div className="mt-3 text-[0.6875rem] text-[#6f7880] flex items-center gap-1 font-mono">
+                  <div className="mt-3 text-[0.6875rem] text-slate-400 font-mono flex items-center gap-1">
                     <span className="material-symbols-outlined text-xs">info</span>
-                    <span>PDF format only • Max 10MB</span>
+                    <span>PDF format only • Max 10MB per document</span>
                   </div>
                 </div>
 
                 {/* Uploaded Files Listing */}
                 {uploadedFiles.length > 0 && (
                   <div className="space-y-2">
-                    <span className="text-xs font-bold text-[#0b1c30]">Selected Files ({uploadedFiles.length})</span>
+                    <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">Selected Files ({uploadedFiles.length})</span>
                     {uploadedFiles.map((file, idx) => (
                       <div
                         key={idx}
-                        className="p-2.5 rounded-lg bg-white border border-slate-200/80 flex items-center justify-between text-xs"
+                        className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="material-symbols-outlined text-red-500 text-lg">picture_as_pdf</span>
-                          <span className="font-medium text-[#0b1c30] truncate">{file.name}</span>
-                          <span className="text-[0.6875rem] text-[#6f7880]">
+                          <span className="font-medium text-slate-900 dark:text-slate-100 truncate">{file.name}</span>
+                          <span className="text-[0.6875rem] text-slate-400 font-mono">
                             {(file.size / (1024 * 1024)).toFixed(1)} MB
                           </span>
                         </div>
                         <button
                           onClick={() => handleRemoveFile(idx)}
-                          className="text-red-500 hover:text-red-700 p-1"
+                          className="text-red-500 hover:text-red-700 p-1 transition-colors"
                         >
                           <span className="material-symbols-outlined text-sm">delete</span>
                         </button>
@@ -1410,128 +1613,130 @@ const RecruiterDashboard: React.FC = () => {
                 )}
 
                 {/* SOC2 Privacy Assurance Card */}
-                <div className="p-3 rounded-xl bg-white border border-slate-200/80 flex items-center gap-3">
-                  <span className="material-symbols-outlined text-[#006389] text-xl shrink-0">encrypted</span>
-                  <p className="text-[0.6875rem] text-[#464555] leading-relaxed">
-                    Resume parsing is strictly isolated to personalize the interview experience. Encrypted at rest & in transit.
+                <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                  <span className="material-symbols-outlined text-blue-700 dark:text-blue-400 text-lg shrink-0">encrypted</span>
+                  <p className="text-[0.6875rem] text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Resume extraction operates under ephemeral memory sandbox boundaries. Fully encrypted at rest (AES-256) and in transit.
                   </p>
                 </div>
               </div>
 
               {/* Right Column: 6 Intelligence Vectors & Extraction Telemetry */}
               <div className="lg:col-span-6 flex flex-col gap-4">
-                <div className="bg-white rounded-xl p-5 border border-slate-200/80 flex flex-col gap-3">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col gap-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#0b1c30]">
-                      What InterviewAI Understands
+                    <h3 className="font-sans text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-100">
+                      Structured Extraction Vectors
                     </h3>
-                    <span className="px-2 py-0.5 rounded-full bg-[#dae2fd] text-[#131b2e] text-[0.6875rem] font-bold">
-                      Resume Intelligence
+                    <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[0.6875rem] font-semibold">
+                      Multi-Vector Analysis
                     </span>
                   </div>
-                  <p className="text-xs text-[#464555]">
-                    More than keywords. We identify the experience, skills, and knowledge areas behind the resume.
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Beyond basic keyword matching. We analyze depth, verifiable scope, and technical problem-solving signals.
                   </p>
 
                   {/* 6 Intelligence Vectors */}
                   <div className="grid grid-cols-2 gap-2 mt-1">
-                    <div className="p-2.5 rounded-lg bg-[#eff4ff] flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-[#006389] font-bold text-xs">
+                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-400 font-semibold text-xs">
                         <span className="material-symbols-outlined text-sm">badge</span>
                         <span>Candidate Profile</span>
                       </div>
-                      <p className="text-[0.6875rem] text-[#464555]">Name, contact, summary</p>
+                      <p className="text-[0.6875rem] text-slate-500 dark:text-slate-400">Name, credentials, background</p>
                     </div>
 
-                    <div className="p-2.5 rounded-lg bg-[#eff4ff] flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-[#006389] font-bold text-xs">
+                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-400 font-semibold text-xs">
                         <span className="material-symbols-outlined text-sm">terminal</span>
-                        <span>Technical Skills</span>
+                        <span>Technical Stack</span>
                       </div>
-                      <p className="text-[0.6875rem] text-[#464555]">Languages, frameworks, tools</p>
+                      <p className="text-[0.6875rem] text-slate-500 dark:text-slate-400">Languages, frameworks, systems</p>
                     </div>
 
-                    <div className="p-2.5 rounded-lg bg-[#eff4ff] flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-[#006389] font-bold text-xs">
+                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-400 font-semibold text-xs">
                         <span className="material-symbols-outlined text-sm">work_history</span>
                         <span>Work Experience</span>
                       </div>
-                      <p className="text-[0.6875rem] text-[#464555]">Roles, production scope</p>
+                      <p className="text-[0.6875rem] text-slate-500 dark:text-slate-400">Roles, team scale, production impact</p>
                     </div>
 
-                    <div className="p-2.5 rounded-lg bg-[#eff4ff] flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-[#006389] font-bold text-xs">
+                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-400 font-semibold text-xs">
                         <span className="material-symbols-outlined text-sm">school</span>
                         <span>Education</span>
                       </div>
-                      <p className="text-[0.6875rem] text-[#464555]">Degrees, institutions</p>
+                      <p className="text-[0.6875rem] text-slate-500 dark:text-slate-400">Degrees, research, coursework</p>
                     </div>
 
-                    <div className="p-2.5 rounded-lg bg-[#eff4ff] flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-[#006389] font-bold text-xs">
+                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-400 font-semibold text-xs">
                         <span className="material-symbols-outlined text-sm">account_tree</span>
-                        <span>Projects</span>
+                        <span>Projects & Architecture</span>
                       </div>
-                      <p className="text-[0.6875rem] text-[#464555]">Architecture, toolsets</p>
+                      <p className="text-[0.6875rem] text-slate-500 dark:text-slate-400">Repositories, system topology</p>
                     </div>
 
-                    <div className="p-2.5 rounded-lg bg-[#eff4ff] flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-[#006389] font-bold text-xs">
+                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-400 font-semibold text-xs">
                         <span className="material-symbols-outlined text-sm">radar</span>
                         <span>Interview Probes</span>
                       </div>
-                      <p className="text-[0.6875rem] text-[#464555]">Focus areas, edge gaps</p>
+                      <p className="text-[0.6875rem] text-slate-500 dark:text-slate-400">Targeted inquiry areas</p>
                     </div>
                   </div>
 
                   {/* Knowledge Profile Calibrated badge */}
-                  <div className="p-3 rounded-lg bg-[#eff4ff] flex items-center justify-between mt-2">
+                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between mt-2">
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[#006389]">hub</span>
+                      <span className="material-symbols-outlined text-blue-700 dark:text-blue-400">hub</span>
                       <div className="text-xs">
-                        <p className="font-semibold text-[#0b1c30]">Candidate Knowledge Profile</p>
-                        <p className="text-[0.6875rem] text-[#464555]">Calibrated with role benchmarks</p>
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">Candidate Calibration Matrix</p>
+                        <p className="text-[0.6875rem] text-slate-500 dark:text-slate-400">Matched against role rubric benchmarks</p>
                       </div>
                     </div>
-                    <span className="text-[0.6875rem] text-[#006389] font-bold font-mono">CALIBRATED</span>
+                    <span className="text-[0.6875rem] text-emerald-700 dark:text-emerald-400 font-semibold font-mono bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                      CALIBRATED
+                    </span>
                   </div>
 
                   {/* Extraction Telemetry Bar */}
                   <div className="mt-2 flex flex-col gap-1.5">
-                    <div className="flex justify-between text-[0.6875rem] font-mono text-[#464555]">
+                    <div className="flex justify-between text-[0.6875rem] font-mono text-slate-500 dark:text-slate-400">
                       <span>Extraction Telemetry</span>
                       <span>Confidence: 99.4%</span>
                     </div>
-                    <div className="h-2 w-full bg-[#e5eeff] rounded-full overflow-hidden flex">
-                      <div className="h-full bg-[#006389] w-[45%]" title="Skills" />
-                      <div className="h-full bg-[#007dac] w-[30%]" title="Experience" />
-                      <div className="h-full bg-[#9ad6fd] w-[15%]" title="Projects" />
-                      <div className="h-full bg-[#0284c7] w-[10%]" title="Academia" />
+                    <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                      <div className="h-full bg-blue-700 w-[45%]" title="Skills" />
+                      <div className="h-full bg-blue-500 w-[30%]" title="Experience" />
+                      <div className="h-full bg-blue-400 w-[15%]" title="Projects" />
+                      <div className="h-full bg-indigo-500 w-[10%]" title="Academia" />
                     </div>
-                    <div className="flex items-center gap-3 text-[0.6875rem] font-mono text-[#6f7880]">
+                    <div className="flex items-center gap-3 text-[0.6875rem] font-mono text-slate-500 dark:text-slate-400">
                       <span className="flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-[#006389]" />Skills 45%
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-700" />Skills 45%
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-[#007dac]" />Experience 30%
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />Experience 30%
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-[#9ad6fd]" />Projects 15%
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />Projects 15%
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-[#0284c7]" />Academia 10%
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />Academia 10%
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Recruiter Tip Callout */}
-                <div className="p-4 rounded-xl bg-white border border-slate-200/80 flex items-start gap-3">
-                  <span className="material-symbols-outlined text-[#006389] text-xl mt-0.5">tips_and_updates</span>
+                <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex items-start gap-3">
+                  <span className="material-symbols-outlined text-blue-700 dark:text-blue-400 text-lg mt-0.5">tips_and_updates</span>
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-[#0b1c30]">Adaptive Generation Ready</span>
-                    <p className="text-[0.6875rem] text-[#464555] leading-relaxed mt-0.5">
-                      The AI interviewer will frame scenario-based questions directly around the candidate's actual projects and core skills.
+                    <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">Adaptive Probe Generation</span>
+                    <p className="text-[0.6875rem] text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">
+                      The AI interviewer generates dynamic scenario questions directly referencing the candidate's actual projects, repos, and cited tech stack.
                     </p>
                   </div>
                 </div>
@@ -1539,10 +1744,10 @@ const RecruiterDashboard: React.FC = () => {
             </div>
 
             {/* Modal Footer Actions */}
-            <div className="p-4 bg-white border-t border-slate-200/80 flex items-center justify-between">
+            <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <button
                 onClick={() => setIsUploadModalOpen(false)}
-                className="px-4 py-2 text-xs text-[#464555] hover:underline font-semibold"
+                className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium transition-colors"
               >
                 Cancel
               </button>
@@ -1561,7 +1766,7 @@ const RecruiterDashboard: React.FC = () => {
                       score: 88,
                       completedAt: "Just now",
                       skills: ["Python", "FastAPI", "React", "Docker", "MongoDB"],
-                      avatarBg: "bg-[#c6e7ff] text-[#001e2d]",
+                      avatarBg: "bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300",
                       initials: "AJ",
                       resumeText: "Alex Johnson. Senior Software Engineer with 5+ years experience in Python, FastAPI, React, Docker, and MongoDB."
                     };
@@ -1572,7 +1777,7 @@ const RecruiterDashboard: React.FC = () => {
                     });
                     setIsUploadModalOpen(false);
                   }}
-                  className="px-4 py-2 bg-slate-50 hover:bg-slate-200 text-[#1b1b24] rounded-lg text-xs font-semibold transition-colors"
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold transition-colors border border-slate-200 dark:border-slate-700"
                 >
                   Load Sample Candidate
                 </button>
@@ -1580,7 +1785,7 @@ const RecruiterDashboard: React.FC = () => {
                 <button
                   disabled={isAnalyzing || uploadedFiles.length === 0}
                   onClick={handleRunResumeAnalysis}
-                  className="px-5 py-2 bg-[#006389] hover:bg-[#004c6b] disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm transition-all"
+                  className="px-5 py-2 bg-blue-700 hover:bg-blue-800 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center gap-2 shadow-xs transition-all"
                 >
                   {isAnalyzing ? (
                     <>
@@ -1601,37 +1806,36 @@ const RecruiterDashboard: React.FC = () => {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          SECTION 7: STITCH SCORECARD & CANDIDATE DETAILS MODAL
-          (Mirrors Screen 35de875130c04250bc63561926decbc7)
+          SECTION 7: ENTERPRISE SCORECARD & CANDIDATE DETAILS MODAL
       ───────────────────────────────────────────────────────────── */}
       {selectedCandidateForScorecard && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#f8fafc] rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 flex flex-col my-auto">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-slate-50 dark:bg-slate-950 rounded-xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col my-auto">
             {/* Scorecard Header */}
-            <div className="p-5 bg-white border-b border-slate-200/80 flex items-center justify-between">
+            <div className="p-5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#006389] text-white font-bold text-xs">
-                  IA
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-700 text-white font-bold text-xs shadow-xs">
+                  R
                 </span>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-['Plus_Jakarta_Sans',sans-serif] text-base font-bold text-[#1b1b24]">
-                      Interview Result & Performance Scorecard
+                    <span className="font-sans text-base font-semibold text-slate-900 dark:text-slate-100">
+                      Structured Interview Rubric & Performance Scorecard
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#c6e7ff] text-[#001e2d] text-[0.6875rem] font-bold font-mono">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#006389] animate-pulse" />
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[0.6875rem] font-semibold font-mono">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
                       EVALUATION COMPLETE
                     </span>
                   </div>
-                  <p className="text-xs text-[#6f7880]">
-                    Candidate: {selectedCandidateForScorecard.name} · Role: {selectedCandidateForScorecard.role}
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Candidate: {selectedCandidateForScorecard.name} · Role Track: {selectedCandidateForScorecard.role}
                   </p>
                 </div>
               </div>
 
               <button
                 onClick={() => setSelectedCandidateForScorecard(null)}
-                className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-200 text-[#3f484f] flex items-center justify-center"
+                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
@@ -1640,20 +1844,20 @@ const RecruiterDashboard: React.FC = () => {
             {/* Scorecard Content */}
             <div className="p-6 flex flex-col gap-6">
               {/* Overall Performance Card (Hero Centerpiece) */}
-              <div className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 {/* Circular Gauge */}
                 <div className="md:col-span-6 flex items-center gap-5">
                   <div className="relative w-32 h-32 flex-shrink-0 flex items-center justify-center">
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                       <path
-                        className="text-slate-200"
+                        className="text-slate-200 dark:text-slate-800"
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="3.2"
                       />
                       <path
-                        className="text-[#006389]"
+                        className="text-blue-700 dark:text-blue-500"
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                         fill="none"
                         stroke="currentColor"
@@ -1663,114 +1867,114 @@ const RecruiterDashboard: React.FC = () => {
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="font-['Plus_Jakarta_Sans',sans-serif] text-2xl font-black text-[#006389] leading-none">
+                      <span className="font-sans text-2xl font-bold text-slate-900 dark:text-slate-100 leading-none">
                         {selectedCandidateForScorecard.score || 82}
                       </span>
-                      <span className="text-[0.6875rem] font-mono text-[#6f7880]">/ 100</span>
+                      <span className="text-[0.6875rem] font-mono text-slate-400">/ 100</span>
                     </div>
                   </div>
 
                   <div className="flex flex-col">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#c6e7ff] text-[#001e2d] text-xs font-bold w-max mb-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#006389]" />
-                      Strong Performance
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-semibold w-max mb-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                      Strong Calibration
                     </span>
-                    <span className="text-xs font-mono text-[#6f7880]">Percentile: Top 14%</span>
-                    <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-lg font-bold text-[#1b1b24] mt-0.5">
+                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">Percentile: Top 14%</span>
+                    <h3 className="font-sans text-lg font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
                       {selectedCandidateForScorecard.name}
                     </h3>
-                    <p className="text-xs text-[#206586] font-medium">
-                      {selectedCandidateForScorecard.role} Assessment
+                    <p className="text-xs text-blue-700 dark:text-blue-400 font-medium">
+                      {selectedCandidateForScorecard.role} Rubric
                     </p>
                   </div>
                 </div>
 
                 {/* Stat Pills */}
                 <div className="md:col-span-6 grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col">
-                    <span className="text-[0.6875rem] font-mono font-bold uppercase text-[#6f7880]">Video Stream</span>
-                    <span className="text-sm font-bold text-[#1b1b24]">24 min HD</span>
-                    <span className="text-[0.6875rem] text-[#6f7880] font-mono">100% verified</span>
+                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col">
+                    <span className="text-[0.6875rem] font-mono font-medium uppercase text-slate-400">Video Stream</span>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">24 min HD</span>
+                    <span className="text-[0.6875rem] text-slate-500 dark:text-slate-400 font-mono">100% verified</span>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col">
-                    <span className="text-[0.6875rem] font-mono font-bold uppercase text-[#6f7880]">Responses</span>
-                    <span className="text-sm font-bold text-[#1b1b24]">8 Evaluated</span>
-                    <span className="text-[0.6875rem] text-[#6f7880] font-mono">All questions answered</span>
+                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col">
+                    <span className="text-[0.6875rem] font-mono font-medium uppercase text-slate-400">Responses</span>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">8 Evaluated</span>
+                    <span className="text-[0.6875rem] text-slate-500 dark:text-slate-400 font-mono">All prompts answered</span>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col">
-                    <span className="text-[0.6875rem] font-mono font-bold uppercase text-[#6f7880]">Real-Time Probes</span>
-                    <span className="text-sm font-bold text-[#0284c7]">5 Dynamic</span>
-                    <span className="text-[0.6875rem] text-[#6f7880] font-mono">AI follow-ups</span>
+                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col">
+                    <span className="text-[0.6875rem] font-mono font-medium uppercase text-slate-400">Real-Time Probes</span>
+                    <span className="text-sm font-semibold text-blue-700 dark:text-blue-400">5 Dynamic</span>
+                    <span className="text-[0.6875rem] text-slate-500 dark:text-slate-400 font-mono">Autonomous follow-ups</span>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col">
-                    <span className="text-[0.6875rem] font-mono font-bold uppercase text-[#6f7880]">Focus Areas</span>
-                    <span className="text-sm font-bold text-[#206586]">6 Explored</span>
-                    <span className="text-[0.6875rem] text-[#6f7880] font-mono">Full rubric depth</span>
+                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col">
+                    <span className="text-[0.6875rem] font-mono font-medium uppercase text-slate-400">Rubric Depth</span>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">6 Dimensions</span>
+                    <span className="text-[0.6875rem] text-slate-500 dark:text-slate-400 font-mono">Full rubric coverage</span>
                   </div>
                 </div>
               </div>
 
               {/* Core Competencies Breakdown */}
-              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex flex-col gap-4">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[0.6875rem] uppercase font-bold tracking-wider text-[#006389] font-mono">
-                      Dimensions
+                    <span className="text-[0.6875rem] uppercase font-semibold tracking-wider text-blue-700 dark:text-blue-400 font-mono">
+                      Rubric Dimensions
                     </span>
-                    <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#1b1b24]">
-                      Core Competencies
+                    <h3 className="font-sans text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      Core Competencies Calibration
                     </h3>
                   </div>
-                  <span className="text-xs font-mono text-[#6f7880]">Benchmark: 75%</span>
+                  <span className="text-xs font-mono text-slate-400">Benchmark: 75%</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   {/* Metric 1 */}
-                  <div className="p-3.5 rounded-xl bg-slate-50 flex flex-col gap-2">
-                    <div className="flex justify-between items-center text-xs font-bold">
-                      <span>Technical Depth</span>
-                      <span className="text-[#006389] font-mono">84%</span>
+                  <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                    <div className="flex justify-between items-center text-xs font-semibold">
+                      <span className="text-slate-900 dark:text-slate-100">Technical Depth</span>
+                      <span className="text-blue-700 dark:text-blue-400 font-mono">84%</span>
                     </div>
-                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-[#006389] h-full rounded-full" style={{ width: "84%" }} />
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-blue-700 h-full rounded-full" style={{ width: "84%" }} />
                     </div>
-                    <p className="text-[0.6875rem] text-[#6f7880]">Good understanding of core concepts.</p>
+                    <p className="text-[0.6875rem] text-slate-500 dark:text-slate-400">High conceptual precision in systems reasoning.</p>
                   </div>
 
                   {/* Metric 2 */}
-                  <div className="p-3.5 rounded-xl bg-slate-50 flex flex-col gap-2">
-                    <div className="flex justify-between items-center text-xs font-bold">
-                      <span>Problem Solving</span>
-                      <span className="text-[#206586] font-mono">79%</span>
+                  <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                    <div className="flex justify-between items-center text-xs font-semibold">
+                      <span className="text-slate-900 dark:text-slate-100">Problem Solving</span>
+                      <span className="text-blue-700 dark:text-blue-400 font-mono">79%</span>
                     </div>
-                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-[#206586] h-full rounded-full" style={{ width: "79%" }} />
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-blue-700 h-full rounded-full" style={{ width: "79%" }} />
                     </div>
-                    <p className="text-[0.6875rem] text-[#6f7880]">Approached challenges logically.</p>
+                    <p className="text-[0.6875rem] text-slate-500 dark:text-slate-400">Logical decomposition of edge constraints.</p>
                   </div>
 
                   {/* Metric 3 */}
-                  <div className="p-3.5 rounded-xl bg-slate-50 flex flex-col gap-2">
-                    <div className="flex justify-between items-center text-xs font-bold">
-                      <span>Verbal Articulation</span>
-                      <span className="text-[#006389] font-mono">88%</span>
+                  <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                    <div className="flex justify-between items-center text-xs font-semibold">
+                      <span className="text-slate-900 dark:text-slate-100">Verbal Articulation</span>
+                      <span className="text-blue-700 dark:text-blue-400 font-mono">88%</span>
                     </div>
-                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-[#006389] h-full rounded-full" style={{ width: "88%" }} />
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-blue-700 h-full rounded-full" style={{ width: "88%" }} />
                     </div>
-                    <p className="text-[0.6875rem] text-[#6f7880]">Coherent delivery and audio clarity.</p>
+                    <p className="text-[0.6875rem] text-slate-500 dark:text-slate-400">Structured communication and audio clarity.</p>
                   </div>
 
                   {/* Metric 4 */}
-                  <div className="p-3.5 rounded-xl bg-slate-50 flex flex-col gap-2">
-                    <div className="flex justify-between items-center text-xs font-bold">
-                      <span>Practical Experience</span>
-                      <span className="text-[#0284c7] font-mono">81%</span>
+                  <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                    <div className="flex justify-between items-center text-xs font-semibold">
+                      <span className="text-slate-900 dark:text-slate-100">Production Experience</span>
+                      <span className="text-blue-700 dark:text-blue-400 font-mono">81%</span>
                     </div>
-                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-[#0284c7] h-full rounded-full" style={{ width: "81%" }} />
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-blue-700 h-full rounded-full" style={{ width: "81%" }} />
                     </div>
-                    <p className="text-[0.6875rem] text-[#6f7880]">Real-world codebase exposure.</p>
+                    <p className="text-[0.6875rem] text-slate-500 dark:text-slate-400">Demonstrated real-world trade-off understanding.</p>
                   </div>
                 </div>
               </div>
@@ -1778,28 +1982,28 @@ const RecruiterDashboard: React.FC = () => {
               {/* Strengths & Growth Areas Two-Column Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Strengths */}
-                <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex flex-col gap-3">
+                <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col gap-3">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#006389] text-[20px]">verified</span>
-                    <h4 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#1b1b24]">
+                    <span className="material-symbols-outlined text-blue-700 dark:text-blue-400 text-[20px]">verified</span>
+                    <h4 className="font-sans text-sm font-semibold text-slate-900 dark:text-slate-100">
                       Validated Strengths
                     </h4>
                   </div>
-                  <ul className="space-y-2 text-xs text-[#3f484f]">
+                  <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-[#006389] text-base shrink-0 mt-0.5">
+                      <span className="material-symbols-outlined text-blue-700 dark:text-blue-400 text-base shrink-0 mt-0.5">
                         check_circle
                       </span>
                       <span>High vocal pacing and structured verbal delivery on camera.</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-[#006389] text-base shrink-0 mt-0.5">
+                      <span className="material-symbols-outlined text-blue-700 dark:text-blue-400 text-base shrink-0 mt-0.5">
                         check_circle
                       </span>
                       <span>Maintained precision when the AI interviewer asked follow-up probes.</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-[#006389] text-base shrink-0 mt-0.5">
+                      <span className="material-symbols-outlined text-blue-700 dark:text-blue-400 text-base shrink-0 mt-0.5">
                         check_circle
                       </span>
                       <span>Demonstrated clear architectural trade-offs in scalable environments.</span>
@@ -1808,28 +2012,28 @@ const RecruiterDashboard: React.FC = () => {
                 </div>
 
                 {/* Areas to Strengthen */}
-                <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex flex-col gap-3">
+                <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col gap-3">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#206586] text-[20px]">lightbulb</span>
-                    <h4 className="font-['Plus_Jakarta_Sans',sans-serif] text-sm font-bold text-[#1b1b24]">
-                      Areas to Strengthen
+                    <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-[20px]">lightbulb</span>
+                    <h4 className="font-sans text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      Areas for Further Inquiry
                     </h4>
                   </div>
-                  <ul className="space-y-2 text-xs text-[#3f484f]">
+                  <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-[#206586] text-base shrink-0 mt-0.5">
+                      <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-base shrink-0 mt-0.5">
                         adjust
                       </span>
                       <span>Deepen understanding of edge caching strategies and memory boundaries.</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-[#206586] text-base shrink-0 mt-0.5">
+                      <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-base shrink-0 mt-0.5">
                         adjust
                       </span>
                       <span>Practice explaining how systems handle graceful degradation during traffic spikes.</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-[#206586] text-base shrink-0 mt-0.5">
+                      <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-base shrink-0 mt-0.5">
                         adjust
                       </span>
                       <span>Strengthen task-aligned evaluation metrics selection.</span>
@@ -1840,12 +2044,12 @@ const RecruiterDashboard: React.FC = () => {
             </div>
 
             {/* Scorecard Footer Actions */}
-            <div className="p-5 bg-white border-t border-slate-200/80 flex items-center justify-between">
+            <div className="p-5 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <button
                 onClick={() => setSelectedCandidateForScorecard(null)}
-                className="px-4 py-2 text-xs text-[#6f7880] hover:underline font-semibold"
+                className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium transition-colors"
               >
-                Close
+                Close Scorecard
               </button>
 
               <button
@@ -1854,7 +2058,7 @@ const RecruiterDashboard: React.FC = () => {
                   setSelectedCandidateForScorecard(null);
                   handleLaunchInterview(candidate);
                 }}
-                className="px-5 py-2.5 bg-[#006389] hover:bg-[#004c6b] text-white rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm transition-all"
+                className="px-5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold flex items-center gap-2 shadow-xs transition-all"
               >
                 <span className="material-symbols-outlined text-sm">videocam</span>
                 <span>Launch Live Interview Room</span>
@@ -1868,21 +2072,21 @@ const RecruiterDashboard: React.FC = () => {
           SECTION: RECRUITER SETTINGS MODAL
       ───────────────────────────────────────────────────────────── */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-5 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-xl max-w-lg w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col gap-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[#006389] text-white flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-blue-700 text-white flex items-center justify-center shadow-xs">
                   <span className="material-symbols-outlined text-[18px]">settings</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-[#1b1b24]">Workspace Settings</h3>
-                  <p className="text-xs text-[#6f7880]">InterviewAI Engine Preferences</p>
+                  <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">Workspace Settings</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Evaluation Engine & Model Preferences</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsSettingsOpen(false)}
-                className="w-7 h-7 rounded-lg hover:bg-slate-50 text-[#6f7880] flex items-center justify-center"
+                className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 flex items-center justify-center transition-colors"
               >
                 <span className="material-symbols-outlined text-sm">close</span>
               </button>
@@ -1890,11 +2094,11 @@ const RecruiterDashboard: React.FC = () => {
 
             <div className="space-y-4 text-xs">
               <div>
-                <label className="font-semibold text-[#1b1b24] block mb-1">LLM Evaluation Model (Groq API)</label>
+                <label className="font-semibold text-slate-900 dark:text-slate-100 block mb-1">LLM Evaluation Model (Groq API)</label>
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:border-[#006389]"
+                  className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700 text-slate-900 dark:text-slate-100"
                 >
                   <option value="llama-3.3-70b-versatile">LLaMA 3.3 70B Versatile (Recommended)</option>
                   <option value="llama-3.1-8b-instant">LLaMA 3.1 8B Instant (Ultra-fast)</option>
@@ -1903,33 +2107,33 @@ const RecruiterDashboard: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-semibold text-[#1b1b24] block mb-1">Speech Engine</label>
+                <label className="font-semibold text-slate-900 dark:text-slate-100 block mb-1">Speech Engine</label>
                 <input
                   type="text"
                   disabled
                   value="Deepgram Nova-2 (WebSocket Real-time)"
-                  className="w-full h-9 px-3 bg-gray-100 border border-slate-200 rounded-lg text-xs text-gray-500 cursor-not-allowed"
+                  className="w-full h-9 px-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-500 cursor-not-allowed"
                 />
               </div>
 
               <div className="flex items-center justify-between pt-2">
                 <div>
-                  <p className="font-semibold text-[#1b1b24]">Google Meet Autonomous Join</p>
-                  <p className="text-[10px] text-[#6f7880]">Allow Playwright bot to auto-admit candidates</p>
+                  <p className="font-semibold text-slate-900 dark:text-slate-100">Google Meet Autonomous Join</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">Allow Playwright bot to auto-admit candidates</p>
                 </div>
                 <input
                   type="checkbox"
                   checked={meetBotAutoJoin}
                   onChange={(e) => setMeetBotAutoJoin(e.target.checked)}
-                  className="w-4 h-4 accent-[#006389] cursor-pointer"
+                  className="w-4 h-4 accent-blue-700 cursor-pointer"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200/80">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
               <button
                 onClick={() => setIsSettingsOpen(false)}
-                className="px-4 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-[#6f7880] hover:bg-slate-50"
+                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
                 Cancel
               </button>
@@ -1941,7 +2145,7 @@ const RecruiterDashboard: React.FC = () => {
                   });
                   setIsSettingsOpen(false);
                 }}
-                className="px-4 py-2 rounded-lg bg-[#006389] hover:bg-[#004c6b] text-white text-xs font-semibold shadow-sm"
+                className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold shadow-xs transition-colors"
               >
                 Save Preferences
               </button>
@@ -1954,53 +2158,53 @@ const RecruiterDashboard: React.FC = () => {
           SECTION: HELP & SUPPORT MODAL
       ───────────────────────────────────────────────────────────── */}
       {isHelpOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-5 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-xl max-w-lg w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col gap-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[#0284c7] text-white flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-blue-700 text-white flex items-center justify-center shadow-xs">
                   <span className="material-symbols-outlined text-[18px]">help</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-[#1b1b24]">Help & System Guide</h3>
-                  <p className="text-xs text-[#6f7880]">InterviewAI Architecture & Troubleshooting</p>
+                  <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">Help & System Guide</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Architecture & Operational Workflows</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsHelpOpen(false)}
-                className="w-7 h-7 rounded-lg hover:bg-slate-50 text-[#6f7880] flex items-center justify-center"
+                className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 flex items-center justify-center transition-colors"
               >
                 <span className="material-symbols-outlined text-sm">close</span>
               </button>
             </div>
 
-            <div className="space-y-3 text-xs text-[#3f484f]">
-              <div className="p-3 rounded-xl bg-slate-50">
-                <h4 className="font-bold text-[#1b1b24] mb-1">1. How Resume Screening Works</h4>
+            <div className="space-y-3 text-xs text-slate-600 dark:text-slate-400">
+              <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">1. How Resume Screening Works</h4>
                 <p className="text-[11px] leading-relaxed">
                   Upload candidate PDFs in the Intake Funnel. The system parses text with spaCy/pdfminer and evaluates cosine similarity against your target job description.
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-50">
-                <h4 className="font-bold text-[#1b1b24] mb-1">2. Google Meet Bot Join</h4>
+              <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">2. Google Meet Bot Join</h4>
                 <p className="text-[11px] leading-relaxed">
                   The automated interview bot uses headless Playwright on port 8001. When a meeting link is generated, it joins as host and asks questions via Deepgram TTS.
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-50">
-                <h4 className="font-bold text-[#1b1b24] mb-1">3. Live Video Interview Room</h4>
+              <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">3. Live Video Interview Room</h4>
                 <p className="text-[11px] leading-relaxed">
                   Click <strong>Launch Direct Room</strong> or <strong>Start Interview</strong> next to any candidate to test the interactive camera, speech evaluation, and question generator.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center justify-end pt-2 border-t border-slate-200/80">
+            <div className="flex items-center justify-end pt-2 border-t border-slate-200 dark:border-slate-800">
               <button
                 onClick={() => setIsHelpOpen(false)}
-                className="px-5 py-2 rounded-lg bg-[#006389] hover:bg-[#004c6b] text-white text-xs font-semibold shadow-sm"
+                className="px-5 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold shadow-xs transition-colors"
               >
                 Got It
               </button>

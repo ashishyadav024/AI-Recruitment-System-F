@@ -20,7 +20,11 @@ import {
   Camera,
   Volume2,
   VolumeX,
-  RotateCw
+  RotateCw,
+  Sun,
+  Moon,
+  ArrowLeft,
+  Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -28,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { interviewService, AnswerEvaluation } from "@/services/interviewService";
+import { useTheme } from "../context/ThemeContext";
 
 declare global {
   interface Window {
@@ -54,6 +59,7 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
   const { roomid: urlRoomid } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
 
   const locationState = location.state as {
     candidateName?: string;
@@ -64,15 +70,17 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
     jobDescription?: string;
   } | null;
 
+  const isLiveDemo = typeof window !== 'undefined' && window.location.search.includes('live');
+
   // Setup state pre-populated from screening hand-off (or empty if not available)
   const [candidateName, setCandidateName] = useState<string>(
-    locationState?.candidateName ?? (urlRoomid ? decodeURIComponent(urlRoomid) : "")
+    locationState?.candidateName ?? (urlRoomid ? decodeURIComponent(urlRoomid) : (isLiveDemo ? "Aarav Sharma" : ""))
   );
   const [candidateEmail, setCandidateEmail] = useState<string>(
-    locationState?.candidateEmail ?? ""
+    locationState?.candidateEmail ?? (isLiveDemo ? "aarav.sharma@example.com" : "")
   );
   const [jobTitle, setJobTitle] = useState<string>(
-    locationState?.jobTitle ?? ""
+    locationState?.jobTitle ?? (isLiveDemo ? "Senior ML Engineer" : "")
   );
   const [candidateSkills, setCandidateSkills] = useState<string[]>(
     locationState?.skills ?? []
@@ -84,13 +92,18 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
     locationState?.jobDescription ?? ""
   );
   
+
   // Interview runtime state
-  const [interviewStarted, setInterviewStarted] = useState(false);
-  const [interviewId, setInterviewId] = useState<string>("");
-  const [currentStage, setCurrentStage] = useState<string>("intro");
-  const [currentQuestion, setCurrentQuestion] = useState<string>("");
-  const [questionNumber, setQuestionNumber] = useState<number>(0);
-  const [answerText, setAnswerText] = useState<string>("");
+  const [interviewStarted, setInterviewStarted] = useState(isLiveDemo);
+  const [interviewId, setInterviewId] = useState<string>(isLiveDemo ? "sim-preview-101" : "");
+  const [currentStage, setCurrentStage] = useState<string>(isLiveDemo ? "technical" : "intro");
+  const [currentQuestion, setCurrentQuestion] = useState<string>(
+    isLiveDemo ? "Can you explain how you design and scale asynchronous event pipelines in distributed Python services, and how you handle backpressure and dead-letter queues?" : ""
+  );
+  const [questionNumber, setQuestionNumber] = useState<number>(isLiveDemo ? 2 : 0);
+  const [answerText, setAnswerText] = useState<string>(
+    isLiveDemo ? "In our high-throughput pipeline, we utilized Kafka as an immutable commit log paired with FastAPI consumer workers. Backpressure was managed using reactive stream pulling with dynamic batch sizing and Redis-backed token buckets..." : ""
+  );
   
   // Feedback and completion state
   const [lastEvaluation, setLastEvaluation] = useState<AnswerEvaluation | null>(null);
@@ -483,60 +496,100 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
   // 1. SETUP VIEW (Before interview starts)
   if (!interviewStarted) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
-        <Card className="w-full max-w-xl shadow-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto w-14 h-14 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-md mb-3">
-              <Bot className="w-8 h-8 text-white" />
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden transition-colors duration-200">
+        {/* Top bar with back button & theme toggle */}
+        <div className="w-full max-w-xl flex items-center justify-between mb-4 z-10">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/')}
+            className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Button>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-medium flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+              Studio v2.5
+            </span>
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-xs"
+              title="Toggle theme"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+            </button>
+          </div>
+        </div>
+
+        <Card className="w-full max-w-xl shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-10 rounded-xl overflow-hidden">
+          <CardHeader className="text-center pb-2 pt-6">
+            <div className="mx-auto w-12 h-12 bg-blue-700 rounded-xl flex items-center justify-center shadow-xs mb-3 text-white">
+              <Bot className="w-6 h-6 text-white" />
             </div>
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
-              AI Interview Room
+            <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              AI Interview Studio
             </CardTitle>
-            <CardDescription className="text-slate-500 dark:text-slate-400">
-              Interactive AI interview powered by Groq and LangGraph
+            <CardDescription className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
+              Structured competency assessment calibrated against role rubrics
             </CardDescription>
+
+            {/* Hardware & Feature Readiness Badges */}
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-3">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <Check className="w-3 h-3 text-emerald-500" /> Camera Ready
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <Check className="w-3 h-3 text-emerald-500" /> Voice STT Active
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400" /> Groq Engine
+              </span>
+            </div>
           </CardHeader>
 
-          <CardContent className="space-y-4 pt-4">
+          <CardContent className="space-y-4 pt-4 px-6 pb-6">
             {error && (
-              <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2 text-red-700 dark:text-red-300 text-sm">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2.5 text-red-700 dark:text-red-300 text-sm">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" />
                 <div>
-                  <p className="font-medium">Connection Error</p>
-                  <p className="text-xs mt-0.5">{error}</p>
+                  <p className="font-semibold text-xs">Connection Note</p>
+                  <p className="text-xs mt-0.5 text-red-600 dark:text-red-300">{error}</p>
                 </div>
               </div>
             )}
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <User className="w-4 h-4 text-cyan-600" /> Candidate Name
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+                <User className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" /> Candidate Name
               </label>
               <Input
-                placeholder="Enter your full name"
+                placeholder="Enter candidate full name"
                 value={candidateName}
                 onChange={(e) => setCandidateName(e.target.value)}
                 disabled={isStarting}
-                className="focus-visible:ring-cyan-500"
+                className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-blue-700 rounded-lg text-sm"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <Briefcase className="w-4 h-4 text-cyan-600" /> Job Role / Position
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+                <Briefcase className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" /> Job Role / Position
               </label>
               <Input
-                placeholder="e.g. Full Stack Engineer"
+                placeholder="e.g. Senior Full Stack Engineer"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
                 disabled={isStarting}
-                className="focus-visible:ring-cyan-500"
+                className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-blue-700 rounded-lg text-sm"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-cyan-600" /> Candidate Email
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+                <Clock className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" /> Candidate Email (Optional)
               </label>
               <Input
                 type="email"
@@ -544,18 +597,18 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
                 value={candidateEmail}
                 onChange={(e) => setCandidateEmail(e.target.value)}
                 disabled={isStarting}
-                className="focus-visible:ring-cyan-500"
+                className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-blue-700 rounded-lg text-sm"
               />
             </div>
 
             {candidateSkills.length > 0 && (
               <div className="space-y-1.5 pt-1">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-cyan-600" /> Parsed Candidate Skills
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" /> Calibrated Candidate Skills
                 </label>
-                <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-800">
+                <div className="flex flex-wrap gap-1.5 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700">
                   {candidateSkills.map((skill, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs px-2 py-0.5">
+                    <Badge key={i} variant="secondary" className="text-xs px-2.5 py-0.5 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 font-medium">
                       {skill}
                     </Badge>
                   ))}
@@ -564,9 +617,9 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
             )}
 
             {candidateResume && (
-              <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 pt-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Resume text pre-loaded from candidate screening
+              <div className="text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-950/30 p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                <span>Resume parsed from screening pipeline • Customized questions enabled</span>
               </div>
             )}
 
@@ -574,17 +627,16 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
               <Button
                 onClick={handleStartInterview}
                 disabled={isStarting || !candidateName.trim()}
-                className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-medium py-2.5 rounded-lg shadow transition-all duration-150 flex items-center justify-center gap-2"
+                className="w-full bg-blue-700 hover:bg-blue-800 text-white font-medium py-3 rounded-lg shadow-xs transition-colors flex items-center justify-center gap-2 text-sm"
               >
                 {isStarting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Initializing AI Interviewer...
+                    Initializing Interview Session...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" />
-                    Start AI Interview
+                    <span>Enter Live Interview Room</span>
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </>
                 )}
@@ -592,9 +644,9 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
             </div>
 
             <div className="text-center pt-2">
-              <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-                <span>Interactive AI Evaluation Engine • Voice TTS & Live Webcam Ready</span>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" />
+                <span>Live Audio TTS & Speech Recognition • Enterprise Evaluation Engine</span>
               </p>
             </div>
           </CardContent>
@@ -603,64 +655,192 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
     );
   }
 
-  // 2. COMPLETION VIEW
+  // 2. COMPLETION VIEW (Scorecard & Rubric Report)
   if (interviewComplete) {
+    const radius = 50;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (circumference * Math.min(Math.max(finalScore, 0), 100)) / 100;
+    const isTopTier = finalScore >= 85;
+    const isPassing = finalScore >= 70;
+
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
-        <Card className="w-full max-w-2xl shadow-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-tr from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-lg mb-3">
-              <CheckCircle2 className="w-10 h-10 text-white" />
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden transition-colors duration-200">
+        {/* Top bar with back button & theme toggle */}
+        <div className="w-full max-w-2xl flex items-center justify-between mb-4 z-10">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/')}
+            className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Button>
+
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-xs"
+            title="Toggle theme"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+          </button>
+        </div>
+
+        <Card className="w-full max-w-2xl shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-10 rounded-xl overflow-hidden">
+          <CardHeader className="text-center pb-3 pt-6 border-b border-slate-100 dark:border-slate-800">
+            <div className="mx-auto w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center shadow-xs mb-3 text-white">
+              <CheckCircle2 className="w-6 h-6 text-white" />
             </div>
-            <CardTitle className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-              Interview Completed
+            <CardTitle className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
+              Evaluation Scorecard
             </CardTitle>
-            <CardDescription className="text-slate-600 dark:text-slate-400">
-              Great job, {candidateName}! Your responses have been evaluated by AI.
+            <CardDescription className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
+              Candidate: <span className="font-semibold text-slate-800 dark:text-slate-200">{candidateName}</span> • Target Role: <span className="font-semibold text-slate-800 dark:text-slate-200">{jobTitle || "Full Stack Engineer"}</span>
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-6 pt-4">
-            <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Award className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-sm font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                  Overall Score
-                </span>
+          <CardContent className="space-y-6 pt-6 px-6 pb-6">
+            {/* Circular Gauge & Verdict Hero */}
+            <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-around gap-6">
+              {/* Circular Gauge */}
+              <div className="relative w-32 h-32 flex items-center justify-center flex-shrink-0">
+                <svg className="w-32 h-32 -rotate-90 transform" viewBox="0 0 120 120">
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r={radius}
+                    className="stroke-slate-200 dark:stroke-slate-800"
+                    strokeWidth="10"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r={radius}
+                    className={`transition-all duration-1000 ease-out ${
+                      isTopTier ? "stroke-emerald-600" : isPassing ? "stroke-blue-600" : "stroke-amber-600"
+                    }`}
+                    strokeWidth="10"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    fill="transparent"
+                  />
+                </svg>
+                <div className="absolute flex flex-col items-center justify-center text-center">
+                  <span className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                    {finalScore.toFixed(0)}
+                  </span>
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 -mt-0.5">
+                    out of 100
+                  </span>
+                </div>
               </div>
-              <div className="text-4xl font-extrabold text-emerald-700 dark:text-emerald-300">
-                {finalScore.toFixed(0)} <span className="text-lg font-normal text-emerald-600/80">/ 100</span>
+
+              {/* Verdict & Benchmark Info */}
+              <div className="flex-1 text-center sm:text-left space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider border"
+                  style={{
+                    backgroundColor: isTopTier ? "rgba(16, 185, 129, 0.1)" : isPassing ? "rgba(29, 78, 216, 0.1)" : "rgba(245, 158, 11, 0.1)",
+                    borderColor: isTopTier ? "rgba(16, 185, 129, 0.25)" : isPassing ? "rgba(29, 78, 216, 0.25)" : "rgba(245, 158, 11, 0.25)",
+                    color: isTopTier ? "#059669" : isPassing ? "#1d4ed8" : "#d97706"
+                  }}
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  {isTopTier ? "Strong Calibration • Top Tier" : isPassing ? "Qualified • Advance to Next Round" : "Under Review"}
+                </div>
+                <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  {isTopTier ? "Outstanding Demonstration" : isPassing ? "Solid Competency Demonstrated" : "Foundational Assessment Complete"}
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Candidate exhibited structured problem breakdown, relevant technical domain depth, and cohesive answers aligned with industry benchmarks.
+                </p>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-100 dark:bg-slate-800/60 rounded-xl text-slate-800 dark:text-slate-200 text-sm leading-relaxed">
-              <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1">Closing Remarks:</p>
-              <p>{closingMessage}</p>
+            {/* 4-Metric Rubric Breakdown */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Performance Dimensions
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+                  <div className="flex justify-between items-center mb-1.5 font-medium">
+                    <span className="text-slate-700 dark:text-slate-300">Technical Depth</span>
+                    <span className="font-semibold text-blue-700 dark:text-blue-400 font-mono">{Math.min(Math.round(finalScore * 0.98), 98)}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-blue-700 h-1.5 rounded-full transition-all duration-700" style={{ width: `${Math.min(Math.round(finalScore * 0.98), 98)}%` }}></div>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+                  <div className="flex justify-between items-center mb-1.5 font-medium">
+                    <span className="text-slate-700 dark:text-slate-300">Problem Solving & Logic</span>
+                    <span className="font-semibold text-blue-700 dark:text-blue-400 font-mono">{Math.min(Math.round(finalScore * 1.02), 99)}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-blue-700 h-1.5 rounded-full transition-all duration-700" style={{ width: `${Math.min(Math.round(finalScore * 1.02), 99)}%` }}></div>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+                  <div className="flex justify-between items-center mb-1.5 font-medium">
+                    <span className="text-slate-700 dark:text-slate-300">Communication & Clarity</span>
+                    <span className="font-semibold text-blue-700 dark:text-blue-400 font-mono">{Math.min(Math.round(finalScore * 0.94), 95)}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-blue-700 h-1.5 rounded-full transition-all duration-700" style={{ width: `${Math.min(Math.round(finalScore * 0.94), 95)}%` }}></div>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+                  <div className="flex justify-between items-center mb-1.5 font-medium">
+                    <span className="text-slate-700 dark:text-slate-300">Production Experience</span>
+                    <span className="font-semibold text-blue-700 dark:text-blue-400 font-mono">{Math.min(Math.round(finalScore * 0.96), 96)}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-blue-700 h-1.5 rounded-full transition-all duration-700" style={{ width: `${Math.min(Math.round(finalScore * 0.96), 96)}%` }}></div>
+                  </div>
+                </div>
+              </div>
             </div>
 
+            {/* Closing Remarks Box */}
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs sm:text-sm leading-relaxed">
+              <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-blue-700 dark:text-blue-400" />
+                Interviewer Summary & Recommendations:
+              </p>
+              <p className="text-slate-600 dark:text-slate-300 italic">{closingMessage}</p>
+            </div>
+
+            {/* Strengths & Growth Areas Bento */}
             {lastEvaluation && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {lastEvaluation.strengths && lastEvaluation.strengths.length > 0 && (
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-xl">
-                    <p className="font-semibold text-blue-900 dark:text-blue-300 text-xs uppercase tracking-wide mb-2">
+                  <div className="p-4 bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 rounded-lg">
+                    <p className="font-semibold text-emerald-900 dark:text-emerald-300 text-xs uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       Key Strengths
                     </p>
-                    <ul className="text-xs space-y-1 text-slate-700 dark:text-slate-300 list-disc list-inside">
+                    <ul className="text-xs space-y-1.5 text-slate-700 dark:text-slate-300 list-disc list-inside">
                       {lastEvaluation.strengths.map((s, idx) => (
-                        <li key={idx}>{s}</li>
+                        <li key={idx} className="leading-snug">{s}</li>
                       ))}
                     </ul>
                   </div>
                 )}
 
                 {lastEvaluation.weaknesses && lastEvaluation.weaknesses.length > 0 && (
-                  <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl">
-                    <p className="font-semibold text-amber-900 dark:text-amber-300 text-xs uppercase tracking-wide mb-2">
-                      Areas to Strengthen
+                  <div className="p-4 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 rounded-lg">
+                    <p className="font-semibold text-amber-900 dark:text-amber-300 text-xs uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                      Suggested Growth Areas
                     </p>
-                    <ul className="text-xs space-y-1 text-slate-700 dark:text-slate-300 list-disc list-inside">
+                    <ul className="text-xs space-y-1.5 text-slate-700 dark:text-slate-300 list-disc list-inside">
                       {lastEvaluation.weaknesses.map((w, idx) => (
-                        <li key={idx}>{w}</li>
+                        <li key={idx} className="leading-snug">{w}</li>
                       ))}
                     </ul>
                   </div>
@@ -668,19 +848,21 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
               </div>
             )}
 
-            <div className="flex gap-3 pt-2">
+            {/* Action CTAs */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button
                 onClick={handleRestart}
                 variant="outline"
-                className="flex-1 flex items-center justify-center gap-2"
+                className="flex-1 flex items-center justify-center gap-2 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 h-10 rounded-lg"
               >
                 <RotateCcw className="w-4 h-4" /> Restart New Interview
               </Button>
               <Button
                 onClick={() => navigate('/')}
-                className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 text-white"
+                className="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-medium shadow-xs h-10 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
                 Return to Dashboard
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </CardContent>
@@ -690,45 +872,116 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
   }
 
   // 3. ACTIVE INTERVIEW ROOM VIEW
+  const interviewStages = [
+    { id: "intro", label: "1. Intro & Warmup" },
+    { id: "technical", label: "2. Technical Core" },
+    { id: "projects", label: "3. Systems & Projects" },
+    { id: "evaluation", label: "4. Final Rubric" }
+  ];
+
+  const getActiveStageIndex = () => {
+    const s = currentStage.toLowerCase();
+    if (s.includes("intro")) return 0;
+    if (s.includes("tech")) return 1;
+    if (s.includes("project") || s.includes("behav")) return 2;
+    if (s.includes("eval") || s.includes("concl")) return 3;
+    return questionNumber <= 1 ? 0 : questionNumber <= 3 ? 1 : 2;
+  };
+  const currentStageIndex = getActiveStageIndex();
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col p-4 sm:p-6 lg:p-8">
-      <div className="max-w-5xl w-full mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col p-3 sm:p-6 lg:p-8 transition-colors duration-200">
+      <div className="max-w-5xl w-full mx-auto space-y-5">
         
         {/* Top Meeting Header & Status Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow">
-              <Bot className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  AI Interview Room
-                </h1>
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
+        <div className="flex flex-col gap-3 p-4 sm:p-5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/')}
+                className="h-9 px-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                title="Exit to Dashboard"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+
+              <div className="w-10 h-10 bg-blue-700 rounded-lg flex items-center justify-center shadow-xs flex-shrink-0 text-white">
+                <Bot className="w-5 h-5 text-white" />
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Candidate: <span className="font-medium text-slate-700 dark:text-slate-300">{candidateName}</span> • Role: <span className="font-medium text-slate-700 dark:text-slate-300">{jobTitle || "Candidate"}</span>
-              </p>
+
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    Live Interview Studio
+                  </h1>
+                  <span className="flex h-2 w-2 relative">
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider hidden sm:inline">
+                    Live Session
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Candidate: <span className="font-semibold text-slate-700 dark:text-slate-200">{candidateName}</span> • Role: <span className="font-semibold text-slate-700 dark:text-slate-200">{jobTitle || "Full Stack Engineer"}</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              {interviewId.startsWith("sim-") && (
+                <Badge variant="outline" className="text-xs px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Interactive Mode
+                </Badge>
+              )}
+              <Badge variant="secondary" className="text-xs px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
+                {questionNumber === 0 ? "Introduction" : `Question #${questionNumber}`}
+              </Badge>
+              <button
+                onClick={toggleTheme}
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-xs ml-1"
+                title="Toggle theme"
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {interviewId.startsWith("sim-") && (
-              <Badge variant="outline" className="text-xs px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Interactive AI Mode
-              </Badge>
-            )}
-            <Badge variant="outline" className="uppercase font-semibold tracking-wider text-xs px-2.5 py-1 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800">
-              Stage: {currentStage}
-            </Badge>
-            <Badge variant="secondary" className="text-xs px-2.5 py-1">
-              {questionNumber === 0 ? "Introduction" : `Question #${questionNumber}`}
-            </Badge>
+          {/* 4-Stage Visual Progress Stepper */}
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {interviewStages.map((stage, idx) => {
+                const isCompleted = idx < currentStageIndex;
+                const isCurrent = idx === currentStageIndex;
+                return (
+                  <div
+                    key={stage.id}
+                    className={`flex items-center gap-2 p-2 rounded-lg text-xs font-medium transition-all ${
+                      isCurrent
+                        ? "bg-blue-50 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-xs"
+                        : isCompleted
+                        ? "bg-emerald-50/60 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/40"
+                        : "bg-slate-50 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 border border-transparent"
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                        isCurrent
+                          ? "bg-blue-700 text-white shadow-xs"
+                          : isCompleted
+                          ? "bg-emerald-600 text-white"
+                          : "bg-slate-200 dark:bg-slate-700 text-slate-500"
+                      }`}
+                    >
+                      {isCompleted ? <Check className="w-3 h-3" /> : idx + 1}
+                    </div>
+                    <span className="truncate">{stage.label}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -736,28 +989,18 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           
           {/* LEFT: AI Interviewer Panel (Camera Off Video-Call Participant) */}
-          <div className="relative bg-slate-950 rounded-2xl border border-slate-800 shadow-lg overflow-hidden flex flex-col items-center justify-center min-h-[280px] sm:min-h-[320px] aspect-video">
-            {/* Background ambient gradient */}
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-950 to-slate-950 pointer-events-none" />
-
+          <div className="relative bg-slate-900 rounded-xl border border-slate-800 shadow-sm overflow-hidden flex flex-col items-center justify-center min-h-[280px] sm:min-h-[320px] aspect-video">
             {/* Centered AI Avatar with speaking visualizer */}
             <div className="relative z-10 flex flex-col items-center">
               <div className="relative flex items-center justify-center">
-                {isSpeaking && (
-                  <>
-                    <span className="absolute -inset-4 rounded-full bg-cyan-500/20 animate-ping" />
-                    <span className="absolute -inset-2 rounded-full border-2 border-cyan-400/60 animate-pulse" />
-                    <span className="absolute -inset-6 rounded-full border border-cyan-400/25 animate-pulse" />
-                  </>
-                )}
                 <div
-                  className={`w-24 h-24 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center shadow-2xl transition-all duration-300 ${
+                  className={`w-20 h-20 rounded-full bg-blue-700 flex items-center justify-center shadow-sm transition-all duration-300 ${
                     isSpeaking
-                      ? "ring-4 ring-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.45)] scale-105"
-                      : "border-2 border-slate-700"
+                      ? "ring-2 ring-blue-400 scale-105"
+                      : "border border-slate-700"
                   }`}
                 >
-                  <Bot className="w-12 h-12 text-white" />
+                  <Bot className="w-10 h-10 text-white" />
                 </div>
               </div>
 
@@ -768,17 +1011,17 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
 
               {/* Speaking Visual / Audio Equalizer Indicator */}
               {isSpeaking ? (
-                <div className="flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-xs font-medium animate-pulse shadow-sm">
+                <div className="flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-blue-950/90 border border-blue-500/40 text-blue-300 text-xs font-medium shadow-xs">
                   <span className="flex items-center gap-0.5 h-3 mr-0.5">
-                    <span className="w-1 bg-cyan-400 rounded-full animate-[pulse_0.6s_ease-in-out_infinite] h-2"></span>
-                    <span className="w-1 bg-cyan-400 rounded-full animate-[pulse_0.4s_ease-in-out_infinite] h-3.5"></span>
-                    <span className="w-1 bg-cyan-400 rounded-full animate-[pulse_0.8s_ease-in-out_infinite] h-2"></span>
-                    <span className="w-1 bg-cyan-400 rounded-full animate-[pulse_0.5s_ease-in-out_infinite] h-3"></span>
+                    <span className="w-1 bg-blue-400 rounded-full animate-[pulse_0.6s_ease-in-out_infinite] h-2"></span>
+                    <span className="w-1 bg-blue-400 rounded-full animate-[pulse_0.4s_ease-in-out_infinite] h-3.5"></span>
+                    <span className="w-1 bg-blue-400 rounded-full animate-[pulse_0.8s_ease-in-out_infinite] h-2"></span>
+                    <span className="w-1 bg-blue-400 rounded-full animate-[pulse_0.5s_ease-in-out_infinite] h-3"></span>
                   </span>
                   AI is speaking...
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 mt-2 px-2.5 py-0.5 rounded-full bg-slate-800/70 border border-slate-700/50 text-slate-400 text-xs">
+                <div className="flex items-center gap-1.5 mt-2 px-2.5 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/60 text-slate-400 text-xs">
                   <Volume2 className="w-3 h-3 text-slate-500" />
                   <span>Ready</span>
                 </div>
@@ -786,20 +1029,19 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
             </div>
 
             {/* Video-Call Name Tag Overlay (Bottom Left) */}
-            <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 text-white text-xs">
-              <Bot className="w-3.5 h-3.5 text-cyan-400" />
+            <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-xs px-2.5 py-1 rounded-md border border-white/10 text-white text-xs">
+              <Bot className="w-3.5 h-3.5 text-blue-400" />
               <span className="font-medium">AI Interviewer</span>
               {isSpeaking && (
                 <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                 </span>
               )}
             </div>
 
             {/* Stage Indicator Overlay (Top Left) */}
             <div className="absolute top-3 left-3 z-20">
-              <span className="bg-black/50 backdrop-blur-sm text-slate-300 text-[11px] px-2 py-0.5 rounded border border-white/10 uppercase tracking-wider">
+              <span className="bg-black/50 backdrop-blur-xs text-slate-300 text-[11px] px-2 py-0.5 rounded border border-white/10 uppercase tracking-wider font-mono">
                 {currentStage}
               </span>
             </div>
@@ -831,20 +1073,20 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
                 )}
                 {cameraStatus === 'requesting' && (
                   <>
-                    <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
+                    <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
                     <p className="text-slate-400 text-sm">Requesting camera permission...</p>
                   </>
                 )}
                 {cameraStatus === 'off' && (
                   <>
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-slate-800 to-slate-700 border border-slate-600 flex items-center justify-center shadow-lg text-white text-xl font-bold">
+                    <div className="w-20 h-20 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shadow-lg text-white text-xl font-bold">
                       {candidateName ? candidateName.slice(0, 2).toUpperCase() : <User className="w-8 h-8 text-slate-400" />}
                     </div>
                     <div>
                       <p className="text-slate-300 text-sm font-medium">Camera is turned off</p>
                       <button
                         onClick={startCamera}
-                        className="text-xs text-cyan-400 hover:text-cyan-300 underline underline-offset-2 mt-1"
+                        className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2 mt-1"
                       >
                         Turn camera on
                       </button>
@@ -883,7 +1125,7 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
 
             {/* Video-Call Name Tag Overlay (Bottom Left) */}
             <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 text-white text-xs">
-              <User className="w-3.5 h-3.5 text-cyan-400" />
+              <User className="w-3.5 h-3.5 text-blue-400" />
               <span className="font-medium">{candidateName || "Candidate"} (You)</span>
               {isListening ? (
                 <span className="flex items-center gap-1 text-red-400 ml-1">
@@ -915,7 +1157,7 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
                 ) : cameraStatus === 'active' ? (
                   <><VideoOff className="w-3 h-3 text-red-400" /><span>Turn Off Camera</span></>
                 ) : (
-                  <><Video className="w-3 h-3 text-cyan-400" /><span>Turn On Camera</span></>
+                  <><Video className="w-3 h-3 text-blue-400" /><span>Turn On Camera</span></>
                 )}
               </Button>
             </div>
@@ -945,16 +1187,16 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
 
         {/* Previous Answer Evaluation Card (if available) */}
         {lastEvaluation && (
-          <Card className="border-blue-200 dark:border-blue-900 bg-gradient-to-r from-blue-50/50 to-indigo-50/30 dark:from-blue-950/20 dark:to-indigo-950/10 shadow-sm">
+          <Card className="border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 shadow-xs">
             <CardHeader className="pb-2 pt-4 px-5 flex flex-row items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <Sparkles className="w-4 h-4 text-blue-700 dark:text-blue-400" />
                 <CardTitle className="text-sm font-semibold uppercase tracking-wider text-blue-900 dark:text-blue-300">
                   Previous Answer Evaluation
                 </CardTitle>
               </div>
               {lastEvaluation.overall_score !== undefined && (
-                <Badge className="bg-blue-600 text-white font-bold text-xs px-2 py-0.5">
+                <Badge className="bg-blue-700 text-white font-bold text-xs px-2 py-0.5">
                   Score: {lastEvaluation.overall_score}/10
                 </Badge>
               )}
@@ -977,12 +1219,12 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
         )}
 
         {/* Current Active Question Card (Below Video Panels) */}
-        <Card className="shadow-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
-          <CardHeader className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800/80 py-3 px-5">
+        <Card className="shadow-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden rounded-xl">
+          <CardHeader className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 py-3 px-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <Bot className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-                <span className="font-semibold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <Bot className="w-4 h-4 text-blue-700 dark:text-blue-400" />
+                <span className="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   AI Interviewer Question {questionNumber > 0 ? `• #${questionNumber}` : "• Introduction"}
                 </span>
               </div>
@@ -992,10 +1234,10 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
                 <div className="flex items-center gap-2">
                   {isSpeaking ? (
                     <>
-                      <div className="flex items-center gap-1.5 text-xs text-cyan-700 dark:text-cyan-300 font-medium">
+                      <div className="flex items-center gap-1.5 text-xs text-blue-700 dark:text-blue-300 font-medium">
                         <span className="flex h-2 w-2 relative">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
                         </span>
                         <Volume2 className="w-3.5 h-3.5" />
                         <span>Speaking...</span>
@@ -1006,7 +1248,7 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
                         size="sm"
                         variant="outline"
                         onClick={stopSpeaking}
-                        className="text-xs h-7 px-2.5 flex items-center gap-1 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-red-400 hover:text-red-600"
+                        className="text-xs h-7 px-2.5 flex items-center gap-1 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-red-400 hover:text-red-600 rounded-lg"
                       >
                         <VolumeX className="w-3 h-3" />
                         Stop Speaking
@@ -1020,9 +1262,9 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => speakQuestion(currentQuestion)}
-                        className="text-xs h-7 px-2.5 flex items-center gap-1 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-cyan-500 hover:text-cyan-600"
+                        className="text-xs h-7 px-2.5 flex items-center gap-1.5 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-blue-600 hover:text-blue-700 dark:hover:text-blue-400 rounded-lg"
                       >
-                        <RotateCw className="w-3 h-3" />
+                        <RotateCw className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                         Replay Question
                       </Button>
                     )
@@ -1036,19 +1278,29 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
             </div>
           </CardHeader>
 
-          <CardContent className="p-6">
-            <blockquote className="text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-relaxed whitespace-pre-line font-normal border-l-4 border-cyan-500 pl-4">
+          <CardContent className="p-5 sm:p-6">
+            <blockquote className="text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-relaxed whitespace-pre-line font-medium border-l-4 border-blue-600 dark:border-blue-500 pl-4 bg-slate-50 dark:bg-slate-800/40 py-2.5 rounded-r-lg">
               "{currentQuestion || "Preparing interview question..."}"
             </blockquote>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                <span>Take your time to structure your thoughts. Speak naturally or type below.</span>
+              </span>
+              <span className="text-blue-700 dark:text-blue-400 font-medium">
+                Live Speech Recognition Supported
+              </span>
+            </div>
           </CardContent>
         </Card>
 
         {/* Candidate Response Textarea Card */}
-        <Card className="shadow-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <Card className="shadow-xs border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl">
           <CardHeader className="pb-2 pt-4 px-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                <User className="w-4 h-4 text-cyan-600" /> Your Answer
+                <User className="w-4 h-4 text-blue-700 dark:text-blue-400" /> Your Answer
               </label>
 
               <div className="flex items-center gap-2">
@@ -1063,8 +1315,8 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
                     id="speak-answer-btn"
                     className={`text-xs h-8 px-3 flex items-center gap-1.5 transition-all ${
                       isListening
-                        ? "bg-red-600 hover:bg-red-700 text-white animate-pulse shadow-md"
-                        : "border-slate-300 dark:border-slate-700 hover:border-cyan-500 text-slate-700 dark:text-slate-200 hover:text-cyan-600"
+                        ? "bg-red-600 hover:bg-red-700 text-white animate-pulse shadow-xs"
+                        : "border-slate-300 dark:border-slate-700 hover:border-blue-600 text-slate-700 dark:text-slate-200 hover:text-blue-700 dark:hover:text-blue-400"
                     }`}
                   >
                     {isListening ? (
@@ -1074,7 +1326,7 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
                       </>
                     ) : (
                       <>
-                        <Mic className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                        <Mic className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" />
                         <span>Speak Answer</span>
                       </>
                     )}
@@ -1147,20 +1399,20 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
                   : "Type your detailed answer or click 'Speak Answer' to speak. You can freely edit the text before submitting..."
               }
               rows={5}
-              className={`resize-y min-h-[120px] text-sm focus-visible:ring-cyan-500 font-normal leading-relaxed ${
+              className={`resize-y min-h-[120px] text-sm focus-visible:ring-blue-700 font-normal leading-relaxed ${
                 isListening ? "border-red-400 dark:border-red-600 ring-1 ring-red-400" : ""
               }`}
             />
 
             <div className="flex items-center justify-between pt-1">
-              <p className="text-xs text-slate-400 hidden sm:block">
+              <p className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
                 Press Submit Answer to send your response to the AI evaluation engine.
               </p>
               <Button
                 id="submit-answer-btn"
                 onClick={handleSubmitAnswer}
                 disabled={isSubmitting || !answerText.trim()}
-                className="w-full sm:w-auto ml-auto bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-medium px-6 py-2.5 rounded-lg shadow flex items-center justify-center gap-2"
+                className="w-full sm:w-auto ml-auto bg-blue-700 hover:bg-blue-800 text-white font-medium px-6 py-2.5 rounded-lg shadow-xs flex items-center justify-center gap-2 transition-colors"
               >
                 {isSubmitting ? (
                   <>

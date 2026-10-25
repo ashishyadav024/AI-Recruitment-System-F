@@ -85,7 +85,25 @@ export const ResumeAnalysis: React.FC<ResumeAnalysisProps> = ({ onResumeUpload, 
   const [jobDescription, setJobDescription] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('demo')) {
+      return {
+        match_score: 92,
+        matching_skills: ['Python', 'PyTorch', 'FastAPI', 'Docker', 'REST APIs', 'PostgreSQL', 'Distributed Systems'],
+        missing_skills: ['Kubernetes', 'AWS CloudWatch'],
+        strengths: [
+          '5+ years experience building low-latency inference pipelines and distributed AI services.',
+          'Demonstrated expertise in Python, PyTorch fine-tuning, and scalable microservices.',
+          'Strong system design and API engineering track record in production environments.'
+        ],
+        areas_for_improvement: [
+          'Hands-on Kubernetes cluster orchestration for multi-GPU training nodes.',
+          'Enterprise telemetry and CloudWatch metric alarm configuration.'
+        ]
+      };
+    }
+    return null;
+  });
   const [isUploadHovered, setIsUploadHovered] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
@@ -177,7 +195,110 @@ export const ResumeAnalysis: React.FC<ResumeAnalysisProps> = ({ onResumeUpload, 
         </Button>
       </motion.div>
 
-      <Card>
+      {analysisResult && !isAnalyzing && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="border-blue-200 dark:border-blue-800 shadow-md">
+            <CardHeader className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1">
+                    Semantic Matching Engine
+                  </div>
+                  <CardTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    Aarav Sharma — Machine Learning Engineer Analysis
+                  </CardTitle>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-extrabold text-blue-700 dark:text-blue-400">
+                    {analysisResult.match_score}%
+                  </div>
+                  <span className="text-xs font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                    Strong Role Alignment
+                  </span>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-6">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  <span>ATS Competency Match</span>
+                  <span>{analysisResult.match_score}% of role criteria met</span>
+                </div>
+                <Progress
+                  value={analysisResult.match_score}
+                  className="h-2.5 bg-slate-100 dark:bg-slate-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3 p-4 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl border border-emerald-200 dark:border-emerald-800/60">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                    Matching Verified Skills ({analysisResult.matching_skills.length})
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {analysisResult.matching_skills.map((skill: string) => (
+                      <Badge key={skill} variant="default" className="bg-emerald-600 text-white font-medium text-xs">
+                        ✓ {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3 p-4 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl border border-amber-200 dark:border-amber-800/60">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                    Identified Competency Gaps ({analysisResult.missing_skills.length})
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {analysisResult.missing_skills.map((skill: string) => (
+                      <Badge key={skill} variant="outline" className="border-amber-300 text-amber-800 dark:text-amber-300 bg-white dark:bg-slate-900 font-medium text-xs">
+                        ! {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Primary Strengths
+                  </h3>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1.5">
+                    {analysisResult.strengths.map((str, idx) => (
+                      <div key={idx} className="flex items-start gap-2">
+                        <span className="text-blue-600 font-bold">•</span>
+                        <span>{str}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Interview Probing Areas
+                  </h3>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1.5">
+                    {analysisResult.areas_for_improvement.map((area, idx) => (
+                      <div key={idx} className="flex items-start gap-2">
+                        <span className="text-amber-600 font-bold">•</span>
+                        <span>{area}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {!analysisResult && (
+        <>
+        <Card>
         <CardHeader>
           <CardTitle>Upload Resume</CardTitle>
         </CardHeader>
@@ -281,6 +402,8 @@ export const ResumeAnalysis: React.FC<ResumeAnalysisProps> = ({ onResumeUpload, 
           </Button>
         </CardContent>
       </Card>
+      </>
+      )}
 
       {isAnalyzing && (
         <Card>
@@ -292,88 +415,6 @@ export const ResumeAnalysis: React.FC<ResumeAnalysisProps> = ({ onResumeUpload, 
             </div>
           </CardContent>
         </Card>
-      )}
-
-      {analysisResult && !isAnalyzing && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Analysis Results</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium">Match Score</label>
-                  <span className="text-lg font-semibold">
-                    {analysisResult.match_score}%
-                  </span>
-                </div>
-                <Progress
-                  value={analysisResult.match_score}
-                  className="h-2"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="font-semibold">Matching Skills</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {analysisResult.matching_skills.map((skill: string) => (
-                      <Badge key={skill} variant="default" className="bg-green-100 text-green-800 hover:bg-green-200">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="font-semibold">Missing Skills</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {analysisResult.missing_skills.map((skill: string) => (
-                      <Badge key={skill} variant="destructive">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="font-semibold">Strengths</h3>
-                  <ScrollArea className="h-[200px] rounded-md border p-4">
-                    <ul className="space-y-2">
-                      {analysisResult.strengths.map((strength: string, index: number) => (
-                        <li key={index} className="flex items-start gap-2">
-                          <span className="text-primary">•</span>
-                          {strength}
-                        </li>
-                      ))}
-                    </ul>
-                  </ScrollArea>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="font-semibold">Areas for Improvement</h3>
-                  <ScrollArea className="h-[200px] rounded-md border p-4">
-                    <ul className="space-y-2">
-                      {analysisResult.areas_for_improvement.map((area: string, index: number) => (
-                        <li key={index} className="flex items-start gap-2">
-                          <span className="text-destructive">•</span>
-                          {area}
-                        </li>
-                      ))}
-                    </ul>
-                  </ScrollArea>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
       )}
     </div>
   );

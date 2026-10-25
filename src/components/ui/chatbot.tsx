@@ -19,15 +19,15 @@ interface ChatbotProps {
 
 export default function Chatbot({
   messages = [
-    "नमस्कार! क्या आप स्मार्ट कृषि के बारे में अधिक जानना चाहेंगे?🌱",  
-"हाँ, मुझे आपके समाधानों के बारे में जानना है।",  
-"हम IoT सेंसर, AI विश्लेषण और सतत कृषि पद्धतियों के साथ डेटा-चालित खेती समाधान प्रदान करते हैं।🌱",  
-"यह तो बहुत रोचक है! मैं इसे कैसे शुरू कर सकता हूँ?",  
-"मैं आपको हमारी टीम से जोड़ रहा हूँ !🌱"
+    "Hello! Welcome to ResumeAI Talent Intelligence.",
+    "Can ResumeAI conduct automated technical screening?",
+    "Yes. We offer structured technical interviews, live code evaluation, and EEOC-compliant scorecards.",
+    "How does it integrate with our hiring pipeline?",
+    "Direct integrations with Greenhouse, Lever, and Ashby are supported out of the box."
   ],
-  delay = 1000, // Slower display time
-  startDelay = 1000, // First message delay
-  restartDelay = 3000, // Delay before restart
+  delay = 1200,
+  startDelay = 800,
+  restartDelay = 3500,
   loop = true
 }: ChatbotProps) {
   const navigate = useNavigate();
@@ -78,43 +78,42 @@ export default function Chatbot({
   }, [currentIndex, messages, delay, startDelay, restartDelay, loop]);
 
   return (
-    <div className={`w-full max-w-sm mx-auto backdrop-blur-md rounded-3xl overflow-hidden border shadow-xl transition-colors ${
+    <div className={`w-full max-w-sm mx-auto rounded-xl overflow-hidden border shadow-sm transition-colors ${
       theme === 'dark'
-        ? 'bg-cyan-950/40 border-cyan-600/30 shadow-cyan-950/50'
-        : 'bg-white border-cyan-100 shadow-slate-200/80'
+        ? 'bg-slate-900 border-slate-800'
+        : 'bg-white border-slate-200'
     }`}>
-      <div className={`p-4 border-b transition-colors ${
-        theme === 'dark' ? 'bg-cyan-900/50 border-cyan-600/30' : 'bg-cyan-50 border-cyan-100'
+      <div className={`px-4 py-3 border-b transition-colors flex items-center justify-between ${
+        theme === 'dark' ? 'bg-slate-800/60 border-slate-800' : 'bg-slate-50 border-slate-100'
       }`}>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <h3 
-            className={`text-lg font-semibold cursor-pointer transition-colors ${
-              theme === 'dark' ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-700 hover:text-cyan-800'
-            }`}
+            className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 cursor-pointer"
             onClick={() => navigate('/login')}
           >
-            AI Assistant
+            Talent Assistant
           </h3>
-          <button 
-            className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white text-xs font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 shadow-md hover:scale-105 transform"
-            onClick={() => navigate('/login')}
-          >
-            Chat Now
-          </button>
         </div>
+        <button 
+          className="px-2.5 py-1 bg-blue-700 hover:bg-blue-800 text-white text-xs font-medium rounded-md transition-colors shadow-xs"
+          onClick={() => navigate('/login')}
+        >
+          Open App
+        </button>
       </div>
 
-      <div className="h-96 p-4 overflow-y-auto flex flex-col space-y-4">
+      <div className="h-80 p-4 overflow-y-auto flex flex-col space-y-3">
         {chatMessages.map((message, index) => (
           <div key={index} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
             <div
-              className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+              className={`max-w-[85%] px-3.5 py-2 rounded-lg text-xs leading-relaxed ${
                 message.isUser 
-                  ? 'bg-blue-600 text-white ml-4 shadow-sm' 
+                  ? 'bg-blue-700 text-white ml-4 shadow-xs' 
                   : theme === 'dark'
-                    ? 'bg-cyan-900/60 text-cyan-50 mr-4 border border-cyan-700/30'
+                    ? 'bg-slate-800 text-slate-200 mr-4 border border-slate-700'
                     : 'bg-slate-100 text-slate-800 mr-4 border border-slate-200'
-              } backdrop-blur-sm shadow-md`}
+              }`}
             >
               {message.text}
             </div>
@@ -124,12 +123,12 @@ export default function Chatbot({
         {/* Bot typing indicator */}
         {isTyping && (
           <div className="flex justify-start">
-            <div className={`p-4 rounded-2xl flex space-x-2 backdrop-blur-sm ${
-              theme === 'dark' ? 'bg-cyan-800/50' : 'bg-slate-100'
+            <div className={`p-2.5 rounded-lg flex space-x-1.5 ${
+              theme === 'dark' ? 'bg-slate-800 border border-slate-700' : 'bg-slate-100 border border-slate-200'
             }`}>
-              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+              <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
+              <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+              <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
             </div>
           </div>
         )}
@@ -137,12 +136,12 @@ export default function Chatbot({
         {/* User typing indicator */}
         {isUserTyping && (
           <div className="flex justify-end">
-            <div className="bg-blue-600/50 p-2 rounded-2xl flex items-center gap-1 backdrop-blur-sm">
-              <div className="text-xs text-blue-200">typing</div>
+            <div className="bg-blue-700/80 px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-white">
+              <span className="text-[10px] text-blue-100">typing</span>
               <div className="flex space-x-1">
-                <div className="w-1.5 h-1.5 bg-blue-200 rounded-full animate-bounce"></div>
-                <div className="w-1.5 h-1.5 bg-blue-200 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                <div className="w-1.5 h-1.5 bg-blue-200 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                <div className="w-1 h-1 bg-white rounded-full animate-bounce"></div>
+                <div className="w-1 h-1 bg-white rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                <div className="w-1 h-1 bg-white rounded-full animate-bounce [animation-delay:0.4s]"></div>
               </div>
             </div>
           </div>

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { CheckCircle2, XCircle, ArrowRight, RotateCw } from 'lucide-react';
+import { CheckCircle2, XCircle, ArrowRight, RotateCw, ArrowLeft, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from "@/lib/utils";
+import { useNavigate } from 'react-router-dom';
 
 // shadcn/ui components
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ interface CandidatePredictorProps {
 }
 
 export default function CandidatePredictor({ initialData, useResumeData = false }: CandidatePredictorProps) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<CandidateData>({
     years_experience: initialData?.years_experience || '',
     skill_match_score: initialData?.skill_match_score || '',
@@ -126,25 +128,42 @@ export default function CandidatePredictor({ initialData, useResumeData = false 
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 p-4 md:p-8">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 md:p-8 relative transition-colors">
+      {/* Top back navigation */}
+      <div className="max-w-4xl mx-auto mb-4 flex items-center justify-between">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/')}
+          className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1.5"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Dashboard
+        </Button>
+        <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-medium flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+          ML Candidate Predictor
+        </span>
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="max-w-4xl mx-auto"
       >
-        <Card className="border border-cyan-400/30 bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
+        <Card className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs rounded-xl overflow-hidden">
+          <CardHeader className="text-center pt-8 pb-4">
+            <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               AI Candidate Predictor
             </CardTitle>
-            <CardDescription className="text-gray-400">
-              {useResumeData ? 'Using data from your resume analysis' : 'Enter your details manually'}
+            <CardDescription className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+              {useResumeData ? 'Using data from your resume analysis' : 'Enter candidate parameters manually to predict hiring odds'}
             </CardDescription>
           </CardHeader>
 
           {error && (
-            <div className="mx-6 mb-6 p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200">
+            <div className="mx-6 mb-6 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
               {error}
             </div>
           )}
@@ -154,13 +173,13 @@ export default function CandidatePredictor({ initialData, useResumeData = false 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-gray-300">Years of Experience</Label>
+                    <Label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Years of Experience</Label>
                     <Input
                       name="years_experience"
                       type="number"
                       value={formData.years_experience}
                       onChange={handleChange}
-                      className="bg-gray-800/50 border-gray-700 text-white hover:border-cyan-400 focus:border-cyan-400"
+                      className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-700 text-sm"
                       placeholder="5.5"
                       required
                       disabled={useResumeData}
@@ -168,13 +187,13 @@ export default function CandidatePredictor({ initialData, useResumeData = false 
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-gray-300">Skill Match Score (0-1)</Label>
+                    <Label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Skill Match Score (0-1)</Label>
                     <Input
                       name="skill_match_score"
                       type="number"
                       value={formData.skill_match_score}
                       onChange={handleChange}
-                      className="bg-gray-800/50 border-gray-700 text-white hover:border-cyan-400 focus:border-cyan-400"
+                      className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-700 text-sm"
                       placeholder="0.85"
                       min="0"
                       max="1"
@@ -182,20 +201,20 @@ export default function CandidatePredictor({ initialData, useResumeData = false 
                       required
                       disabled={useResumeData}
                     />
-                    <p className="text-sm text-gray-500">1 = perfect skill match</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">1 = perfect skill match</p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-gray-300">Education</Label>
+                    <Label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Education</Label>
                     <Select
                       value={formData.education}
                       onValueChange={(value) => handleSelectChange('education', value)}
                       disabled={useResumeData}
                     >
-                      <SelectTrigger className="bg-gray-800/50 border-gray-700 text-white hover:border-cyan-400">
+                      <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-blue-700 text-sm">
                         <SelectValue placeholder="Select education" />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-800 border-gray-700">
+                      <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100">
                         <SelectItem value="High School">High School</SelectItem>
                         <SelectItem value="Associate">Associate</SelectItem>
                         <SelectItem value="Bachelor">Bachelor</SelectItem>
@@ -206,16 +225,16 @@ export default function CandidatePredictor({ initialData, useResumeData = false 
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-gray-300">Job Level</Label>
+                    <Label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Job Level</Label>
                     <Select
                       value={formData.job_level}
                       onValueChange={(value) => handleSelectChange('job_level', value)}
                       disabled={useResumeData}
                     >
-                      <SelectTrigger className="bg-gray-800/50 border-gray-700 text-white hover:border-cyan-400">
+                      <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-blue-700 text-sm">
                         <SelectValue placeholder="Select job level" />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-800 border-gray-700">
+                      <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100">
                         <SelectItem value="Entry-level">Entry-level</SelectItem>
                         <SelectItem value="Mid-level">Mid-level</SelectItem>
                         <SelectItem value="Senior">Senior</SelectItem>
@@ -225,16 +244,16 @@ export default function CandidatePredictor({ initialData, useResumeData = false 
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-gray-300">Industry</Label>
+                    <Label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Industry</Label>
                     <Select
                       value={formData.industry}
                       onValueChange={(value) => handleSelectChange('industry', value)}
                       disabled={useResumeData}
                     >
-                      <SelectTrigger className="bg-gray-800/50 border-gray-700 text-white hover:border-cyan-400">
+                      <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-blue-700 text-sm">
                         <SelectValue placeholder="Select industry" />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-800 border-gray-700">
+                      <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100">
                         <SelectItem value="Technology">Technology</SelectItem>
                         <SelectItem value="Finance">Finance</SelectItem>
                         <SelectItem value="Healthcare">Healthcare</SelectItem>
@@ -248,7 +267,7 @@ export default function CandidatePredictor({ initialData, useResumeData = false 
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-slate-950 font-semibold"
+                  className="w-full bg-blue-700 hover:bg-blue-800 text-white font-medium py-2.5 rounded-lg shadow-xs transition-colors"
                   disabled={loading}
                 >
                   {loading ? (
@@ -271,21 +290,21 @@ export default function CandidatePredictor({ initialData, useResumeData = false 
                   transition={{ duration: 0.5 }}
                   className="space-y-6"
                 >
-                  <Card className={`border ${result.prediction ? 'border-green-500/30 bg-green-900/10' : 'border-red-500/30 bg-red-900/10'} p-6`}>
+                  <Card className={`border ${result.prediction ? 'border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/20' : 'border-red-200 dark:border-red-800/60 bg-red-50/60 dark:bg-red-950/20'} p-6 rounded-xl shadow-xs`}>
                     <div className="flex items-start gap-4">
                       {result.prediction ? (
-                        <CheckCircle2 className="h-10 w-10 text-green-400 flex-shrink-0" />
+                        <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                       ) : (
-                        <XCircle className="h-10 w-10 text-red-400 flex-shrink-0" />
+                        <XCircle className="h-8 w-8 text-red-600 dark:text-red-400 flex-shrink-0" />
                       )}
                       <div>
-                        <h3 className="text-xl font-bold text-white">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                           {result.recommendation}
                         </h3>
                         <div className="mt-4 space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-400">Confidence Score</span>
-                            <span className="text-sm font-medium text-white">
+                            <span className="text-xs text-slate-500 dark:text-slate-400">Confidence Score</span>
+                            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
                               {(result.probability * 100).toFixed(2)}%
                             </span>
                           </div>
@@ -293,13 +312,13 @@ export default function CandidatePredictor({ initialData, useResumeData = false 
                             value={result.probability * 100} 
                             className={cn(
                               "h-2",
-                              result.prediction ? "bg-green-900/50 [&>div]:bg-green-400" : "bg-red-900/50 [&>div]:bg-red-400"
+                              result.prediction ? "bg-emerald-100 dark:bg-emerald-950/50 [&>div]:bg-emerald-600" : "bg-red-100 dark:bg-red-950/50 [&>div]:bg-red-600"
                             )}
                           />
                         </div>
                         <Badge
                           variant="outline"
-                          className={`mt-3 ${result.prediction ? 'border-green-400 text-green-400' : 'border-red-400 text-red-400'}`}
+                          className={`mt-3 ${result.prediction ? 'border-emerald-500 text-emerald-700 dark:text-emerald-400' : 'border-red-500 text-red-700 dark:text-red-400'}`}
                         >
                           {result.prediction ? 'Recommended' : 'Not Recommended'}
                         </Badge>
@@ -307,31 +326,31 @@ export default function CandidatePredictor({ initialData, useResumeData = false 
                     </div>
                   </Card>
 
-                  <Card className="border border-gray-700 bg-gray-800/50">
-                    <CardHeader>
-                      <CardTitle className="text-white">Candidate Details</CardTitle>
+                  <Card className="border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 rounded-xl shadow-xs">
+                    <CardHeader className="py-4 px-6 border-b border-slate-100 dark:border-slate-800">
+                      <CardTitle className="text-slate-900 dark:text-slate-100 text-base font-semibold">Candidate Details</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <p className="text-sm text-gray-400">Years of Experience</p>
-                          <p className="text-white">{formData.years_experience}</p>
+                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Years of Experience</p>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formData.years_experience}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm text-gray-400">Skill Match Score</p>
-                          <p className="text-white">{formData.skill_match_score}</p>
+                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Skill Match Score</p>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formData.skill_match_score}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm text-gray-400">Education</p>
-                          <p className="text-white">{formData.education}</p>
+                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Education</p>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formData.education}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm text-gray-400">Job Level</p>
-                          <p className="text-white">{formData.job_level}</p>
+                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Job Level</p>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formData.job_level}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm text-gray-400">Industry</p>
-                          <p className="text-white">{formData.industry}</p>
+                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Industry</p>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formData.industry}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -340,9 +359,9 @@ export default function CandidatePredictor({ initialData, useResumeData = false 
                   <Button
                     onClick={handleReset}
                     variant="outline"
-                    className="w-full border-cyan-400 text-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300 py-6 text-lg"
+                    className="w-full border-slate-300 dark:border-slate-700 hover:border-blue-600 text-slate-700 dark:text-slate-200 hover:text-blue-700 dark:hover:text-blue-400 py-3 rounded-lg text-sm font-medium transition-colors"
                   >
-                    <RotateCw className="mr-2" />
+                    <RotateCw className="mr-2 h-4 w-4" />
                     Evaluate Another Candidate
                   </Button>
                 </motion.div>
