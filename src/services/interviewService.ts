@@ -1,4 +1,5 @@
 import { API_ENDPOINTS } from '../config/api';
+import { pipelineService } from './pipelineService';
 
 export interface InterviewStartRequest {
   candidate_name: string;
@@ -11,6 +12,9 @@ export interface InterviewStartRequest {
   session_id?: string;
   meeting_id?: string;
   target_duration_minutes?: number;
+  application_id?: string;
+  round_id?: string;
+  pipeline_attempt_id?: string;
 }
 
 export interface InterviewStartResponse {
@@ -51,6 +55,9 @@ export interface InterviewAnswerRequest {
   interview_id: string;
   answer: string;
   transcription_id?: string;
+  application_id?: string;
+  round_id?: string;
+  pipeline_attempt_id?: string;
 }
 
 export interface InterviewAnswerResponse {
@@ -86,6 +93,9 @@ interface SimulatedSession {
   currentQuestionIndex: number;
   scores: number[];
   answers: string[];
+  applicationId?: string;
+  roundId?: string;
+  pipelineAttemptId?: string;
 }
 
 const simulatedSessions: Record<string, SimulatedSession> = {};
@@ -216,7 +226,10 @@ export const interviewService = {
       skills,
       currentQuestionIndex: 0,
       scores: [],
-      answers: []
+      answers: [],
+      applicationId: request.application_id,
+      roundId: request.round_id,
+      pipelineAttemptId: request.pipeline_attempt_id
     };
 
     return {
@@ -286,6 +299,21 @@ export const interviewService = {
       const avgScore = session.scores.length > 0 
         ? Math.round(session.scores.reduce((a, b) => a + b, 0) / session.scores.length)
         : 89;
+
+      const attemptId = request.pipeline_attempt_id || session.pipelineAttemptId;
+      if (attemptId) {
+        pipelineService.submitNormalizedScore(
+          attemptId,
+          avgScore,
+          `Completed Technical Interview round with evaluation score of ${avgScore}/100.`,
+          {
+            total_questions: questions.length,
+            scores: session.scores,
+            stages_completed: ["Introduction", "Technical Architecture", "Problem Solving", "System Design"]
+          },
+          true // is_simulated
+        ).catch(e => console.warn("Failed to record normalized pipeline score:", e));
+      }
 
       return {
         success: true,

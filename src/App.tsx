@@ -15,6 +15,10 @@ import EmployeeResumeAnalysis from "./components1/EmployeeResumeAnalysis";
 import HRResumeAnalysis from "./components1/HRResumeAnalysis";
 import VideoInterview from "./components1/VideoInterview";
 import RecruiterDashboard from "./components1/RecruiterDashboard";
+import { PipelineBuilder } from "./components/pipeline/PipelineBuilder";
+import { ApplicationOverview } from "./components/pipeline/ApplicationOverview";
+import { AptitudeTestPage } from "./components/pipeline/AptitudeTestPage";
+import { AptitudeInstructionsPage } from "./components/pipeline/AptitudeInstructionsPage";
 
 const queryClient = new QueryClient();
 
@@ -30,12 +34,20 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<RecruiterDashboard />} />
               <Route path="/recruiter-dashboard" element={<RecruiterDashboard />} />
+              <Route path="/pipeline-builder" element={<PipelineBuilder />} />
+              <Route path="/pipelines" element={<PipelineBuilder />} />
               <Route path="/resumeAnalyzer" element={<ResumeAnalyzer />} />
               <Route path="/login" element={<Login />} />
               <Route path="/resume-analysis" element={<ResumeAnalysisContainer />} />
               <Route path="/employee-resume-analysis" element={<EmployeeResumeAnalysis />} />
               <Route path="/hr-resume-analysis" element={<HRResumeAnalysis />} />
               <Route path="/candidate-predictor" element={<CandidatePredictor />} />
+              <Route path="/apply" element={<ApplicationOverview />} />
+              <Route path="/apply/round/2/instructions" element={<AptitudeInstructionsPage />} />
+              <Route path="/apply/round/:roundOrder/instructions" element={<AptitudeInstructionsPage />} />
+              <Route path="/apply/round/2/test" element={<AptitudeTestPage />} />
+              <Route path="/apply/round/:roundOrder/test" element={<AptitudeTestPage />} />
+              <Route path="/application-overview" element={<ApplicationOverview />} />
               <Route path="/interview" element={<VideoInterview />} />
               <Route path="/interview/:roomid" element={<VideoInterview />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

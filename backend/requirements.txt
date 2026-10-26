@@ -3,6 +3,8 @@ uvicorn
 python-multipart
 pydantic
 PyPDF2
+PyMuPDF
+python-docx
 groq
 python-dotenv
 langchain

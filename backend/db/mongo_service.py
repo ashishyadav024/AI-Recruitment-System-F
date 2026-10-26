@@ -13,11 +13,19 @@ import logging
 import uuid
 from datetime import datetime
 from typing import Dict, List, Any, Optional
-from pymongo.collection import Collection
-from pymongo.errors import DuplicateKeyError, PyMongoError
+try:
+    from pymongo.collection import Collection
+    from pymongo.errors import DuplicateKeyError, PyMongoError
+except ImportError:
+    Collection = None
+    DuplicateKeyError = Exception
+    PyMongoError = Exception
 from db.mongo_client import get_collection
 from db.models import Collections
-import bcrypt
+try:
+    import bcrypt
+except ImportError:
+    bcrypt = None
 
 logger = logging.getLogger(__name__)
 

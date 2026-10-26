@@ -13,10 +13,12 @@ Why LangGraph?
 - Observable and debuggable execution
 """
 
-from langgraph_agents.resume_analysis_agent import ResumeAnalysisAgent
-from langgraph_agents.qa_agent import ResumeQAAgent
-
-__all__ = [
-    'ResumeAnalysisAgent',
-    'ResumeQAAgent'
-]
+try:
+    from langgraph_agents.resume_analysis_agent import ResumeAnalysisAgent
+    from langgraph_agents.qa_agent import ResumeQAAgent
+    __all__ = [
+        'ResumeAnalysisAgent',
+        'ResumeQAAgent'
+    ]
+except Exception:
+    __all__ = []

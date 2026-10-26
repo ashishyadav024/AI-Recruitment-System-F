@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { useTheme } from "../context/ThemeContext";
+import { CandidateVerifiedIcon } from "@/components/ui/BrandLogo";
+import { PipelineBuilder } from "@/components/pipeline/PipelineBuilder";
+import { pipelineService } from "@/services/pipelineService";
 
 interface CandidateRecord {
   id: string;
@@ -122,7 +125,7 @@ const RecruiterDashboard: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Active navigation tab
-  const [activeTab, setActiveTab] = useState<"overview" | "candidates" | "interviews" | "reports" | "job-roles">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "candidates" | "interviews" | "reports" | "job-roles" | "pipelines">("overview");
 
   // Modal states
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -137,6 +140,44 @@ const RecruiterDashboard: React.FC = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState("llama-3.3-70b-versatile");
   const [meetBotAutoJoin, setMeetBotAutoJoin] = useState(true);
+  const [candidateAptitudeAudit, setCandidateAptitudeAudit] = useState<any | null>(null);
+  const [isLoadingAptitude, setIsLoadingAptitude] = useState(false);
+
+  // Sync candidate aptitude assessment audit when scorecard candidate is selected
+  useEffect(() => {
+    let mounted = true;
+    if (selectedCandidateForScorecard?.email) {
+      setIsLoadingAptitude(true);
+      try {
+        const apps = pipelineService.listAllApplications();
+        const app = apps.find(a => a.candidate_email.toLowerCase() === selectedCandidateForScorecard.email.toLowerCase());
+        if (app) {
+          pipelineService.getAptitudeRecruiterAudit(app.application_id)
+            .then(res => {
+              if (mounted && res.success && res.audit) {
+                setCandidateAptitudeAudit(res.audit);
+              } else if (mounted) {
+                setCandidateAptitudeAudit(null);
+              }
+            })
+            .catch(() => {
+              if (mounted) setCandidateAptitudeAudit(null);
+            })
+            .finally(() => {
+              if (mounted) setIsLoadingAptitude(false);
+            });
+          return;
+        }
+      } catch {
+        // ignore
+      }
+      setCandidateAptitudeAudit(null);
+      setIsLoadingAptitude(false);
+    } else {
+      setCandidateAptitudeAudit(null);
+    }
+    return () => { mounted = false; };
+  }, [selectedCandidateForScorecard]);
 
   // Resume Analyzer Modal state
   const [jobTitleInput, setJobTitleInput] = useState("Machine Learning Engineer");
@@ -176,7 +217,45 @@ const RecruiterDashboard: React.FC = () => {
   });
 
   // Candidate interview launch handoff
-  const handleLaunchInterview = (candidate: CandidateRecord) => {
+  const handleLaunchInterview = async (candidate: CandidateRecord) => {
+    let appId: string | undefined;
+    let roundId: string | undefined;
+    try {
+      const apps = pipelineService.listAllApplications();
+      let app = apps.find(a => a.candidate_email.toLowerCase() === candidate.email.toLowerCase());
+      if (!app) {
+        app = await pipelineService.createCandidateApplication(
+          candidate.email,
+          candidate.name,
+          candidate.role
+        );
+      }
+      if (app) {
+        appId = app.application_id;
+        const pipeline = await pipelineService.getPipelineByRole(app.job_role);
+        const techRound = pipeline.rounds.find(r => r.round_type === 'technical_interview');
+        if (techRound) {
+          roundId = techRound.round_id;
+        }
+      }
+
+      // Gating Verification: Recruiters should not accidentally start an unpassed round
+      if (appId && roundId) {
+        const gatingCheck = await pipelineService.validateCanStartRound(appId, roundId);
+        if (!gatingCheck.can_start) {
+          toast({
+            title: "Round Gating Restricted",
+            description: `${candidate.name} has not completed preceding rounds: ${gatingCheck.reason || "Preceding rounds must be passed first."}`,
+            variant: "destructive"
+          });
+          navigate(`/apply?appId=${encodeURIComponent(appId)}`);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not sync candidate pipeline:", e);
+    }
+
     navigate(candidate.name ? `/interview/${encodeURIComponent(candidate.name)}` : "/interview", {
       state: {
         candidateName: candidate.name,
@@ -184,7 +263,9 @@ const RecruiterDashboard: React.FC = () => {
         jobTitle: candidate.role,
         skills: candidate.skills,
         candidateResume: candidate.resumeText || "",
-        jobDescription: jobDescriptionInput || ""
+        jobDescription: jobDescriptionInput || "",
+        applicationId: appId,
+        roundId: roundId
       }
     });
   };
@@ -314,15 +395,15 @@ const RecruiterDashboard: React.FC = () => {
         <div className="flex flex-col flex-1">
           {/* Brand Logo & Header */}
           <div className="p-5 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-blue-700 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                R
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-[10px] bg-blue-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <CandidateVerifiedIcon className="w-[22px] h-[22px] text-white" />
               </div>
               <div className="flex flex-col">
-                <span className={`text-[1.05rem] tracking-tight font-bold ${
+                <span className={`text-[1.05rem] tracking-tight font-bold whitespace-nowrap ${
                   theme === 'dark' ? 'text-white' : 'text-slate-900'
                 }`}>
-                  Resume<span className="text-blue-700 dark:text-blue-400">AI</span>
+                  AI Recruitment System
                 </span>
                 <span className="text-[0.625rem] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold font-mono">
                   TALENT INTELLIGENCE
@@ -423,6 +504,25 @@ const RecruiterDashboard: React.FC = () => {
             >
               <span className="material-symbols-outlined text-[18px]">work</span>
               <span>Job Roles</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("pipelines"); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                activeTab === "pipelines"
+                  ? "bg-blue-700 text-white font-semibold shadow-xs"
+                  : theme === 'dark'
+                    ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">account_tree</span>
+              <span>Hiring Pipelines</span>
+              <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full font-semibold font-mono ${
+                activeTab === "pipelines" ? "bg-white/20 text-white" : "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+              }`}>
+                6 Rounds
+              </span>
             </button>
           </nav>
         </div>
@@ -624,6 +724,7 @@ const RecruiterDashboard: React.FC = () => {
                   {activeTab === "interviews" && "AI Video Interviews & Live Rooms"}
                   {activeTab === "reports" && "Recruitment Intelligence & Reports"}
                   {activeTab === "job-roles" && "Active Job Roles & Openings"}
+                  {activeTab === "pipelines" && "Multi-Round Hiring Pipelines & Gating"}
                 </h1>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25 text-[0.6875rem] font-bold font-mono">
                   {activeTab === "overview" && "LIVE HUD"}
@@ -631,6 +732,7 @@ const RecruiterDashboard: React.FC = () => {
                   {activeTab === "interviews" && "AI BOT READY"}
                   {activeTab === "reports" && "AI ANALYTICS"}
                   {activeTab === "job-roles" && "4 OPENINGS"}
+                  {activeTab === "pipelines" && "SEQUENTIAL GATING"}
                 </span>
               </div>
               <p className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
@@ -639,6 +741,7 @@ const RecruiterDashboard: React.FC = () => {
                 {activeTab === "interviews" && "Monitor active Google Meet sessions, bot connectivity, and conduct live candidate evaluations."}
                 {activeTab === "reports" && "Comprehensive analytical reports, candidate competencies, and screening velocity."}
                 {activeTab === "job-roles" && "Manage position requirements, target skill profiles, and applicant volumes."}
+                {activeTab === "pipelines" && "Order rounds, calibrate cutoff scores & weights, and enforce sequential progression."}
               </p>
             </div>
 
@@ -655,11 +758,11 @@ const RecruiterDashboard: React.FC = () => {
                 <span>Upload Resumes</span>
               </button>
               <button
-                onClick={() => navigate("/interview")}
+                onClick={() => navigate("/apply")}
                 className="px-3.5 py-1.5 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-blue-700 dark:hover:border-blue-500 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors shadow-2xs"
               >
-                <span className="material-symbols-outlined text-[17px] text-slate-500">videocam</span>
-                <span>Launch Direct Room</span>
+                <span className="material-symbols-outlined text-[17px] text-slate-500">assignment</span>
+                <span>Candidate Pipeline Portal</span>
               </button>
             </div>
           </div>
@@ -1178,6 +1281,14 @@ const RecruiterDashboard: React.FC = () => {
                             Scorecard <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
                           </button>
                           <button
+                            onClick={() => setActiveTab("pipelines")}
+                            className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium px-2 py-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            title="Inspect candidate multi-round pipeline progress"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">account_tree</span>
+                            <span>Pipeline</span>
+                          </button>
+                          <button
                             onClick={() => handleLaunchInterview(cand)}
                             className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-medium transition-colors shadow-2xs active:scale-95"
                           >
@@ -1316,11 +1427,11 @@ const RecruiterDashboard: React.FC = () => {
                   <span>Upload Resumes</span>
                 </button>
                 <button
-                  onClick={() => navigate("/interview/Aarav%20Sharma")}
+                  onClick={() => navigate("/apply?appId=app-cand-1")}
                   className="px-4 py-2 bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all border border-slate-700"
                 >
                   <span className="material-symbols-outlined text-[16px]">play_arrow</span>
-                  <span>Demo Interview</span>
+                  <span>Demo Candidate Overview</span>
                 </button>
               </div>
             </div>
@@ -1353,11 +1464,11 @@ const RecruiterDashboard: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => navigate("/interview")}
+                    onClick={() => navigate("/apply")}
                     className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all"
                   >
-                    <span className="material-symbols-outlined text-[16px]">videocam</span>
-                    <span>Start Test Interview</span>
+                    <span className="material-symbols-outlined text-[16px]">assignment</span>
+                    <span>View Candidate Portal</span>
                   </button>
                 </div>
               </div>
@@ -1457,6 +1568,15 @@ const RecruiterDashboard: React.FC = () => {
                   <span>Export PDF</span>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* ─────────────────────────────────────────────────────────────
+              SECTION: MULTI-ROUND HIRING PIPELINES & GATING BUILDER
+          ───────────────────────────────────────────────────────────── */}
+          {activeTab === "pipelines" && (
+            <div className="w-full">
+              <PipelineBuilder />
             </div>
           )}
         </main>
@@ -2041,6 +2161,91 @@ const RecruiterDashboard: React.FC = () => {
                   </ul>
                 </div>
               </div>
+
+              {/* Round 2 Aptitude Evaluation Summary if candidate has attempted */}
+              {candidateAptitudeAudit && (
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col gap-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-blue-700 dark:text-blue-400 text-[20px]">psychology</span>
+                      <div>
+                        <h4 className="font-sans text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          Round 2: Aptitude Assessment Performance
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                          Automated evaluation across Quantitative, Logical Reasoning, and Verbal Ability
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold font-mono border ${
+                        candidateAptitudeAudit.passed
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                          : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300'
+                      }`}>
+                        {candidateAptitudeAudit.passed ? 'PASSED (Cutoff Met)' : 'FAILED (Below Cutoff)'}
+                      </span>
+                      <span className="text-base font-bold text-blue-700 dark:text-blue-400 font-mono">
+                        {candidateAptitudeAudit.score?.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Section Stats Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col">
+                      <span className="text-[0.6875rem] font-mono font-medium uppercase text-slate-400">Time Taken</span>
+                      <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                        {Math.floor((candidateAptitudeAudit.time_spent_seconds || 0) / 60)}m {(candidateAptitudeAudit.time_spent_seconds || 0) % 60}s
+                      </span>
+                      <span className="text-[0.6875rem] text-slate-500 font-mono">Server verified</span>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col">
+                      <span className="text-[0.6875rem] font-mono font-medium uppercase text-slate-400">Proctoring Signals</span>
+                      <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                        {candidateAptitudeAudit.tab_switches || 0} Tab Switches
+                      </span>
+                      <span className="text-[0.6875rem] text-slate-500 font-mono">Warning limit: 3</span>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col">
+                      <span className="text-[0.6875rem] font-mono font-medium uppercase text-slate-400">Cutoff Threshold</span>
+                      <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                        {candidateAptitudeAudit.cutoff || 60}%
+                      </span>
+                      <span className="text-[0.6875rem] text-slate-500 font-mono">Round 2 Gating</span>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col">
+                      <span className="text-[0.6875rem] font-mono font-medium uppercase text-slate-400">Total Questions</span>
+                      <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                        {candidateAptitudeAudit.questions?.length || 0} Evaluated
+                      </span>
+                      <span className="text-[0.6875rem] text-slate-500 font-mono">100% evaluated</span>
+                    </div>
+                  </div>
+
+                  {/* Section Breakdown Pills */}
+                  {candidateAptitudeAudit.section_scores && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {Object.entries(candidateAptitudeAudit.section_scores).map(([sec, stats]: [string, any]) => (
+                        <div key={sec} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                          <div className="flex justify-between items-center text-xs font-semibold">
+                            <span className="text-slate-900 dark:text-slate-100">{sec}</span>
+                            <span className="text-blue-700 dark:text-blue-400 font-mono">{stats.score?.toFixed(1)}%</span>
+                          </div>
+                          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                            <div className="bg-blue-700 h-full rounded-full" style={{ width: `${Math.min(100, Math.max(0, stats.score))}%` }} />
+                          </div>
+                          <span className="text-[0.6875rem] text-slate-400 font-mono">{stats.correct}/{stats.total} correct</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Scorecard Footer Actions */}

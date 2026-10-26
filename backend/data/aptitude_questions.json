@@ -1,0 +1,407 @@
+[
+  {
+    "question_id": "quant_01",
+    "section": "Quantitative Aptitude",
+    "difficulty": "easy",
+    "question_text": "A laptop originally priced at $1,200 is discounted by 15%. What is the final sale price?",
+    "options": ["$1,020", "$1,040", "$980", "$1,050"],
+    "correct_answer": "$1,020",
+    "explanation": "Discount = 15% of $1,200 = 0.15 * 1200 = $180. Sale price = $1,200 - $180 = $1,020."
+  },
+  {
+    "question_id": "quant_02",
+    "section": "Quantitative Aptitude",
+    "difficulty": "easy",
+    "question_text": "If a train travels at a constant speed of 72 km/h, how many meters does it cover in 25 seconds?",
+    "options": ["500 meters", "450 meters", "600 meters", "550 meters"],
+    "correct_answer": "500 meters",
+    "explanation": "Speed in m/s = 72 * (5/18) = 20 m/s. Distance in 25 seconds = 20 m/s * 25 s = 500 meters."
+  },
+  {
+    "question_id": "quant_03",
+    "section": "Quantitative Aptitude",
+    "difficulty": "easy",
+    "question_text": "The ratio of two positive numbers is 3:5. If their sum is 144, what is the value of the larger number?",
+    "options": ["90", "84", "96", "80"],
+    "correct_answer": "90",
+    "explanation": "Total ratio units = 3 + 5 = 8. One unit = 144 / 8 = 18. Larger number = 5 * 18 = 90."
+  },
+  {
+    "question_id": "quant_04",
+    "section": "Quantitative Aptitude",
+    "difficulty": "easy",
+    "question_text": "A merchant buys a gadget for $80 and sells it for $100. What is the merchant's profit percentage?",
+    "options": ["25%", "20%", "30%", "22.5%"],
+    "correct_answer": "25%",
+    "explanation": "Profit = $100 - $80 = $20. Profit percentage = (20 / 80) * 100% = 25%."
+  },
+  {
+    "question_id": "quant_05",
+    "section": "Quantitative Aptitude",
+    "difficulty": "easy",
+    "question_text": "If 8 workers can finish a data entry project in 6 days, how many days will 12 workers take to finish the same project working at the same pace?",
+    "options": ["4 days", "3 days", "5 days", "4.5 days"],
+    "correct_answer": "4 days",
+    "explanation": "Total workload = 8 * 6 = 48 worker-days. Time needed for 12 workers = 48 / 12 = 4 days."
+  },
+  {
+    "question_id": "quant_06",
+    "section": "Quantitative Aptitude",
+    "difficulty": "medium",
+    "question_text": "A principal sum of $5,000 is invested at an annual interest rate of 8% compounded annually. What is the total compound interest earned after 2 years?",
+    "options": ["$832", "$800", "$864", "$816"],
+    "correct_answer": "$832",
+    "explanation": "Total Amount = 5000 * (1 + 0.08)^2 = 5000 * 1.1664 = $5,832. Compound interest = 5,832 - 5,000 = $832."
+  },
+  {
+    "question_id": "quant_07",
+    "section": "Quantitative Aptitude",
+    "difficulty": "medium",
+    "question_text": "Pipe A fills a reservoir in 12 hours, while Pipe B empties it in 18 hours. If both pipes are opened together, how long will it take to fill the empty reservoir?",
+    "options": ["36 hours", "30 hours", "24 hours", "42 hours"],
+    "correct_answer": "36 hours",
+    "explanation": "Net filling rate per hour = (1/12) - (1/18) = (3 - 2)/36 = 1/36. Therefore, filling takes 36 hours."
+  },
+  {
+    "question_id": "quant_08",
+    "section": "Quantitative Aptitude",
+    "difficulty": "medium",
+    "question_text": "A box contains 5 red balls, 4 green balls, and 3 blue balls. If two balls are drawn at random without replacement, what is the probability that both balls are red?",
+    "options": ["5/33", "5/36", "10/66", "1/6"],
+    "correct_answer": "5/33",
+    "explanation": "Total balls = 12. P(1st Red) = 5/12. P(2nd Red | 1st Red) = 4/11. Combined P = (5/12) * (4/11) = 20/132 = 5/33."
+  },
+  {
+    "question_id": "quant_09",
+    "section": "Quantitative Aptitude",
+    "difficulty": "medium",
+    "question_text": "A container holds 60 liters of a mixture of milk and water in the ratio 2:1. How many liters of water must be added so the new ratio of milk to water becomes 1:2?",
+    "options": ["60 liters", "40 liters", "50 liters", "70 liters"],
+    "correct_answer": "60 liters",
+    "explanation": "Milk = (2/3)*60 = 40L, Water = 20L. Let x liters of water be added: 40 / (20 + x) = 1/2 => 20 + x = 80 => x = 60 liters."
+  },
+  {
+    "question_id": "quant_10",
+    "section": "Quantitative Aptitude",
+    "difficulty": "medium",
+    "question_text": "The average score of 20 students in a test is 65. If the highest score (95) and lowest score (35) are excluded, what is the average of the remaining 18 students?",
+    "options": ["65", "64", "66", "63.5"],
+    "correct_answer": "65",
+    "explanation": "Total of 20 = 20 * 65 = 1300. Sum of extremes = 95 + 35 = 130. Remaining total = 1300 - 130 = 1170. New average = 1170 / 18 = 65."
+  },
+  {
+    "question_id": "quant_11",
+    "section": "Quantitative Aptitude",
+    "difficulty": "hard",
+    "question_text": "In how many distinct ways can the letters of the word 'COMBINE' be arranged so that all three vowels always stay together?",
+    "options": ["720", "576", "840", "1,440"],
+    "correct_answer": "720",
+    "explanation": "Vowels = O, I, E (3). Consonants = C, M, B, N (4). Treat the vowels as 1 unit: 5 units total, arranged in 5! = 120 ways. The 3 vowels arrange in 3! = 6 ways. Total = 120 * 6 = 720."
+  },
+  {
+    "question_id": "quant_12",
+    "section": "Quantitative Aptitude",
+    "difficulty": "hard",
+    "question_text": "A motorboat travels 24 km upstream and 36 km downstream in a total of 6 hours. If the current flows at 2 km/h, what is the boat's speed in still water?",
+    "options": ["10 km/h", "12 km/h", "8 km/h", "14 km/h"],
+    "correct_answer": "10 km/h",
+    "explanation": "Let still water speed be v. Upstream speed = v - 2, downstream speed = v + 2. Time: 24/(v - 2) + 36/(v + 2) = 6. For v = 10: 24/8 + 36/12 = 3 + 3 = 6 hours."
+  },
+  {
+    "question_id": "quant_13",
+    "section": "Quantitative Aptitude",
+    "difficulty": "hard",
+    "question_text": "A shopkeeper marks an item 40% above the cost price and allows two successive discounts of 10% and 15%. What is the net profit percentage?",
+    "options": ["7.1%", "6.5%", "8.2%", "5.8%"],
+    "correct_answer": "7.1%",
+    "explanation": "Let CP = 100. Marked Price = 140. After 10% discount = 140 * 0.90 = 126. After 15% discount = 126 * 0.85 = 107.1. Profit = 107.1 - 100 = 7.1%."
+  },
+  {
+    "question_id": "quant_14",
+    "section": "Quantitative Aptitude",
+    "difficulty": "hard",
+    "question_text": "A solid right cylinder and a right circular cone share the same base radius and identical height. If the volume of the cylinder is 450 cm³, what is the volume of the cone?",
+    "options": ["150 cm³", "225 cm³", "300 cm³", "100 cm³"],
+    "correct_answer": "150 cm³",
+    "explanation": "Volume of a cone is (1/3)*π*r²*h, which is exactly one-third of the cylinder's volume: 450 / 3 = 150 cm³."
+  },
+  {
+    "question_id": "quant_15",
+    "section": "Quantitative Aptitude",
+    "difficulty": "hard",
+    "question_text": "Two athletes run in opposite directions around a 400-meter circular track, starting simultaneously from the same point at speeds of 6 m/s and 4 m/s. After how many seconds will they meet for the first time?",
+    "options": ["40 seconds", "45 seconds", "50 seconds", "36 seconds"],
+    "correct_answer": "40 seconds",
+    "explanation": "Relative speed in opposite directions = 6 + 4 = 10 m/s. Time to meet = 400 m / 10 m/s = 40 seconds."
+  },
+  {
+    "question_id": "logic_01",
+    "section": "Logical Reasoning",
+    "difficulty": "easy",
+    "question_text": "Identify the next number in the following sequence: 4, 9, 16, 25, 36, ?",
+    "options": ["49", "48", "50", "64"],
+    "correct_answer": "49",
+    "explanation": "The terms are squares of consecutive integers: 2²=4, 3²=9, 4²=16, 5²=25, 6²=36, 7²=49."
+  },
+  {
+    "question_id": "logic_02",
+    "section": "Logical Reasoning",
+    "difficulty": "easy",
+    "question_text": "Pointing to a portrait, Alex says: 'She is the daughter of my grandfather's only child.' How is the person in the portrait related to Alex?",
+    "options": ["Sister", "Cousin", "Aunt", "Mother"],
+    "correct_answer": "Sister",
+    "explanation": "Grandfather's only child is Alex's parent (father or mother). The daughter of Alex's parent is Alex's sister."
+  },
+  {
+    "question_id": "logic_03",
+    "section": "Logical Reasoning",
+    "difficulty": "easy",
+    "question_text": "If in a certain code language, 'RIVER' is written as 'SJWFS' where each letter is incremented by 1, how is 'CLOUD' encoded using the same rule?",
+    "options": ["DMPVE", "DMQUE", "CMPVE", "ENQWF"],
+    "correct_answer": "DMPVE",
+    "explanation": "Shifting each letter forward by 1: C->D, L->M, O->P, U->V, D->E => DMPVE."
+  },
+  {
+    "question_id": "logic_04",
+    "section": "Logical Reasoning",
+    "difficulty": "easy",
+    "question_text": "Which word does not share the same categorical classification as the other three?",
+    "options": ["Platinum", "Ruby", "Emerald", "Diamond"],
+    "correct_answer": "Platinum",
+    "explanation": "Ruby, Emerald, and Diamond are precious gemstones (minerals), whereas Platinum is a precious transition metal."
+  },
+  {
+    "question_id": "logic_05",
+    "section": "Logical Reasoning",
+    "difficulty": "easy",
+    "question_text": "A surveyor walks 10 meters North, turns 90° right and walks 6 meters, then turns 90° right again and walks 10 meters. Where is the surveyor relative to the starting point?",
+    "options": ["6 meters East", "6 meters West", "10 meters East", "16 meters North"],
+    "correct_answer": "6 meters East",
+    "explanation": "The 10m North and 10m South movements cancel each other out. The rightward movement leaves the surveyor 6 meters directly East of the origin."
+  },
+  {
+    "question_id": "logic_06",
+    "section": "Logical Reasoning",
+    "difficulty": "medium",
+    "question_text": "Statements:\n1. All rectangles are polygons.\n2. All polygons are 2D geometric shapes.\nWhich conclusions logically follow?\nI. All rectangles are 2D geometric shapes.\nII. Some 2D geometric shapes are rectangles.",
+    "options": ["Both conclusions I and II follow", "Only conclusion I follows", "Only conclusion II follows", "Neither conclusion follows"],
+    "correct_answer": "Both conclusions I and II follow",
+    "explanation": "By transitivity, rectangles are 2D geometric shapes (I follows). Since rectangles exist as 2D shapes, some 2D shapes are rectangles (II follows)."
+  },
+  {
+    "question_id": "logic_07",
+    "section": "Logical Reasoning",
+    "difficulty": "medium",
+    "question_text": "If RED = 27 (R=18 + E=5 + D=4) and BLUE = 40 (B=2 + L=12 + U=21 + E=5), what is the numerical value of GREEN?",
+    "options": ["49", "51", "47", "53"],
+    "correct_answer": "49",
+    "explanation": "G(7) + R(18) + E(5) + E(5) + N(14) = 7 + 18 + 5 + 5 + 14 = 49."
+  },
+  {
+    "question_id": "logic_08",
+    "section": "Logical Reasoning",
+    "difficulty": "medium",
+    "question_text": "Five engineers (P, Q, R, S, T) sit in a row facing North. Q is to the immediate right of S. P sits between R and S. T is seated at the extreme right end. Who sits in the exact middle?",
+    "options": ["S", "P", "Q", "R"],
+    "correct_answer": "S",
+    "explanation": "Ordering from left to right: R, P, S, Q, T. P is between R and S, Q is immediately right of S, and T is on the right end. The 3rd (middle) engineer is S."
+  },
+  {
+    "question_id": "logic_09",
+    "section": "Logical Reasoning",
+    "difficulty": "medium",
+    "question_text": "In a standard non-leap year, if August 15 falls on a Friday, what day of the week is September 26 of the same year?",
+    "options": ["Friday", "Saturday", "Thursday", "Wednesday"],
+    "correct_answer": "Friday",
+    "explanation": "Days remaining in August = 31 - 15 = 16. Days in September = 26. Total elapsed days = 16 + 26 = 42 days. 42 mod 7 = 0 extra days. Friday + 0 days = Friday."
+  },
+  {
+    "question_id": "logic_10",
+    "section": "Logical Reasoning",
+    "difficulty": "medium",
+    "question_text": "At 3:40, what is the acute or smaller angle formed between the hour hand and the minute hand of an analog clock?",
+    "options": ["130°", "140°", "125°", "135°"],
+    "correct_answer": "130°",
+    "explanation": "Angle = |30*H - (11/2)*M| = |30(3) - (11/2)(40)| = |90 - 220| = |-130| = 130 degrees."
+  },
+  {
+    "question_id": "logic_11",
+    "section": "Logical Reasoning",
+    "difficulty": "hard",
+    "question_text": "Six leaders (A, B, C, D, E, F) sit around a circular table facing inwards. A sits directly opposite D. C is seated between A and B. E is not adjacent to D. Who sits to the immediate left of F?",
+    "options": ["D", "E", "A", "B"],
+    "correct_answer": "D",
+    "explanation": "Clockwise layout: A at 1, C at 2, B at 3, D at 4, F at 5, E at 6. Facing center, the immediate left of F (position 5) is position 4, which is D."
+  },
+  {
+    "question_id": "logic_12",
+    "section": "Logical Reasoning",
+    "difficulty": "hard",
+    "question_text": "Proposal: 'A municipal government considers banning all non-electric commercial delivery vans from the city center starting next month.'\nArgument I: Yes, this will rapidly drop ambient particulate emissions and protect pedestrian air quality.\nArgument II: No, an abrupt 30-day mandate causes extreme supply chain disruption before logistics fleets can deploy electric vehicles.\nWhich argument is strong?",
+    "options": ["Both Argument I and Argument II are strong", "Only Argument I is strong", "Only Argument II is strong", "Neither argument is strong"],
+    "correct_answer": "Both Argument I and Argument II are strong",
+    "explanation": "Argument I presents a vital public health benefit grounded in environmental data, while Argument II highlights genuine operational and economic feasibility constraints of an abrupt timeline."
+  },
+  {
+    "question_id": "logic_13",
+    "section": "Logical Reasoning",
+    "difficulty": "hard",
+    "question_text": "In a family of six (U, V, W, X, Y, Z), there are two married couples. W is a physician and father of X. Z is grandmother of V. Y is grandfather of X and is an engineer. U is mother of V. What is the relationship between V and X?",
+    "options": ["Sibling", "Cousin", "Niece", "Aunt"],
+    "correct_answer": "Sibling",
+    "explanation": "Generation 1: Y (grandfather) and Z (grandmother). Generation 2: W (father) married to U (mother). Generation 3: X and V are their children, making V and X siblings."
+  },
+  {
+    "question_id": "logic_14",
+    "section": "Logical Reasoning",
+    "difficulty": "hard",
+    "question_text": "Statements:\n1. Some developers are designers.\n2. No designer is an accountant.\n3. All accountants are managers.\nWhich conclusions must be true?\nI. Some developers are not accountants.\nII. Some managers are accountants.",
+    "options": ["Both I and II follow", "Only I follows", "Only II follows", "Neither follows"],
+    "correct_answer": "Both I and II follow",
+    "explanation": "The developers who are designers cannot be accountants (hence some developers are not accountants, I follows). Since all accountants are managers, some managers must be accountants (II follows)."
+  },
+  {
+    "question_id": "logic_15",
+    "section": "Logical Reasoning",
+    "difficulty": "hard",
+    "question_text": "Four labeled boxes (Red, Blue, Green, Yellow) each contain one distinct fruit: Apple, Orange, Banana, or Pear. Exactly ONE of the following statements is true:\n- Red box says: 'The Banana is in this box.'\n- Blue box says: 'The Banana is not in this box.'\n- Green box says: 'The Pear is in the Red box.'\n- Yellow box says: 'The Orange is in this box.'\nIn which box is the Banana located?",
+    "options": ["Blue box", "Red box", "Green box", "Yellow box"],
+    "correct_answer": "Blue box",
+    "explanation": "If the banana is in the Blue box: Red's statement is False. Blue's statement ('Banana is not in this box') is False. Green's statement is False (Pear is not in Red). If the Orange is in the Yellow box, Yellow's statement is True. This satisfies the constraint that exactly one statement is true."
+  },
+  {
+    "question_id": "verbal_01",
+    "section": "Verbal Ability",
+    "difficulty": "easy",
+    "question_text": "Choose the word that is most nearly OPPOSITE in meaning to 'CANDID':",
+    "options": ["Deceitful", "Blunt", "Honest", "Sincere"],
+    "correct_answer": "Deceitful",
+    "explanation": "'Candid' means truthful, frank, and straightforward. The opposite is 'Deceitful' (misleading or dishonest)."
+  },
+  {
+    "question_id": "verbal_02",
+    "section": "Verbal Ability",
+    "difficulty": "easy",
+    "question_text": "Identify the word with the correct spelling:",
+    "options": ["Accommodate", "Acommodate", "Accomodate", "Acomodate"],
+    "correct_answer": "Accommodate",
+    "explanation": "The standard correct spelling has double 'c' and double 'm': 'Accommodate'."
+  },
+  {
+    "question_id": "verbal_03",
+    "section": "Verbal Ability",
+    "difficulty": "easy",
+    "question_text": "Fill in the blank with the appropriate preposition:\n'The engineering director congratulated Maya _____ her successful system migration.'",
+    "options": ["on", "for", "at", "about"],
+    "correct_answer": "on",
+    "explanation": "The standard grammatical idiom is to congratulate someone 'on' an achievement or event."
+  },
+  {
+    "question_id": "verbal_04",
+    "section": "Verbal Ability",
+    "difficulty": "easy",
+    "question_text": "Select the word that best completes the sentence:\n'The technical architect's explanation was so _____ that even non-technical stakeholders grasped the design immediately.'",
+    "options": ["lucid", "ambiguous", "redundant", "tedious"],
+    "correct_answer": "lucid",
+    "explanation": "'Lucid' means completely clear, intelligible, and easy to understand."
+  },
+  {
+    "question_id": "verbal_05",
+    "section": "Verbal Ability",
+    "difficulty": "easy",
+    "question_text": "What is the meaning of the idiomatic expression 'to cut corners'?",
+    "options": ["To do something hastily or cheaply to save effort or expense", "To make sharp turns while driving", "To precisely measure architectural borders", "To strictly comply with security regulations"],
+    "correct_answer": "To do something hastily or cheaply to save effort or expense",
+    "explanation": "'Cut corners' refers to bypassing proper procedures, standards, or diligence to economize on cost or time."
+  },
+  {
+    "question_id": "verbal_06",
+    "section": "Verbal Ability",
+    "difficulty": "medium",
+    "question_text": "Identify the segment containing a grammatical error:\n'(A) Neither the database administrator / (B) nor the principal software engineers / (C) was present at the incident review / (D) yesterday afternoon.'",
+    "options": ["C", "A", "B", "D"],
+    "correct_answer": "C",
+    "explanation": "When subjects are joined by 'neither... nor', the verb agrees with the closer subject ('engineers', plural). Therefore, it should be 'were present', making segment C incorrect."
+  },
+  {
+    "question_id": "verbal_07",
+    "section": "Verbal Ability",
+    "difficulty": "medium",
+    "question_text": "Complete the analogy:\nEPHEMERAL : PERMANENT :: PRAGMATIC : _____",
+    "options": ["Idealistic", "Realistic", "Sensible", "Rational"],
+    "correct_answer": "Idealistic",
+    "explanation": "'Ephemeral' (transient) and 'Permanent' are antonyms. The antonym of 'Pragmatic' (practical and realistic) is 'Idealistic'."
+  },
+  {
+    "question_id": "verbal_08",
+    "section": "Verbal Ability",
+    "difficulty": "medium",
+    "question_text": "Arrange the sentences into a logical and cohesive paragraph:\nP: This rapid cloud adoption drove unprecedented organizational efficiency.\nQ: Over the past five years, enterprises migrated their core systems to microservices.\nR: However, it concurrently increased the attack surface for distributed security threats.\nS: As a result, automated DevSecOps pipelines became essential for enterprise resilience.",
+    "options": ["Q - P - R - S", "P - Q - R - S", "Q - R - P - S", "S - Q - P - R"],
+    "correct_answer": "Q - P - R - S",
+    "explanation": "Q introduces the shift to microservices. P details the positive outcome (efficiency). R introduces the negative counterpoint (threat surface). S concludes with the modern countermeasure."
+  },
+  {
+    "question_id": "verbal_09",
+    "section": "Verbal Ability",
+    "difficulty": "medium",
+    "question_text": "Choose the sentence that maintains proper parallel grammatical structure:",
+    "options": ["She excelled at designing interfaces, writing resilient code, and reviewing pull requests.", "She excelled at designing interfaces, to write resilient code, and reviewing pull requests.", "She excelled at designing interfaces, writing resilient code, and to review pull requests.", "She excelled at design interfaces, writing resilient code, and review pull requests."],
+    "correct_answer": "She excelled at designing interfaces, writing resilient code, and reviewing pull requests.",
+    "explanation": "All three verbs in the list follow the consistent gerund (-ing) form: 'designing...', 'writing...', and 'reviewing...'."
+  },
+  {
+    "question_id": "verbal_10",
+    "section": "Verbal Ability",
+    "difficulty": "medium",
+    "question_text": "Which single word best substitutes the phrase: 'Using an unnecessarily large number of words in an indirect or evasive manner'?",
+    "options": ["Circumlocutory", "Eloquent", "Succinct", "Articulate"],
+    "correct_answer": "Circumlocutory",
+    "explanation": "'Circumlocutory' describes speech or writing that is roundabout, wordy, and avoids concise directness."
+  },
+  {
+    "question_id": "verbal_11",
+    "section": "Verbal Ability",
+    "difficulty": "hard",
+    "question_text": "Read the statement:\n'While automated algorithmic screening promises objectivity by removing individual human favoritism, it intrinsically reflects historical inequities present in training datasets. Consequently, uncritical reliance on model scores can institutionalize disparities behind a veneer of technical neutrality.'\nWhat is the author's primary assertion?",
+    "options": ["Automated models can inadvertently entrench past biases if training data is not scrutinized", "Algorithmic screening is invariably worse than unassisted human intuition", "Eliminating statistical models guarantees complete fairness in hiring", "Historical datasets should never be used in software development"],
+    "correct_answer": "Automated models can inadvertently entrench past biases if training data is not scrutinized",
+    "explanation": "The author argues that models trained on historical data inherit past biases, risking the entrenchment of disparities under a false appearance of neutrality."
+  },
+  {
+    "question_id": "verbal_12",
+    "section": "Verbal Ability",
+    "difficulty": "hard",
+    "question_text": "Choose the pair of words that best completes the sentence:\n'Although the initial performance benchmarks seemed _____, rigorous load testing revealed that the system architecture was wholly _____ under peak enterprise traffic.'",
+    "options": ["promising ... untenable", "spurious ... robust", "dubious ... optimal", "unconvincing ... resilient"],
+    "correct_answer": "promising ... untenable",
+    "explanation": "The subordinating conjunction 'Although' signals a contrast between an initially positive impression ('promising') and an unfavorable reality ('untenable')."
+  },
+  {
+    "question_id": "verbal_13",
+    "section": "Verbal Ability",
+    "difficulty": "hard",
+    "question_text": "Analyze the reasoning flaw:\n'Our top three product managers all drink green tea daily and consistently hit their quarterly targets. Therefore, providing free green tea to all product managers will elevate team performance.'",
+    "options": ["It confuses correlation with causation", "It uses circular reasoning", "It introduces an ad hominem attack", "It creates a false dichotomy"],
+    "correct_answer": "It confuses correlation with causation",
+    "explanation": "A coincident behavior shared by top performers does not establish a causal relationship that green tea causes superior performance."
+  },
+  {
+    "question_id": "verbal_14",
+    "section": "Verbal Ability",
+    "difficulty": "hard",
+    "question_text": "Which of the following sentences correctly applies the subjunctive mood?",
+    "options": ["The security director requested that the access key be rotated immediately.", "The security director requested that the access key was rotated immediately.", "The security director requested that the access key is rotated immediately.", "The security director requested that the access key has been rotated immediately."],
+    "correct_answer": "The security director requested that the access key be rotated immediately.",
+    "explanation": "Verbs expressing demand, insistence, or request ('requested that...') mandate the subjunctive base form 'be rotated' rather than 'was' or 'is'."
+  },
+  {
+    "question_id": "verbal_15",
+    "section": "Verbal Ability",
+    "difficulty": "hard",
+    "question_text": "What does the phrase 'mitigating circumstances' most accurately mean in an organizational or legal context?",
+    "options": ["Contextual factors that reduce the severity or culpability of an adverse event", "Aggravating factors that intensify the penalty for negligence", "Contractual clauses specifying mandatory liquidated damages", "Unforeseeable external financial market fluctuations"],
+    "correct_answer": "Contextual factors that reduce the severity or culpability of an adverse event",
+    "explanation": "'Mitigating circumstances' are surrounding facts that do not excuse an error or violation, but reduce blameworthiness and severity."
+  }
+]

@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { Mail, Lock, User, LogOut, CheckCircle2, Building2, Briefcase, UserCircle, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { registerUser, loginUser } from '../../services/authService';
 import { useTheme } from '../../context/ThemeContext';
+import { CandidateVerifiedIcon } from './BrandLogo';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -249,12 +250,12 @@ const Login = () => {
             : 'bg-white border-slate-200'
         }`}>
           <CardHeader className="text-center space-y-2 pb-4">
-            <div className="mx-auto w-8 h-8 rounded-lg bg-blue-700 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-              R
+            <div className="mx-auto w-10 h-10 rounded-[10px] bg-blue-700 text-white flex items-center justify-center shadow-xs">
+              <CandidateVerifiedIcon className="w-[22px] h-[22px] text-white" />
             </div>
             <div>
               <CardTitle className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                Sign in to ResumeAI
+                Sign in to AI Recruitment System
               </CardTitle>
               <CardDescription className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                 Structured hiring intelligence and automated evaluations

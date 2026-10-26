@@ -12,14 +12,22 @@ Features:
 import logging
 import os
 from typing import Optional
-from pymongo import MongoClient
-from pymongo.database import Database
-from pymongo.collection import Collection
-from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
+try:
+    from pymongo import MongoClient
+    from pymongo.database import Database
+    from pymongo.collection import Collection
+    from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
+except ImportError:
+    MongoClient = None
+    Database = None
+    Collection = None
+    ConnectionFailure = Exception
+    ServerSelectionTimeoutError = Exception
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 logger = logging.getLogger(__name__)
 

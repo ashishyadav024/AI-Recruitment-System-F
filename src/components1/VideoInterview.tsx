@@ -24,7 +24,9 @@ import {
   Sun,
   Moon,
   ArrowLeft,
-  Check
+  Check,
+  Lock,
+  ShieldAlert
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -32,7 +34,10 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { interviewService, AnswerEvaluation } from "@/services/interviewService";
+import { pipelineService } from "@/services/pipelineService";
+import { CandidateProgressStepper } from "@/components/pipeline/CandidateProgressStepper";
 import { useTheme } from "../context/ThemeContext";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 declare global {
   interface Window {
@@ -68,7 +73,15 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
     skills?: string[];
     candidateResume?: string;
     jobDescription?: string;
+    applicationId?: string;
+    roundId?: string;
+    attemptId?: string;
   } | null;
+
+  const searchParams = new URLSearchParams(location.search);
+  const paramAppId = searchParams.get('appId') || searchParams.get('application_id') || locationState?.applicationId;
+  const paramRoundId = searchParams.get('roundId') || searchParams.get('round_id') || locationState?.roundId;
+  const paramAttemptId = searchParams.get('attemptId') || searchParams.get('attempt_id') || locationState?.attemptId;
 
   const isLiveDemo = typeof window !== 'undefined' && window.location.search.includes('live');
 
@@ -91,6 +104,14 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
   const [jobDescription, setJobDescription] = useState<string>(
     locationState?.jobDescription ?? ""
   );
+
+  // Multi-Round Hiring Pipeline & Gating State
+  const [applicationId, setApplicationId] = useState<string | null>(paramAppId || null);
+  const [roundId, setRoundId] = useState<string | null>(paramRoundId || null);
+  const [attemptId, setAttemptId] = useState<string | null>(paramAttemptId || null);
+  const [gatingBlocked, setGatingBlocked] = useState<boolean>(false);
+  const [gatingReason, setGatingReason] = useState<string>("");
+  const [isCheckingGating, setIsCheckingGating] = useState<boolean>(false);
   
 
   // Interview runtime state
@@ -158,6 +179,90 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
       delete window.__simulateVoiceTranscript;
     };
   }, []);
+
+  // Check sequential gating requirements for pipeline
+  useEffect(() => {
+    let isCancelled = false;
+
+    const checkGating = async () => {
+      let activeAppId = applicationId;
+      let activeRoundId = roundId;
+
+      if (!activeAppId && candidateEmail) {
+        const apps = pipelineService.listAllApplications();
+        const found = apps.find(a => a.candidate_email.toLowerCase() === candidateEmail.toLowerCase());
+        if (found) {
+          activeAppId = found.application_id;
+          if (!isCancelled) setApplicationId(found.application_id);
+        }
+      }
+
+      if (activeAppId && !activeRoundId) {
+        const apps = pipelineService.listAllApplications();
+        const app = apps.find(a => a.application_id === activeAppId);
+        if (app) {
+          const pipeline = await pipelineService.getPipelineByRole(app.job_role);
+          const techRound = pipeline.rounds.find(r => r.round_type === 'technical_interview');
+          if (techRound) {
+            activeRoundId = techRound.round_id;
+            if (!isCancelled) setRoundId(techRound.round_id);
+          }
+        }
+      }
+
+      if (!activeAppId && !isLiveDemo) {
+        navigate(
+          "/apply?blocked=1&reason=" +
+            encodeURIComponent(
+              "Candidate must select a job role and pass preceding rounds before accessing Technical Interview."
+            ),
+          { replace: true }
+        );
+        return;
+      }
+
+      if (activeAppId && activeRoundId) {
+        if (!isCancelled) setIsCheckingGating(true);
+        try {
+          const check = await pipelineService.validateCanStartRound(activeAppId, activeRoundId);
+          if (!isCancelled) {
+            if (!check.can_start) {
+              setGatingBlocked(true);
+              setGatingReason(check.reason || "Previous round must be passed before accessing Technical Interview.");
+              if (!isLiveDemo) {
+                navigate(
+                  `/apply?appId=${encodeURIComponent(activeAppId)}&blocked=1&reason=${encodeURIComponent(
+                    check.reason || "Previous round must be passed before accessing Technical Interview."
+                  )}`,
+                  { replace: true }
+                );
+                return;
+              }
+            } else {
+              setGatingBlocked(false);
+              setGatingReason("");
+            }
+          }
+        } catch {
+          // safe fallback
+        } finally {
+          if (!isCancelled) setIsCheckingGating(false);
+        }
+      }
+    };
+
+    checkGating();
+    return () => {
+      isCancelled = true;
+    };
+  }, [applicationId, roundId, candidateEmail, isLiveDemo, navigate]);
+
+  // Auto-start interview if candidate completed instructions & hardware check on Application Overview
+  useEffect(() => {
+    if (locationState?.autoStart && !interviewStarted && !gatingBlocked && !isStarting && !interviewId && candidateName.trim()) {
+      handleStartInterview();
+    }
+  }, [locationState?.autoStart, interviewStarted, gatingBlocked, isStarting, interviewId, candidateName]);
 
   // Webcam helpers
   const startCamera = useCallback(async () => {
@@ -364,6 +469,25 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
     setIsStarting(true);
     setError(null);
 
+    let activeAttemptId = attemptId;
+    if (applicationId && roundId) {
+      try {
+        const attemptRes = await pipelineService.startRoundAttempt(applicationId, roundId);
+        if (attemptRes.success && attemptRes.attempt) {
+          activeAttemptId = attemptRes.attempt.attempt_id;
+          setAttemptId(activeAttemptId);
+        } else if (!attemptRes.success) {
+          setError(attemptRes.error || "Cannot start this round due to sequential gating restrictions.");
+          setGatingBlocked(true);
+          setGatingReason(attemptRes.error || "Sequential gating requirement not met.");
+          setIsStarting(false);
+          return;
+        }
+      } catch (e: any) {
+        console.warn("Could not register pipeline attempt:", e);
+      }
+    }
+
     try {
       const response = await interviewService.startInterview({
         candidate_name: nameToUse,
@@ -372,7 +496,10 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
         job_description: jobDescription.trim(),
         required_skills: candidateSkills,
         candidate_resume: candidateResume.trim(),
-        target_duration_minutes: 30
+        target_duration_minutes: 30,
+        application_id: applicationId || undefined,
+        round_id: roundId || undefined,
+        pipeline_attempt_id: activeAttemptId || undefined
       });
 
       if (response.success && response.data) {
@@ -428,18 +555,37 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
     try {
       const response = await interviewService.submitAnswer({
         interview_id: interviewId,
-        answer: submittedAnswer
+        answer: submittedAnswer,
+        application_id: applicationId || undefined,
+        round_id: roundId || undefined,
+        pipeline_attempt_id: attemptId || undefined
       });
 
       if (response.success && response.data) {
         const data = response.data;
 
         if (data.interview_complete) {
+          const overallScore = data.overall_score || 0;
           setInterviewComplete(true);
           setClosingMessage(data.closing_message || "Thank you for completing the interview!");
-          setFinalScore(data.overall_score || 0);
+          setFinalScore(overallScore);
           if (data.evaluation) {
             setLastEvaluation(data.evaluation);
+          }
+
+          // Persist normalized score to pipeline
+          if (attemptId) {
+            pipelineService.submitNormalizedScore(
+              attemptId,
+              overallScore,
+              data.closing_message || "Completed Technical Interview round.",
+              {
+                summary: data.summary,
+                evaluation: data.evaluation,
+                stages_completed: ["intro", "technical", "projects", "evaluation"]
+              },
+              interviewId.startsWith("sim-")
+            ).catch(e => console.warn("Pipeline score submission error:", e));
           }
         } else {
           // Update for next question
@@ -497,19 +643,20 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
   if (!interviewStarted) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden transition-colors duration-200">
-        {/* Top bar with back button & theme toggle */}
+        {/* Top bar with BrandLogo & theme toggle */}
         <div className="w-full max-w-xl flex items-center justify-between mb-4 z-10">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1.5"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </Button>
+          <BrandLogo size="sm" asLink={true} />
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/')}
+              className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Exit Studio
+            </Button>
             <span className="text-xs px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-medium flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
               Studio v2.5
@@ -623,25 +770,64 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
               </div>
             )}
 
-            <div className="pt-3">
-              <Button
-                onClick={handleStartInterview}
-                disabled={isStarting || !candidateName.trim()}
-                className="w-full bg-blue-700 hover:bg-blue-800 text-white font-medium py-3 rounded-lg shadow-xs transition-colors flex items-center justify-center gap-2 text-sm"
-              >
-                {isStarting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Initializing Interview Session...
-                  </>
-                ) : (
-                  <>
-                    <span>Enter Live Interview Room</span>
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </>
+            {gatingBlocked ? (
+              <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl space-y-3">
+                <div className="flex items-start gap-3 text-amber-900 dark:text-amber-200">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center shrink-0">
+                    <Lock className="w-4 h-4 text-amber-700 dark:text-amber-300" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">Sequential Gating Enforced</p>
+                    <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5 leading-relaxed">
+                      {gatingReason || "Previous round must be completed and passed before Technical Interview can be started."}
+                    </p>
+                  </div>
+                </div>
+
+                {applicationId && (
+                  <div className="pt-2 border-t border-amber-200 dark:border-amber-900/60">
+                    <CandidateProgressStepper applicationId={applicationId} compact={true} />
+                  </div>
                 )}
-              </Button>
-            </div>
+
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/pipelines')}
+                    className="flex-1 text-xs font-medium border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                  >
+                    View Pipeline Status
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/')}
+                    className="text-xs font-medium"
+                  >
+                    Exit
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="pt-3">
+                <Button
+                  onClick={handleStartInterview}
+                  disabled={isStarting || !candidateName.trim() || isCheckingGating}
+                  className="w-full bg-blue-700 hover:bg-blue-800 text-white font-medium py-3 rounded-lg shadow-xs transition-colors flex items-center justify-center gap-2 text-sm"
+                >
+                  {isStarting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Initializing Interview Session...
+                    </>
+                  ) : (
+                    <>
+                      <span>Enter Live Interview Room</span>
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
 
             <div className="text-center pt-2">
               <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1.5">
@@ -665,25 +851,29 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
 
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden transition-colors duration-200">
-        {/* Top bar with back button & theme toggle */}
+        {/* Top bar with BrandLogo, back button & theme toggle */}
         <div className="w-full max-w-2xl flex items-center justify-between mb-4 z-10">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1.5"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </Button>
+          <BrandLogo size="sm" asLink={true} />
 
-          <button
-            onClick={toggleTheme}
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-xs"
-            title="Toggle theme"
-          >
-            {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
-          </button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/')}
+              className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Home
+            </Button>
+
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-xs"
+              title="Toggle theme"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+            </button>
+          </div>
         </div>
 
         <Card className="w-full max-w-2xl shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-10 rounded-xl overflow-hidden">
@@ -848,6 +1038,23 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
               </div>
             )}
 
+            {/* Multi-Round Pipeline Stepper Status */}
+            {applicationId && (
+              <div className="pt-2">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      Overall Hiring Pipeline Progress
+                    </h4>
+                    <span className="text-[11px] font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                      Round Synchronized
+                    </span>
+                  </div>
+                  <CandidateProgressStepper applicationId={applicationId} />
+                </div>
+              </div>
+            )}
+
             {/* Action CTAs */}
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button
@@ -858,10 +1065,10 @@ const VideoInterview: React.FC<VideoInterviewProps> = () => {
                 <RotateCcw className="w-4 h-4" /> Restart New Interview
               </Button>
               <Button
-                onClick={() => navigate('/')}
+                onClick={() => navigate(applicationId ? `/apply?appId=${encodeURIComponent(applicationId)}` : '/apply')}
                 className="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-medium shadow-xs h-10 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
-                Return to Dashboard
+                Return to Application Overview
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>

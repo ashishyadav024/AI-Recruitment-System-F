@@ -50,6 +50,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Button as ChakraButton, Container, Box } from '@chakra-ui/react';
 import Chatbot from '../components/ui/chatbot';
 import { ResumeAnalysisContainer } from "../components1/ResumeAnalysisContainer";
+import { BrandLogo } from '../components/ui/BrandLogo';
 
 // Enterprise Product UI Preview Component (Real Pipeline & Scorecard replacing fake chatbot)
 const EnterpriseProductPreview: React.FC = () => {
@@ -108,14 +109,14 @@ const EnterpriseProductPreview: React.FC = () => {
           <div className="space-y-2.5">
             {/* Table Header: Column Widths: 50% Candidate, 25% Match Score, 25% Stage */}
             <div className="grid grid-cols-12 text-xs font-medium text-slate-500 dark:text-slate-400 pb-2 border-b border-slate-100 dark:border-slate-800 px-2">
-              <span className="col-span-6">Candidate</span>
+              <span className="col-span-5">Candidate</span>
               <span className="col-span-3 text-center">Match Score</span>
-              <span className="col-span-3 text-right">Stage</span>
+              <span className="col-span-4 text-right">Stage</span>
             </div>
 
             {/* Candidate 1 */}
             <div className="grid grid-cols-12 items-center p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 transition-colors">
-              <div className="col-span-6 flex items-center gap-2.5 min-w-0 pr-2">
+              <div className="col-span-5 flex items-center gap-2.5 min-w-0 pr-2">
                 <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center shrink-0">
                   PM
                 </div>
@@ -125,12 +126,12 @@ const EnterpriseProductPreview: React.FC = () => {
                 </div>
               </div>
               <div className="col-span-3 text-center">
-                <span className="h-6 inline-flex items-center justify-center text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 rounded-md">
+                <span className="h-6 inline-flex items-center justify-center text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 rounded-md whitespace-nowrap">
                   94% Match
                 </span>
               </div>
-              <div className="col-span-3 text-right">
-                <span className="h-6 inline-flex items-center justify-center text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 rounded-md">
+              <div className="col-span-4 flex justify-end">
+                <span className="h-6 inline-flex items-center justify-center text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 rounded-md whitespace-nowrap shrink-0">
                   Scorecard Ready
                 </span>
               </div>
@@ -138,7 +139,7 @@ const EnterpriseProductPreview: React.FC = () => {
 
             {/* Candidate 2 */}
             <div className="grid grid-cols-12 items-center p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 transition-colors">
-              <div className="col-span-6 flex items-center gap-2.5 min-w-0 pr-2">
+              <div className="col-span-5 flex items-center gap-2.5 min-w-0 pr-2">
                 <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center shrink-0">
                   AS
                 </div>
@@ -148,12 +149,12 @@ const EnterpriseProductPreview: React.FC = () => {
                 </div>
               </div>
               <div className="col-span-3 text-center">
-                <span className="h-6 inline-flex items-center justify-center text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 rounded-md">
+                <span className="h-6 inline-flex items-center justify-center text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 rounded-md whitespace-nowrap">
                   88% Match
                 </span>
               </div>
-              <div className="col-span-3 text-right">
-                <span className="h-6 inline-flex items-center justify-center text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 rounded-md">
+              <div className="col-span-4 flex justify-end">
+                <span className="h-6 inline-flex items-center justify-center text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 rounded-md whitespace-nowrap shrink-0">
                   Interviewing
                 </span>
               </div>
@@ -161,7 +162,7 @@ const EnterpriseProductPreview: React.FC = () => {
 
             {/* Candidate 3 */}
             <div className="grid grid-cols-12 items-center p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 transition-colors">
-              <div className="col-span-6 flex items-center gap-2.5 min-w-0 pr-2">
+              <div className="col-span-5 flex items-center gap-2.5 min-w-0 pr-2">
                 <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center shrink-0">
                   NP
                 </div>
@@ -171,12 +172,12 @@ const EnterpriseProductPreview: React.FC = () => {
                 </div>
               </div>
               <div className="col-span-3 text-center">
-                <span className="h-6 inline-flex items-center justify-center text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 rounded-md">
+                <span className="h-6 inline-flex items-center justify-center text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 rounded-md whitespace-nowrap">
                   91% Match
                 </span>
               </div>
-              <div className="col-span-3 text-right">
-                <span className="h-6 inline-flex items-center justify-center text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 rounded-md">
+              <div className="col-span-4 flex justify-end">
+                <span className="h-6 inline-flex items-center justify-center text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 rounded-md whitespace-nowrap shrink-0">
                   Final Decision
                 </span>
               </div>
@@ -184,7 +185,7 @@ const EnterpriseProductPreview: React.FC = () => {
 
             {/* Candidate 4 */}
             <div className="grid grid-cols-12 items-center p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 transition-colors">
-              <div className="col-span-6 flex items-center gap-2.5 min-w-0 pr-2">
+              <div className="col-span-5 flex items-center gap-2.5 min-w-0 pr-2">
                 <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center shrink-0">
                   RV
                 </div>
@@ -194,12 +195,12 @@ const EnterpriseProductPreview: React.FC = () => {
                 </div>
               </div>
               <div className="col-span-3 text-center">
-                <span className="h-6 inline-flex items-center justify-center text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 rounded-md">
+                <span className="h-6 inline-flex items-center justify-center text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 rounded-md whitespace-nowrap">
                   86% Match
                 </span>
               </div>
-              <div className="col-span-3 text-right">
-                <span className="h-6 inline-flex items-center justify-center text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 rounded-md">
+              <div className="col-span-4 flex justify-end">
+                <span className="h-6 inline-flex items-center justify-center text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 rounded-md whitespace-nowrap shrink-0">
                   Screened
                 </span>
               </div>
@@ -294,8 +295,8 @@ const EnterpriseProductPreview: React.FC = () => {
           <CheckCircle2 className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" />
           128 resumes screened • 24 interviews this week
         </span>
-        <Link to="/interview/Priya%20Mehta" className="text-blue-700 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1">
-          Launch Live Studio <ChevronRight className="w-3 h-3" />
+        <Link to="/apply" className="text-blue-700 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1">
+          Candidate Portal <ChevronRight className="w-3 h-3" />
         </Link>
       </div>
     </div>
@@ -566,19 +567,12 @@ const Index = () => {
         }`}
       >
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-[72px] min-h-[72px]">
-          {/* Logo - aligns exactly with hero content left edge */}
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-700 text-white flex items-center justify-center font-bold text-base shadow-xs">
-              R
-            </div>
-            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-slate-100">
-              Resume<span className="text-blue-700 dark:text-blue-400">AI</span>
-            </span>
-          </Link>
+          {/* Logo - BrandLogo with 48px space (lg:mr-12) to Platform link on desktop */}
+          <BrandLogo size="md" className="lg:mr-12" />
           
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <ul className="flex items-center space-x-8 text-sm font-medium">
+          <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
+            <ul className="flex items-center space-x-5 xl:space-x-7 text-sm font-medium">
               {[
                 { name: 'Platform', id: 'home', ref: homeRef },
                 { name: 'Features', id: 'features', ref: featuresRef },
@@ -597,7 +591,7 @@ const Index = () => {
               ))}
             </ul>
 
-            <div className="flex items-center space-x-5 pl-6 border-l border-slate-200 dark:border-slate-800">
+            <div className="flex items-center space-x-4 pl-6 border-l border-slate-200 dark:border-slate-800">
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-150"
@@ -608,22 +602,15 @@ const Index = () => {
 
               <Link 
                 to="/login"
-                className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors duration-150"
+                className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors duration-150 whitespace-nowrap"
               >
                 Sign In
               </Link>
 
-              <Link 
-                to="/dashboard"
-                className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors duration-150"
-              >
-                Recruiter Dashboard
-              </Link>
-
-              <Link to="/interview/Priya%20Mehta">
+              <Link to="/apply">
                 <Button 
                   size="sm"
-                  className="h-10 px-4 bg-blue-700 hover:bg-blue-800 text-white font-medium text-sm rounded-lg shadow-xs transition-colors duration-150"
+                  className="h-10 px-4 bg-blue-700 hover:bg-blue-800 text-white font-medium text-sm rounded-lg shadow-xs transition-colors duration-150 whitespace-nowrap"
                 >
                   Start AI Interview
                 </Button>
@@ -632,7 +619,7 @@ const Index = () => {
           </nav>
           
           {/* Mobile Menu Actions */}
-          <div className="flex items-center space-x-2 md:hidden">
+          <div className="flex items-center space-x-2 lg:hidden">
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -650,7 +637,7 @@ const Index = () => {
         
         {/* Mobile Navigation Drawer */}
         {isMenuOpen && (
-          <div className="md:hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 space-y-3">
+          <div className="lg:hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 space-y-3">
             {[
               { name: 'Platform', ref: homeRef },
               { name: 'Features', ref: featuresRef },
@@ -673,7 +660,7 @@ const Index = () => {
               <Link to="/dashboard" className="block text-sm font-medium text-slate-700 dark:text-slate-300 py-1.5">
                 Recruiter Dashboard
               </Link>
-              <Link to="/interview/Priya%20Mehta" className="block w-full pt-1">
+              <Link to="/apply" className="block w-full pt-1">
                 <Button size="sm" className="w-full h-10 bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium rounded-lg">
                   Start AI Interview
                 </Button>
@@ -709,12 +696,12 @@ const Index = () => {
 
               {/* Subtitle (Requirement 1: 17px, slate-600, max 540px, 1.6 line height) */}
               <p className="text-[17px] leading-[1.6] text-slate-600 dark:text-slate-400 max-w-[540px]">
-                ResumeAI standardizes candidate screening, conducts multi-stage structured video interviews with calibrated rubrics, and eliminates hiring bias for modern engineering organizations.
+                AI Recruitment System standardizes candidate screening, conducts multi-stage structured video interviews with calibrated rubrics, and eliminates hiring bias for modern engineering organizations.
               </p>
 
               {/* Primary Dual CTAs (Requirement 3: Both 48px height, consistent radius and padding) */}
               <div className="flex flex-wrap items-center gap-4 pt-2">
-                <Link to="/interview/Priya%20Mehta">
+                <Link to="/apply">
                   <Button 
                     size="lg"
                     className="h-12 px-6 bg-blue-700 hover:bg-blue-800 text-white font-medium text-sm rounded-lg shadow-xs flex items-center gap-2 transition-colors duration-150"
@@ -882,7 +869,7 @@ const Index = () => {
                 className="font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-[1.2] [text-wrap:balance]"
                 style={{ fontSize: 'clamp(28px, 4vw, 40px)' }}
               >
-                See ResumeAI in action
+                See AI Recruitment System in action
               </h2>
               <p className="text-[17px] leading-[1.6] text-slate-600 dark:text-slate-400 max-w-[640px] mx-auto [text-wrap:balance]">
                 Explore our candidate pipeline, semantic ATS scoring, live voice interviews, and rubric scorecards.
@@ -1021,7 +1008,7 @@ const Index = () => {
                 Fairer hiring starts with consistent evaluation
               </h2>
               <p className="text-[17px] leading-[1.6] text-slate-600 dark:text-slate-400 max-w-[640px] mx-auto [text-wrap:balance]">
-                ResumeAI scores every candidate against the same role-based rubric, so decisions rest on skills, not formatting or background.
+                AI Recruitment System scores every candidate against the same role-based rubric, so decisions rest on skills, not formatting or background.
               </p>
             </motion.div>
 
@@ -1132,7 +1119,7 @@ const Index = () => {
                 {/* Supporting Text - At most two short paragraphs */}
                 <div className="space-y-3">
                   <p className="text-[17px] leading-[1.6] text-slate-600 dark:text-slate-400">
-                    Traditional screening often filters candidates based on university pedigree, formatting quirks, or keyword density. ResumeAI replaces guesswork by scoring demonstrated competency against structured role rubrics.
+                    Traditional screening often filters candidates based on university pedigree, formatting quirks, or keyword density. AI Recruitment System replaces guesswork by scoring demonstrated competency against structured role rubrics.
                   </p>
                   <p className="text-[17px] leading-[1.6] text-slate-600 dark:text-slate-400">
                     Every candidate receives the exact same evaluation questions, transparent scorecards, and objective criteria — keeping human hiring managers firmly in control of final decisions.
@@ -1214,7 +1201,7 @@ const Index = () => {
 
                 {/* CTA: Primary button + Secondary text link */}
                 <div className="flex flex-wrap items-center gap-4 pt-2">
-                  <Link to="/interview/Priya%20Mehta">
+                  <Link to="/apply">
                     <Button 
                       className="bg-blue-700 hover:bg-blue-800 text-white font-medium text-sm px-5 h-10 rounded-lg shadow-xs transition-colors duration-150"
                     >
@@ -1244,14 +1231,14 @@ const Index = () => {
                 Trusted by Modern Engineering & Talent Leaders
               </h2>
               <p className="text-base text-slate-600 dark:text-slate-400">
-                See how high-growth organizations use ResumeAI to cut time-to-hire by 68% while elevating candidate experience.
+                See how high-growth organizations use AI Recruitment System to cut time-to-hire by 68% while elevating candidate experience.
               </p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
               {[
                 {
-                  quote: "ResumeAI transformed our engineering hiring loop. We cut phone screens from 45 minutes to zero manual overhead, and our hiring managers praise the calibrated rubrics.",
+                  quote: "AI Recruitment System transformed our engineering hiring loop. We cut phone screens from 45 minutes to zero manual overhead, and our hiring managers praise the calibrated rubrics.",
                   author: "Elena Rostova",
                   title: "VP of Engineering, CloudScale",
                   metric: "68% faster time-to-hire",
@@ -1317,16 +1304,16 @@ const Index = () => {
             <div className="max-w-3xl mx-auto space-y-3">
               {[
                 {
-                  q: "How does ResumeAI ensure compliance with EEOC and fair-hiring regulations?",
-                  a: "ResumeAI's evaluation engine is audited annually for adverse impact and demographic bias. Evaluation models score purely against predefined, objective job rubrics and verifiable technical competency rather than subjective factors or unstructured commentary."
+                  q: "How does AI Recruitment System ensure fair-hiring and objective evaluations?",
+                  a: "AI Recruitment System evaluates candidates purely against predefined, objective job rubrics and verifiable technical competency rather than subjective factors or unstructured commentary."
                 },
                 {
-                  q: "Does ResumeAI integrate with our existing ATS (Greenhouse, Lever, Ashby, Workday)?",
-                  a: "Yes. ResumeAI provides native two-way sync with Greenhouse, Lever, Ashby, and Workday. Candidate resumes are automatically ingested from your job postings, and structured scorecards and interview transcripts sync directly back into your candidate pipeline."
+                  q: "Does AI Recruitment System integrate with our existing ATS (Greenhouse, Lever, Ashby, Workday)?",
+                  a: "Yes. AI Recruitment System provides native two-way sync with Greenhouse, Lever, Ashby, and Workday. Candidate resumes are automatically ingested from your job postings, and structured scorecards and interview transcripts sync directly back into your candidate pipeline."
                 },
                 {
                   q: "How does the voice AI technical interview work in practice?",
-                  a: "Candidates receive a dedicated interview link. ResumeAI conducts a real-time conversational interview with calibrated technical follow-ups, coding explanations, and speech synthesis. Responses are transcribed with speech-to-text and scored against your engineering rubrics."
+                  a: "Candidates receive a dedicated interview link. AI Recruitment System conducts a real-time conversational interview with calibrated technical follow-ups, coding explanations, and speech synthesis. Responses are transcribed with speech-to-text and scored against your engineering rubrics."
                 },
                 {
                   q: "Can hiring managers customize the interview questions and scoring rubrics?",
@@ -1397,7 +1384,7 @@ const Index = () => {
                       {!failedImages[member.name] ? (
                         <img 
                           src={member.image} 
-                          alt={`Portrait of ${member.name}, ${member.role} at ResumeAI`}
+                          alt={`Portrait of ${member.name}, ${member.role} at AI Recruitment System`}
                           onError={() => setFailedImages(prev => ({ ...prev, [member.name]: true }))}
                           className={`w-full h-full object-cover filter grayscale contrast-[1.05] group-hover:grayscale-0 transition-all duration-300 ${
                             member.imageClass || 'object-top'
@@ -1550,7 +1537,7 @@ const Index = () => {
                       </div>
                       <div>
                         <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Direct Inquiries</p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">enterprise@resumeai.com</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">contact@airecruitmentsystem.internal</p>
                       </div>
                     </div>
                     <div className="flex items-start">
@@ -1593,14 +1580,7 @@ const Index = () => {
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
             <div className="md:col-span-1 space-y-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-blue-700 text-white flex items-center justify-center font-bold text-sm">
-                  R
-                </div>
-                <span className="font-bold text-lg text-white tracking-tight">
-                  Resume<span className="text-blue-400">AI</span>
-                </span>
-              </div>
+              <BrandLogo size="md" textClassName="text-white" asLink={true} />
               <p className="text-xs leading-relaxed text-slate-400">
                 Institutional talent intelligence, resume verification, and structured video interviews.
               </p>
@@ -1621,7 +1601,7 @@ const Index = () => {
               <h4 className="text-xs font-semibold text-slate-200 uppercase tracking-wider">Product Suite</h4>
               <ul className="space-y-2 text-xs">
                 <li><Link to="/dashboard" className="hover:text-white transition-colors">Recruiter Dashboard</Link></li>
-                <li><Link to="/interview/Priya%20Mehta" className="hover:text-white transition-colors">Voice AI Interview</Link></li>
+                <li><Link to="/apply" className="hover:text-white transition-colors">Candidate Application</Link></li>
                 <li><a href="#features" onClick={() => scrollToSection(featuresRef)} className="hover:text-white transition-colors">Semantic Resume Match</a></li>
                 <li><a href="#gallery" onClick={() => scrollToSection(galleryRef)} className="hover:text-white transition-colors">Automated Scorecards</a></li>
               </ul>
@@ -1667,7 +1647,7 @@ const Index = () => {
           <Separator className="bg-slate-800/80 mb-8" />
           
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-            <p>© 2026 ResumeAI, Inc. All rights reserved. Enterprise talent intelligence.</p>
+            <p>© 2026 AI Recruitment System. All rights reserved. Enterprise talent intelligence.</p>
             <div className="flex space-x-6">
               <a href="#" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-slate-300 transition-colors">Terms of Service</a>

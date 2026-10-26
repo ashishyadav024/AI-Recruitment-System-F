@@ -5,8 +5,9 @@ import path from "path";
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
+    host: '0.0.0.0',
     port: 3000,
-    open: true,
+    open: false,
     proxy: {
       '/pdfjs-dist': {
         target: 'https://unpkg.com',

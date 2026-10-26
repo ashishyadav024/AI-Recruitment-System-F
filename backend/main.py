@@ -20,19 +20,28 @@ import asyncio
 from groq import Groq
 from dotenv import load_dotenv
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # LangGraph Integration
-from langgraph_integration import get_langgraph_service, initialize_langgraph_service
+try:
+    from langgraph_integration import get_langgraph_service, initialize_langgraph_service
+except Exception as e:
+    logger.warning(f"LangGraph integration not loaded: {e}")
+    get_langgraph_service = None
+    initialize_langgraph_service = None
 
 # Dashboard Service
-from dashboard_service import get_dashboard_service
+try:
+    from dashboard_service import get_dashboard_service
+except Exception as e:
+    logger.warning(f"Dashboard service not loaded: {e}")
+    get_dashboard_service = None
 
 # MongoDB Client - Centralized database connection
 from db.mongo_client import get_mongo_client, get_db, get_collection
 from db.models import Collections
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -43,11 +52,14 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("🚀 Initializing LangGraph + MCP service...")
     groq_api_key = os.getenv('GROQ_API_KEY') or os.getenv('API_KEY_ANALYSIS')
-    if groq_api_key:
-        initialize_langgraph_service(groq_api_key=groq_api_key)
-        logger.info("✅ LangGraph service initialized successfully!")
+    if groq_api_key and initialize_langgraph_service:
+        try:
+            initialize_langgraph_service(groq_api_key=groq_api_key)
+            logger.info("✅ LangGraph service initialized successfully!")
+        except Exception as e:
+            logger.warning(f"⚠️ LangGraph service initialization warning: {e}")
     else:
-        logger.warning("⚠️ GROQ_API_KEY not found, LangGraph service may not work properly")
+        logger.info("ℹ️ Proceeding with core FastAPI pipeline and interview services.")
     
     yield
     
@@ -65,12 +77,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Multi-Round Hiring Pipeline Router
+from api.pipeline_routes import pipeline_router
+app.include_router(pipeline_router)
+
+# Resume Extraction and Management Router
+from api.resume_routes import resume_router
+app.include_router(resume_router)
+
+# Aptitude Test Round Router
+from api.aptitude_routes import aptitude_router
+app.include_router(aptitude_router)
+
+
 # Initialize Groq client with different API keys for different functionalities
-client_analysis = Groq(api_key=os.getenv('API_KEY_ANALYSIS'))
-client_qa = Groq(api_key=os.getenv('API_KEY_QA'))
-client_questions = Groq(api_key=os.getenv('API_KEY_QUESTIONS'))
-client_improvement = Groq(api_key=os.getenv('API_KEY_IMPROVEMENT'))
-client_improved_resume = Groq(api_key=os.getenv('API_KEY_IMPROVED_RESUME'))
+default_groq_key = os.getenv('GROQ_API_KEY') or 'gsk_mock_key_for_dev'
+client_analysis = Groq(api_key=os.getenv('API_KEY_ANALYSIS') or default_groq_key)
+client_qa = Groq(api_key=os.getenv('API_KEY_QA') or default_groq_key)
+client_questions = Groq(api_key=os.getenv('API_KEY_QUESTIONS') or default_groq_key)
+client_improvement = Groq(api_key=os.getenv('API_KEY_IMPROVEMENT') or default_groq_key)
+client_improved_resume = Groq(api_key=os.getenv('API_KEY_IMPROVED_RESUME') or default_groq_key)
 
 # Define role requirements
 ROLE_REQUIREMENTS = {
@@ -2590,12 +2616,15 @@ async def get_interview_status(interview_id: str):
 # QUESTION GENERATION ENDPOINTS (Step 2: AI Question Generator)
 # ============================================================================
 
-from langgraph_agents.question_generator_agent import QuestionGeneratorAgent
-from repositories.question_repository import QuestionRepository
-
-# Initialize question generator and repository
-question_generator = QuestionGeneratorAgent()
 try:
+    from langgraph_agents.question_generator_agent import QuestionGeneratorAgent
+    question_generator = QuestionGeneratorAgent()
+except Exception as e:
+    logger.warning(f"QuestionGeneratorAgent not available: {e}")
+    question_generator = None
+
+try:
+    from repositories.question_repository import QuestionRepository
     question_repo = QuestionRepository()
     logger.info("✅ QuestionRepository initialized successfully")
 except Exception as e:
@@ -2983,13 +3012,16 @@ async def get_question_analytics(interview_id: str):
 
 # ==================== Google Meet Bot Endpoints ====================
 
-from langgraph_agents.meet_bot_agent import create_meet_session
-from repositories.meet_session_repository import MeetSessionRepository
+try:
+    from langgraph_agents.meet_bot_agent import create_meet_session
+    from repositories.meet_session_repository import MeetSessionRepository
+    meet_session_repo = MeetSessionRepository()
+except Exception as e:
+    logger.warning(f"Meet Bot agent not loaded: {e}")
+    create_meet_session = None
+    meet_session_repo = None
 import subprocess
 import uuid as uuid_lib
-
-# Initialize Meet Session Repository
-meet_session_repo = MeetSessionRepository()
 
 async def _run_meet_bot_agent(session_config: dict, session_id: str, repo: MeetSessionRepository):
     """Background task to run Meet Bot LangGraph agent"""
@@ -5159,12 +5191,17 @@ class InterviewStartRequest(BaseModel):
     session_id: Optional[str] = None
     meeting_id: Optional[str] = None
     target_duration_minutes: int = 60
+    # Sequential Gating & Pipeline Linkage
+    application_id: Optional[str] = None
+    round_id: Optional[str] = None
+    pipeline_attempt_id: Optional[str] = None
 
 class InterviewAnswerRequest(BaseModel):
     """Request to process candidate answer"""
     interview_id: str
     answer: str
     transcription_id: Optional[str] = None
+    pipeline_attempt_id: Optional[str] = None
 
 @app.post("/api/interview/start")
 async def start_interview_endpoint(request: InterviewStartRequest):
@@ -5177,6 +5214,46 @@ async def start_interview_endpoint(request: InterviewStartRequest):
         - current_stage: Interview stage (intro)
     """
     logger.info(f"📞 Interview start request for: {request.candidate_name}")
+
+    # Server-Side Sequential Gating Verification
+    from repositories.pipeline_repository import PipelineRepository
+    pipe_repo = PipelineRepository()
+
+    app_id = request.application_id
+    round_id = request.round_id
+
+    # If application_id is omitted, resolve via candidate email
+    if not app_id and request.candidate_email:
+        app_doc = pipe_repo.get_application_by_email(request.candidate_email, request.job_title)
+        if app_doc:
+            app_id = app_doc["application_id"]
+
+    if app_id:
+        if not round_id:
+            # Locate technical_interview round in pipeline
+            app_data = pipe_repo.get_application(app_id)
+            if app_data:
+                pipeline_rounds = pipe_repo.get_pipeline_rounds(app_data["pipeline_id"])
+                for r in pipeline_rounds:
+                    if r.get("round_type") in ["technical_interview", "interview"]:
+                        round_id = r["round_id"]
+                        break
+
+        if round_id:
+            can_start, reason, _ = pipe_repo.validate_can_start_round(app_id, round_id)
+            if not can_start:
+                logger.warning(f"🚫 Direct interview attempt blocked by sequential gating: {reason}")
+                raise HTTPException(
+                    status_code=403,
+                    detail=reason or "Sequential gating violation: Previous round must be passed before accessing Technical Interview."
+                )
+    elif not request.interview_id or not request.interview_id.startswith("sim-preview"):
+        # Direct attempt without application is forbidden
+        logger.warning(f"🚫 Direct interview attempt blocked: No active application found for {request.candidate_name}")
+        raise HTTPException(
+            status_code=403,
+            detail="Sequential Gating Violation: Candidate must have an active application and pass preceding rounds before starting Technical Interview."
+        )
     
     try:
         # Prepare interview configuration
@@ -5224,6 +5301,8 @@ async def start_interview_endpoint(request: InterviewStartRequest):
                 "message": "Failed to start interview"
             }
     
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Error starting interview: {str(e)}", exc_info=True)
         return {
@@ -5264,6 +5343,22 @@ async def process_answer_endpoint(request: InterviewAnswerRequest):
             if result.get('interview_complete'):
                 logger.info(f"✅ Interview completed: {request.interview_id}")
                 logger.info(f"   Overall Score: {result.get('overall_score', 0)}/100")
+
+                # Auto-record normalized score into pipeline if attempt id is linked
+                if request.pipeline_attempt_id:
+                    try:
+                        from repositories.pipeline_repository import PipelineRepository
+                        pipe_repo = PipelineRepository()
+                        score_val = float(result.get('overall_score', 0))
+                        pipe_repo.submit_normalized_score(
+                            attempt_id=request.pipeline_attempt_id,
+                            score=score_val,
+                            feedback=result.get('closing_message', 'Interview completed'),
+                            details=result.get('summary', {}),
+                            is_simulated=False
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to record normalized pipeline score: {e}")
                 
                 return {
                     "success": True,

@@ -1,4 +1,4 @@
-# 🤖 AI Recruiter — Autonomous Interview Platform
+# 🤖 AI Recruitment System — Autonomous Interview Platform
 
 > **GitHub:** https://github.com/vaibhavnarute/recruit  
 > **Stack:** Python 3.11 · FastAPI · React/TypeScript · LangGraph · Groq · Deepgram · MongoDB · Redis · Playwright

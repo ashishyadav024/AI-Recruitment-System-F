@@ -89,3 +89,8 @@ api_keys.json
 .cache/
 *.tmp
 *.bak
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3

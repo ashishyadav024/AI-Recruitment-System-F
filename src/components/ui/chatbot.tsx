@@ -19,9 +19,9 @@ interface ChatbotProps {
 
 export default function Chatbot({
   messages = [
-    "Hello! Welcome to ResumeAI Talent Intelligence.",
-    "Can ResumeAI conduct automated technical screening?",
-    "Yes. We offer structured technical interviews, live code evaluation, and EEOC-compliant scorecards.",
+    "Hello! Welcome to AI Recruitment System Talent Intelligence.",
+    "Can AI Recruitment System conduct automated technical screening?",
+    "Yes. We offer structured technical interviews, live code evaluation, and calibrated scorecards.",
     "How does it integrate with our hiring pipeline?",
     "Direct integrations with Greenhouse, Lever, and Ashby are supported out of the box."
   ],
