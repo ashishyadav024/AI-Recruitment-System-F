@@ -25,7 +25,10 @@ import {
   AlertTriangle,
   FileCheck2,
   Check,
-  X
+  X,
+  Quote,
+  RefreshCw,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -85,6 +88,24 @@ export const PipelineBuilder: React.FC = () => {
   const [isSavingAptitude, setIsSavingAptitude] = useState(false);
   const [questionStats, setQuestionStats] = useState<{ total_questions: number; by_section: Record<string, number> } | null>(null);
   const [isAptitudeExpanded, setIsAptitudeExpanded] = useState(true);
+
+  // Step B: Role Requirements State & Handlers
+  const [roleRequirements, setRoleRequirements] = useState<{
+    job_description: string;
+    must_have_skills: string[];
+    nice_to_have_skills: string[];
+    experience_expectations: string;
+  }>({
+    job_description: '',
+    must_have_skills: [],
+    nice_to_have_skills: [],
+    experience_expectations: ''
+  });
+  const [isSavingRequirements, setIsSavingRequirements] = useState(false);
+  const [isRequirementsExpanded, setIsRequirementsExpanded] = useState(true);
+  const [newMustHave, setNewMustHave] = useState('');
+  const [newNiceToHave, setNewNiceToHave] = useState('');
+  const [isReScreening, setIsReScreening] = useState(false);
 
   // Candidates & Stepper inspections
   const [applications, setApplications] = useState<CandidateApplication[]>([]);
@@ -152,6 +173,67 @@ export const PipelineBuilder: React.FC = () => {
     });
     return () => { mounted = false; };
   }, [selectedRole]);
+
+  // Load Role Requirements for selected role (Step B)
+  useEffect(() => {
+    let mounted = true;
+    pipelineService.getRoleRequirements(selectedRole).then(res => {
+      if (mounted && res.success && res.requirements) {
+        setRoleRequirements({
+          job_description: res.requirements.job_description || '',
+          must_have_skills: res.requirements.must_have_skills || [],
+          nice_to_have_skills: res.requirements.nice_to_have_skills || [],
+          experience_expectations: res.requirements.experience_expectations || ''
+        });
+      }
+    });
+    return () => { mounted = false; };
+  }, [selectedRole]);
+
+  const handleSaveRoleRequirements = async () => {
+    setIsSavingRequirements(true);
+    try {
+      const res = await pipelineService.saveRoleRequirements(selectedRole, roleRequirements);
+      if (res.success) {
+        toast({
+          title: "Role Requirements Saved",
+          description: `Updated job description and requirements for ${selectedRole}.`,
+        });
+      } else {
+        toast({
+          title: "Save Failed",
+          description: res.error || "Could not save role requirements.",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setIsSavingRequirements(false);
+    }
+  };
+
+  const handleReScreenCandidate = async (appId: string) => {
+    setIsReScreening(true);
+    try {
+      const res = await pipelineService.screenApplication(appId, selectedRole);
+      if (res.success) {
+        toast({
+          title: res.flagged ? "Flagged for Review" : "Screening Complete",
+          description: `Score: ${res.score}% (${res.passed ? "Passed" : "Below Cutoff"}). Method: ${res.evaluation_method}`,
+          variant: res.flagged ? "destructive" : "default"
+        });
+        const updated = await pipelineService.getStepperProgress(appId);
+        if (updated) setSelectedAppProgress(updated);
+      } else {
+        toast({
+          title: "Screening Failed",
+          description: res.error || "Screening could not be completed.",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setIsReScreening(false);
+    }
+  };
 
   // Load candidate's Aptitude Assessment audit when candidate is selected
   useEffect(() => {
@@ -554,6 +636,221 @@ export const PipelineBuilder: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Dedicated Role Requirements & ATS Screening Calibration for Round 1 */}
+                  {round.round_type === 'resume_screening' && (
+                    <div className="w-full pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Bot className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                            Role Requirements & ATS Screening Calibration (Backend LLM)
+                          </span>
+                          <Badge variant="outline" className="text-[10px] font-mono bg-emerald-50 text-emerald-700 border-emerald-200">
+                            Must-Haves: 75% • Nice-To-Haves: 25%
+                          </Badge>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsRequirementsExpanded(!isRequirementsExpanded)}
+                          className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1 cursor-pointer"
+                        >
+                          {isRequirementsExpanded ? (
+                            <><span>Collapse</span><ChevronUp className="w-3.5 h-3.5" /></>
+                          ) : (
+                            <><span>Configure</span><ChevronDown className="w-3.5 h-3.5" /></>
+                          )}
+                        </button>
+                      </div>
+
+                      {isRequirementsExpanded && (
+                        <div className="p-3.5 rounded-lg bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 flex flex-col gap-3">
+                          {/* Job Description */}
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                              Job Description (Used by LLM for semantic evaluation)
+                            </label>
+                            <textarea
+                              rows={2}
+                              value={roleRequirements.job_description}
+                              onChange={(e) => setRoleRequirements(prev => ({ ...prev, job_description: e.target.value }))}
+                              placeholder="Paste or edit the job description for this role..."
+                              className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs leading-relaxed"
+                            />
+                          </div>
+
+                          {/* Experience Expectations */}
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                              Experience Expectations
+                            </label>
+                            <input
+                              type="text"
+                              value={roleRequirements.experience_expectations}
+                              onChange={(e) => setRoleRequirements(prev => ({ ...prev, experience_expectations: e.target.value }))}
+                              placeholder="e.g. 2+ years building production applications"
+                              className="h-8 px-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs"
+                            />
+                          </div>
+
+                          {/* Must Have vs Nice to Have Skills Grid */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                            {/* Must-Have Skills (75% weight) */}
+                            <div className="p-3 bg-white dark:bg-slate-900 rounded border border-emerald-200 dark:border-emerald-800/60 flex flex-col gap-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                  <span>Must-Have Skills (75% weight)</span>
+                                </span>
+                                <span className="text-[10px] font-mono text-emerald-700">
+                                  {roleRequirements.must_have_skills.length} skills
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5 min-h-[30px]">
+                                {roleRequirements.must_have_skills.map((skill, sIdx) => (
+                                  <span
+                                    key={sIdx}
+                                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800"
+                                  >
+                                    <span>{skill}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setRoleRequirements(prev => ({
+                                        ...prev,
+                                        must_have_skills: prev.must_have_skills.filter((_, i) => i !== sIdx)
+                                      }))}
+                                      className="text-emerald-600 hover:text-red-600 cursor-pointer text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="flex gap-1.5 pt-1">
+                                <input
+                                  type="text"
+                                  placeholder="Add must-have skill..."
+                                  value={newMustHave}
+                                  onChange={(e) => setNewMustHave(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && newMustHave.trim()) {
+                                      e.preventDefault();
+                                      setRoleRequirements(prev => ({
+                                        ...prev,
+                                        must_have_skills: [...prev.must_have_skills, newMustHave.trim()]
+                                      }));
+                                      setNewMustHave('');
+                                    }
+                                  }}
+                                  className="h-7 px-2 flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs"
+                                />
+                                <Button
+                                  size="sm"
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    if (newMustHave.trim()) {
+                                      setRoleRequirements(prev => ({
+                                        ...prev,
+                                        must_have_skills: [...prev.must_have_skills, newMustHave.trim()]
+                                      }));
+                                      setNewMustHave('');
+                                    }
+                                  }}
+                                  className="h-7 px-2 text-xs"
+                                >
+                                  +
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Nice-To-Have Skills (25% weight) */}
+                            <div className="p-3 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700 flex flex-col gap-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                                  <Sparkles className="w-3 h-3 text-blue-600" />
+                                  <span>Nice-To-Have Skills (25% weight)</span>
+                                </span>
+                                <span className="text-[10px] font-mono text-slate-500">
+                                  {roleRequirements.nice_to_have_skills.length} skills
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5 min-h-[30px]">
+                                {roleRequirements.nice_to_have_skills.map((skill, sIdx) => (
+                                  <span
+                                    key={sIdx}
+                                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                                  >
+                                    <span>{skill}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setRoleRequirements(prev => ({
+                                        ...prev,
+                                        nice_to_have_skills: prev.nice_to_have_skills.filter((_, i) => i !== sIdx)
+                                      }))}
+                                      className="text-slate-500 hover:text-red-600 cursor-pointer text-xs"
+                                    >
+                                      ✕
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="flex gap-1.5 pt-1">
+                                <input
+                                  type="text"
+                                  placeholder="Add nice-to-have skill..."
+                                  value={newNiceToHave}
+                                  onChange={(e) => setNewNiceToHave(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && newNiceToHave.trim()) {
+                                      e.preventDefault();
+                                      setRoleRequirements(prev => ({
+                                        ...prev,
+                                        nice_to_have_skills: [...prev.nice_to_have_skills, newNiceToHave.trim()]
+                                      }));
+                                      setNewNiceToHave('');
+                                    }
+                                  }}
+                                  className="h-7 px-2 flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs"
+                                />
+                                <Button
+                                  size="sm"
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    if (newNiceToHave.trim()) {
+                                      setRoleRequirements(prev => ({
+                                        ...prev,
+                                        nice_to_have_skills: [...prev.nice_to_have_skills, newNiceToHave.trim()]
+                                      }));
+                                      setNewNiceToHave('');
+                                    }
+                                  }}
+                                  className="h-7 px-2 text-xs"
+                                >
+                                  +
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Save Role Requirements Action Button */}
+                          <div className="flex justify-end pt-1">
+                            <Button
+                              size="sm"
+                              type="button"
+                              onClick={handleSaveRoleRequirements}
+                              disabled={isSavingRequirements}
+                              className="h-8 px-4 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded flex items-center gap-1.5 cursor-pointer shadow-xs"
+                            >
+                              <Save className="w-3.5 h-3.5" />
+                              <span>{isSavingRequirements ? 'Saving Requirements...' : 'Save Role Requirements'}</span>
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Dedicated Aptitude Engine Calibration & Marking Rules for Round 2 */}
                   {round.round_type === 'aptitude_test' && (
                     <div className="w-full pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3">
@@ -790,6 +1087,279 @@ export const PipelineBuilder: React.FC = () => {
                     });
                   }}
                 />
+
+                {/* Round 1: ATS Resume Screening & Evidence Verification Audit */}
+                {(() => {
+                  const round1Item = selectedAppProgress.rounds.find(
+                    r => r.order === 1 || r.round_type === 'resume_screening'
+                  );
+                  const round1ScoreData = round1Item?.score_data;
+                  const round1Details = (round1ScoreData?.details || {}) as Record<string, any>;
+                  const round1Passed = round1ScoreData?.passed ?? (round1Item?.status === 'passed');
+                  const round1Score = round1ScoreData?.score ?? null;
+                  const round1Cutoff = round1ScoreData?.cutoff ?? round1Item?.cutoff_score ?? 60.0;
+                  const evalMethod = round1Details.evaluation_method || (round1Score !== null ? 'llm_analysis' : 'pending_evaluation');
+                  const evalModel = round1Details.model || 'llama-3.3-70b-versatile';
+                  const isSecurityFlagged = Boolean(round1Details.security_flag);
+                  const securityReason = round1Details.security_reason;
+                  const matchedDetails = (round1Details.matched_details as Array<any>) || [];
+                  const missingDetails = (round1Details.missing_details as Array<any>) || [];
+                  const piiStats = round1Details.pii_redacted_stats as Record<string, number> | undefined;
+                  const isPending = round1Item?.status === 'in_progress' && round1Score === null;
+
+                  return (
+                    <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col gap-5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
+                            <FileCheck2 className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                                Round 1: ATS Resume Screening & Evidence Audit
+                              </h3>
+                              {isSecurityFlagged ? (
+                                <Badge className="bg-red-100 text-red-800 dark:bg-red-950/70 dark:text-red-300 border-red-300 text-[10px]">
+                                  SECURITY FLAGGED
+                                </Badge>
+                              ) : isPending ? (
+                                <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border-amber-300 text-[10px]">
+                                  PENDING EVALUATION
+                                </Badge>
+                              ) : round1Score !== null ? (
+                                <Badge className={round1Passed ? "bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]" : "bg-red-50 text-red-700 border-red-200 text-[10px]"}>
+                                  {round1Passed ? "PASSED" : "FAILED"}
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-slate-100 text-slate-700 text-[10px]">
+                                  NOT SCREENED
+                                </Badge>
+                              )}
+
+                              {/* Evaluation method badge */}
+                              {evalMethod === 'llm_analysis' && (
+                                <Badge className="bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 text-[10px] flex items-center gap-1">
+                                  <Sparkles className="w-3 h-3" />
+                                  <span>AI Screened • {evalModel}</span>
+                                </Badge>
+                              )}
+                              {evalMethod === 'keyword_fallback' && (
+                                <Badge className="bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 text-[10px]">
+                                  Keyword Fallback
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Candidate: {selectedAppProgress.application.candidate_name} ({selectedAppProgress.application.candidate_email}) • Role: {selectedAppProgress.application.job_role}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 self-end sm:self-center">
+                          {round1Score !== null && (
+                            <div className="text-right">
+                              <div className="text-xs text-slate-400 font-mono">Cutoff: {round1Cutoff}%</div>
+                              <div className="text-lg font-black text-emerald-700 dark:text-emerald-400 font-mono">
+                                {round1Score.toFixed(1)}%
+                              </div>
+                            </div>
+                          )}
+                          <Button
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                            onClick={() => handleReScreenCandidate(selectedAppProgress.application.application_id)}
+                            disabled={isReScreening}
+                            className="h-8 px-3 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <RefreshCw className={`w-3.5 h-3.5 ${isReScreening ? 'animate-spin' : ''}`} />
+                            <span>{isReScreening ? 'Screening...' : 'Re-Screen with AI'}</span>
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Security Warning Banner */}
+                      {isSecurityFlagged && (
+                        <div className="p-3.5 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
+                          <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                          <div className="flex-1 text-xs">
+                            <span className="font-bold text-red-800 dark:text-red-300 block mb-0.5">
+                              Prompt Injection Detected — Flagged for Recruiter Review
+                            </span>
+                            <span className="text-red-700 dark:text-red-400">
+                              {securityReason || "Suspicious system override patterns were detected in the candidate resume text. Server score was held at 0% to prevent prompt hijacking."}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Pending Evaluation Banner */}
+                      {isPending && (
+                        <div className="p-3.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-3">
+                          <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                          <div className="flex-1 text-xs">
+                            <span className="font-bold text-amber-800 dark:text-amber-300 block mb-0.5">
+                              Resume Screening Pending Evaluation
+                            </span>
+                            <span className="text-amber-700 dark:text-amber-400">
+                              The LLM service was temporarily unavailable when the candidate applied. Click "Re-Screen with AI" above to run server-side screening with live role requirements.
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Metric KPI Cards */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                          <span className="text-[10px] uppercase font-semibold text-slate-400">Server ATS Score</span>
+                          <span className="text-base font-bold text-slate-900 dark:text-slate-100 font-mono">
+                            {round1Score !== null ? `${round1Score.toFixed(1)} / 100` : 'Pending'}
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            75% Must-Have + 25% Nice-To-Have
+                          </span>
+                        </div>
+
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                          <span className="text-[10px] uppercase font-semibold text-slate-400">Found in Resume</span>
+                          <span className="text-base font-bold text-emerald-700 dark:text-emerald-400 font-mono">
+                            {matchedDetails.length} Skills
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            Verified with quote matching
+                          </span>
+                        </div>
+
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                          <span className="text-[10px] uppercase font-semibold text-slate-400">Missing Competencies</span>
+                          <span className="text-base font-bold text-red-600 dark:text-red-400 font-mono">
+                            {missingDetails.length} Skills
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            Not found or dropped
+                          </span>
+                        </div>
+
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                          <span className="text-[10px] uppercase font-semibold text-slate-400">Fairness & PII Stripped</span>
+                          <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                            {piiStats ? `${(piiStats.name || 0) + (piiStats.email || 0) + (piiStats.phone || 0) + (piiStats.demographic || 0)} attributes redacted` : 'Scrubbed'}
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            Name, contacts & demographics removed
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Verified Evidence & Missing Skills Audit */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {/* Found In Resume (Verified Matches) */}
+                        <div className="p-4 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/40 flex flex-col gap-3">
+                          <div className="flex items-center justify-between pb-2 border-b border-emerald-100 dark:border-emerald-900/40">
+                            <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                              <span>Found in resume ({matchedDetails.length})</span>
+                            </span>
+                            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
+                              Exact quote verified
+                            </span>
+                          </div>
+
+                          {matchedDetails.length === 0 ? (
+                            <div className="py-4 text-center text-xs text-slate-400">
+                              No matching competencies verified in resume.
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-2.5 max-h-[320px] overflow-y-auto pr-1">
+                              {matchedDetails.map((item, idx) => (
+                                <div
+                                  key={idx}
+                                  className="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-emerald-200/60 dark:border-emerald-900/60 flex flex-col gap-1.5 shadow-2xs"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                      {item.skill}
+                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                                        item.category === 'must_have'
+                                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300'
+                                          : 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300'
+                                      }`}>
+                                        {item.category === 'must_have' ? 'Must-Have (75%)' : 'Nice-To-Have (25%)'}
+                                      </span>
+                                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-semibold">
+                                        {item.status === 'partially_matched' ? 'Partial' : 'Match'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {item.evidence_quote && (
+                                    <div className="p-2 bg-emerald-50/60 dark:bg-emerald-950/40 rounded border border-emerald-100 dark:border-emerald-900/50 flex items-start gap-2">
+                                      <Quote className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                                      <p className="text-[11px] text-emerald-950 dark:text-emerald-200 italic leading-relaxed">
+                                        "{item.evidence_quote}"
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Missing or Dropped Competencies */}
+                        <div className="p-4 bg-red-50/40 dark:bg-red-950/20 rounded-xl border border-red-100 dark:border-red-900/40 flex flex-col gap-3">
+                          <div className="flex items-center justify-between pb-2 border-b border-red-100 dark:border-red-900/40">
+                            <span className="text-xs font-bold text-red-900 dark:text-red-300 flex items-center gap-1.5">
+                              <XCircle className="w-4 h-4 text-red-600" />
+                              <span>Missing Competencies ({missingDetails.length})</span>
+                            </span>
+                            <span className="text-[10px] text-red-700 dark:text-red-400 font-medium">
+                              Not found / evidence dropped
+                            </span>
+                          </div>
+
+                          {missingDetails.length === 0 ? (
+                            <div className="py-4 text-center text-xs text-emerald-600 font-medium">
+                              All role competency requirements were successfully matched!
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-2.5 max-h-[320px] overflow-y-auto pr-1">
+                              {missingDetails.map((item, idx) => (
+                                <div
+                                  key={idx}
+                                  className="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-red-200/60 dark:border-red-900/60 flex flex-col gap-1.5 shadow-2xs"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                      {item.skill}
+                                    </span>
+                                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                                      item.category === 'must_have'
+                                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300'
+                                        : 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300'
+                                    }`}>
+                                      {item.category === 'must_have' ? 'Must-Have' : 'Nice-To-Have'}
+                                    </span>
+                                  </div>
+                                  <div className="p-1.5 bg-red-50/60 dark:bg-red-950/40 rounded border border-red-100 dark:border-red-900/50 text-[11px] text-red-800 dark:text-red-300">
+                                    {item.dropped_reason || "Not mentioned in resume"}
+                                    {item.unverified_quote && (
+                                      <p className="mt-1 text-[10px] text-red-600 dark:text-red-400 italic">
+                                        Quote not found in resume: "{item.unverified_quote}"
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Candidate Aptitude Test Performance Audit */}
                 <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col gap-5">

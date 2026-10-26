@@ -803,6 +803,14 @@ class PipelineService {
       if (!attempt) return { success: false, error: 'Attempt not found' };
     }
 
+    // Step B Guard: Prevent client-side score submission for Round 1 (Resume Screening)
+    if (attempt?.round_order === 1 || attempt?.round_type === 'resume_screening' || details?.round_type === 'resume_screening') {
+      return {
+        success: false,
+        error: 'Client-side score submission for Round 1 (Resume Screening) is prohibited. Resume evaluation must be performed server-side via pipelineService.screenApplication()'
+      };
+    }
+
     try {
       const res = await fetch(`${FASTAPI_BASE_URL}/api/candidate-applications/${targetAppId}/rounds/${targetRoundId}/submit`, {
         method: 'POST',
@@ -1187,6 +1195,113 @@ class PipelineService {
       return { success: true, audit: data.audit };
     } catch (e: any) {
       return { success: false, error: e.message || 'Network error fetching audit' };
+    }
+  }
+
+  /**
+   * Step B: Trigger server-side ATS resume screening using LLM and strict evidence verification.
+   * Score is computed ONLY on the server.
+   */
+  async screenApplication(
+    applicationId: string,
+    jobRole?: string,
+    allowKeywordFallback: boolean = false
+  ): Promise<{
+    success: boolean;
+    score?: number;
+    passed?: boolean;
+    cutoff?: number;
+    evaluation_method?: string;
+    model?: string;
+    status?: string;
+    message?: string;
+    matched_skills?: string[];
+    missing_skills?: string[];
+    matched_details?: Array<{ skill: string; category: string; status: string; evidence_quote?: string; verified: boolean }>;
+    missing_details?: Array<{ skill: string; category: string; status: string; dropped_reason?: string }>;
+    score_breakdown?: any;
+    stepper?: any;
+    flagged?: boolean;
+    error?: string;
+  }> {
+    try {
+      const res = await fetch(`${FASTAPI_BASE_URL}/api/applications/${encodeURIComponent(applicationId)}/screen`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_role: jobRole,
+          allow_keyword_fallback: allowKeywordFallback
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return {
+          success: false,
+          error: data.detail || 'ATS screening evaluation failed on server'
+        };
+      }
+      return data;
+    } catch (e: any) {
+      return {
+        success: false,
+        error: e.message || 'Network error triggering resume screening'
+      };
+    }
+  }
+
+  /**
+   * Get role requirements & job description (LLM generated or recruiter defined)
+   */
+  async getRoleRequirements(jobRole: string): Promise<{
+    success: boolean;
+    requirements?: {
+      role_id: string;
+      job_role: string;
+      job_description: string;
+      must_have_skills: string[];
+      nice_to_have_skills: string[];
+      experience_expectations: string;
+      updated_at: string;
+    };
+    error?: string;
+  }> {
+    try {
+      const res = await fetch(`${FASTAPI_BASE_URL}/api/role-requirements/${encodeURIComponent(jobRole)}`);
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.detail || 'Failed to fetch role requirements' };
+      }
+      return data;
+    } catch (e: any) {
+      return { success: false, error: e.message || 'Network error fetching role requirements' };
+    }
+  }
+
+  /**
+   * Save recruiter-modified role requirements & job description
+   */
+  async saveRoleRequirements(
+    jobRole: string,
+    requirements: {
+      job_description?: string;
+      must_have_skills: string[];
+      nice_to_have_skills: string[];
+      experience_expectations?: string;
+    }
+  ): Promise<{ success: boolean; message?: string; requirements?: any; error?: string }> {
+    try {
+      const res = await fetch(`${FASTAPI_BASE_URL}/api/role-requirements/${encodeURIComponent(jobRole)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requirements)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.detail || 'Failed to save role requirements' };
+      }
+      return data;
+    } catch (e: any) {
+      return { success: false, error: e.message || 'Network error saving role requirements' };
     }
   }
 }

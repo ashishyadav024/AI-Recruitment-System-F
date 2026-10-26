@@ -64,6 +64,12 @@ export interface ATSResult {
   feedback: string;
   onFailAction: "reject" | "hold";
   evaluatedAt: string;
+  evaluationMethod?: string;
+  model?: string;
+  status?: string;
+  matchedDetails?: Array<{ skill: string; category: string; status: string; evidence_quote?: string; verified: boolean }>;
+  missingDetails?: Array<{ skill: string; category: string; status: string; dropped_reason?: string }>;
+  flagged?: boolean;
 }
 
 const ROLE_SKILL_PROFILES: Record<string, { label: string; keywords: string[] }[]> = {
@@ -315,58 +321,51 @@ export const ApplicationOverview: React.FC = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioAnimationRef = useRef<number | null>(null);
 
-  // Helper to run automatic ATS resume screening and submit normalized score to pipeline
+  // Helper to run server-side ATS resume screening using LLM and strict evidence verification
   const runAutomaticResumeScreening = async (
     appId: string,
     targetRole: string,
-    cleanResumeText: string,
+    _cleanResumeText: string,
     round1: StepperRoundItem
-  ): Promise<ATSResult> => {
-    const evaluation = evaluateResumeATS(
-      cleanResumeText,
-      targetRole,
-      round1.cutoff_score || 60,
-      (round1.on_fail_action as any) || "reject"
-    );
-
+  ): Promise<ATSResult | null> => {
     try {
-      // 1. Start attempt for Round 1
-      const startRes = await pipelineService.startRoundAttempt(appId, round1.round_id, false);
-      const attemptId = startRes.attempt?.attempt_id || `att-${Date.now()}`;
+      const res = await pipelineService.screenApplication(appId, targetRole);
+      if (!res.success && !res.status) {
+        console.warn("Server ATS screening returned error:", res.error);
+        return null;
+      }
 
-      // 2. Submit ATS normalized score with explicit appId and roundId
-      const submitRes = await pipelineService.submitNormalizedScore(
-        attemptId,
-        evaluation.score,
-        evaluation.feedback,
-        {
-          round_type: "resume_screening",
-          matched_skills: evaluation.matchedSkills,
-          missing_skills: evaluation.missingSkills,
-          match_score: evaluation.score,
-          cutoff: evaluation.cutoff,
-          evaluated_at: evaluation.evaluatedAt,
-          application_id: appId,
-          round_id: round1.round_id
-        },
-        false,
-        appId,
-        round1.round_id
-      );
+      const evaluation: ATSResult = {
+        score: res.score ?? 0,
+        cutoff: res.cutoff ?? (round1.cutoff_score || 60),
+        passed: res.passed ?? false,
+        matchedSkills: res.matched_skills || [],
+        missingSkills: res.missing_skills || [],
+        feedback: res.feedback || res.message || "",
+        onFailAction: (round1.on_fail_action as any) || "reject",
+        evaluatedAt: new Date().toISOString(),
+        evaluationMethod: res.evaluation_method,
+        model: res.model,
+        status: res.status,
+        matchedDetails: res.matched_details,
+        missingDetails: res.missing_details,
+        flagged: res.flagged
+      };
 
-      // 3. Cache ATS result in state & localStorage
       localStorage.setItem(`ats_result_${appId}`, JSON.stringify(evaluation));
       setAtsResult(evaluation);
 
-      // 4. Update stepper directly from server response
-      if (submitRes.stepper) {
-        setProgress(submitRes.stepper);
+      if (res.stepper) {
+        setProgress(res.stepper);
+      } else {
+        const updated = await pipelineService.getStepperProgress(appId);
+        if (updated) setProgress(updated);
       }
+      return evaluation;
     } catch (err) {
-      console.warn("Error submitting automatic ATS score:", err);
+      console.warn("Error running backend ATS screening:", err);
+      return null;
     }
-
-    return evaluation;
   };
 
   // Load candidate application progress
@@ -384,7 +383,7 @@ export const ApplicationOverview: React.FC = () => {
           // Check Round 1 (Resume Screening)
           const round1 = stepper.rounds.find((r) => r.order === 1);
           if (round1) {
-            if (round1.status === "passed" || round1.status === "failed" || round1.score_data) {
+            if (round1.status === "passed" || round1.status === "failed" || round1.score_data || round1.status === "pending_evaluation") {
               const cached = localStorage.getItem(`ats_result_${appId}`);
               if (cached) {
                 try {
@@ -402,11 +401,30 @@ export const ApplicationOverview: React.FC = () => {
                   missingSkills: sd.details?.missing_skills || [],
                   feedback: sd.feedback || "",
                   onFailAction: (round1.on_fail_action as any) || "reject",
-                  evaluatedAt: sd.details?.evaluated_at || new Date().toISOString()
+                  evaluatedAt: sd.details?.evaluated_at || new Date().toISOString(),
+                  evaluationMethod: sd.details?.evaluation_method,
+                  model: sd.details?.model,
+                  status: sd.details?.status,
+                  matchedDetails: sd.details?.matched_details,
+                  missingDetails: sd.details?.missing_details,
+                  flagged: sd.details?.flagged_for_review
+                });
+              } else if (round1.status === "pending_evaluation") {
+                setAtsResult({
+                  score: 0,
+                  cutoff: round1.cutoff_score,
+                  passed: false,
+                  matchedSkills: [],
+                  missingSkills: [],
+                  feedback: "AI resume evaluation is currently queued. Your evaluation is pending.",
+                  onFailAction: (round1.on_fail_action as any) || "reject",
+                  evaluatedAt: new Date().toISOString(),
+                  evaluationMethod: "llm_unavailable_pending",
+                  status: "pending_evaluation"
                 });
               }
             } else if (round1.status === "unlocked") {
-              // If Round 1 is unlocked but not yet scored, run automatic screening immediately
+              // If Round 1 is unlocked but not yet scored, trigger server-side screening immediately
               const text = stepper.application.metadata?.resume_text || localStorage.getItem(`resume_text_${appId}`);
               if (text && text.trim().length >= 50) {
                 const evalRes = await runAutomaticResumeScreening(
@@ -415,7 +433,9 @@ export const ApplicationOverview: React.FC = () => {
                   text,
                   round1
                 );
-                setAtsResult(evalRes);
+                if (evalRes) {
+                  setAtsResult(evalRes);
+                }
                 const updatedStepper = await pipelineService.getStepperProgress(appId);
                 if (updatedStepper) {
                   setProgress(updatedStepper);
@@ -1667,6 +1687,18 @@ export const ApplicationOverview: React.FC = () => {
                           <span>Round 1 • Automatic Resume Screening</span>
                         </Badge>
 
+                        {atsResult.evaluationMethod && (
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] font-mono px-2 py-0.5 rounded-full"
+                          >
+                            {atsResult.evaluationMethod === "llm_verified" && `AI Screened • ${atsResult.model || "LLM"}`}
+                            {atsResult.evaluationMethod === "keyword_fallback" && `Keyword Fallback • ${atsResult.model || "keyword_v1"}`}
+                            {atsResult.evaluationMethod === "llm_unavailable_pending" && "Pending AI Evaluation"}
+                            {atsResult.evaluationMethod === "flagged_injection_defense" && "Security Flagged"}
+                          </Badge>
+                        )}
+
                         <span className="text-xs font-sans text-slate-500 dark:text-slate-400">
                           Evaluated automatically against role requirements
                         </span>
@@ -1674,7 +1706,11 @@ export const ApplicationOverview: React.FC = () => {
 
                       <CardTitle className="text-lg font-bold font-sans text-slate-900 dark:text-slate-100 flex items-center gap-2 pt-1">
                         <span>ATS Match Evaluation</span>
-                        {atsResult.passed ? (
+                        {atsResult.status === "pending_evaluation" ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-full">
+                            <Clock className="w-3.5 h-3.5" /> Pending Evaluation
+                          </span>
+                        ) : atsResult.passed ? (
                           <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Passed Cutoff
                           </span>
@@ -1694,13 +1730,19 @@ export const ApplicationOverview: React.FC = () => {
                         </p>
                         <div className="flex items-baseline justify-center gap-1 pt-0.5">
                           <span className={`text-2xl font-bold font-sans tabular-nums ${
-                            atsResult.passed ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                            atsResult.status === "pending_evaluation"
+                              ? "text-blue-600 dark:text-blue-400 text-lg"
+                              : atsResult.passed
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-red-600 dark:text-red-400"
                           }`}>
-                            {atsResult.score}%
+                            {atsResult.status === "pending_evaluation" ? "Pending" : `${atsResult.score}%`}
                           </span>
-                          <span className="text-xs font-sans text-slate-400 dark:text-slate-500">
-                            / 100%
-                          </span>
+                          {atsResult.status !== "pending_evaluation" && (
+                            <span className="text-xs font-sans text-slate-400 dark:text-slate-500">
+                              / 100%
+                            </span>
+                          )}
                         </div>
                         <p className="text-[10px] font-sans text-slate-500 dark:text-slate-400 mt-0.5">
                           Cutoff: <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-300">{atsResult.cutoff}%</span>
@@ -1711,31 +1753,83 @@ export const ApplicationOverview: React.FC = () => {
                 </CardHeader>
 
                 <CardContent className="pt-4 space-y-4">
+                  {/* Security / Prompt Injection Flag Banner */}
+                  {atsResult.flagged && (
+                    <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 flex items-start gap-3">
+                      <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5 text-xs text-amber-900 dark:text-amber-100">
+                        <h4 className="font-bold">Security Review Flagged</h4>
+                        <p>
+                          Potential prompt manipulation or override instructions detected in resume text. Your application has been safely flagged for manual recruiter review.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pending Evaluation Banner */}
+                  {atsResult.status === "pending_evaluation" && (
+                    <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-start gap-3">
+                      <Clock className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5 text-xs text-blue-900 dark:text-blue-100">
+                        <h4 className="font-bold">AI Resume Evaluation Pending</h4>
+                        <p>
+                          Your resume is currently queued for evaluation by our backend AI model. Results will update automatically.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Skills Breakdown Grid: Matched & Missing */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Matched Skills */}
-                    <div className="p-3.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 space-y-2">
+                    <div className="p-3.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 space-y-2.5">
                       <div className="flex items-center justify-between">
                         <h4 className="text-xs font-bold font-sans text-emerald-900 dark:text-emerald-200 uppercase tracking-wider flex items-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                           <span>Matched Skills ({atsResult.matchedSkills.length})</span>
                         </h4>
                         <span className="text-[11px] font-sans tabular-nums font-semibold text-emerald-700 dark:text-emerald-300">
-                          Verified in resume
+                          Found in resume
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap gap-1.5">
-                        {atsResult.matchedSkills.length > 0 ? (
-                          atsResult.matchedSkills.map((skill, idx) => (
-                            <span
+                      <div className="flex flex-col gap-2">
+                        {atsResult.matchedDetails && atsResult.matchedDetails.length > 0 ? (
+                          atsResult.matchedDetails.map((item, idx) => (
+                            <div
                               key={idx}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium font-sans bg-white dark:bg-slate-800 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700 shadow-2xs"
+                              className="p-2 rounded-lg bg-white dark:bg-slate-800 text-emerald-900 dark:text-emerald-100 border border-emerald-200 dark:border-emerald-700 shadow-2xs space-y-1"
                             >
-                              <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                              <span>{skill}</span>
-                            </span>
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 text-xs font-semibold">
+                                  <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                  <span>{item.skill}</span>
+                                </div>
+                                {item.category && (
+                                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-mono font-semibold">
+                                    {item.category === "must_have" ? "Must-Have" : "Nice-To-Have"}
+                                  </span>
+                                )}
+                              </div>
+                              {item.evidence_quote && (
+                                <p className="text-[11px] font-sans text-emerald-700 dark:text-emerald-300 italic pl-5">
+                                  Found in resume: &ldquo;{item.evidence_quote}&rdquo;
+                                </p>
+                              )}
+                            </div>
                           ))
+                        ) : atsResult.matchedSkills.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {atsResult.matchedSkills.map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium font-sans bg-white dark:bg-slate-800 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700 shadow-2xs"
+                              >
+                                <Check className="w-3 h-3 text-emerald-600 shrink-0" />
+                                <span>{skill}</span>
+                              </span>
+                            ))}
+                          </div>
                         ) : (
                           <span className="text-xs text-slate-500 italic font-sans">No direct matching skills detected.</span>
                         )}
@@ -1743,7 +1837,7 @@ export const ApplicationOverview: React.FC = () => {
                     </div>
 
                     {/* Missing Skills */}
-                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2.5">
                       <div className="flex items-center justify-between">
                         <h4 className="text-xs font-bold font-sans text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                           <AlertCircle className="w-4 h-4 text-amber-500" />
@@ -1754,17 +1848,43 @@ export const ApplicationOverview: React.FC = () => {
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap gap-1.5">
-                        {atsResult.missingSkills.length > 0 ? (
-                          atsResult.missingSkills.map((skill, idx) => (
-                            <span
+                      <div className="flex flex-col gap-2">
+                        {atsResult.missingDetails && atsResult.missingDetails.length > 0 ? (
+                          atsResult.missingDetails.map((item, idx) => (
+                            <div
                               key={idx}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium font-sans bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 shadow-2xs"
+                              className="p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-2xs space-y-0.5"
                             >
-                              <span className="text-slate-400">✕</span>
-                              <span>{skill}</span>
-                            </span>
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 text-xs font-medium">
+                                  <span className="text-slate-400 font-bold">✕</span>
+                                  <span>{item.skill}</span>
+                                </div>
+                                {item.category && (
+                                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono">
+                                    {item.category === "must_have" ? "Must-Have" : "Nice-To-Have"}
+                                  </span>
+                                )}
+                              </div>
+                              {item.dropped_reason && (
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500 italic pl-4">
+                                  {item.dropped_reason}
+                                </p>
+                              )}
+                            </div>
                           ))
+                        ) : atsResult.missingSkills.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {atsResult.missingSkills.map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium font-sans bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 shadow-2xs"
+                              >
+                                <span className="text-slate-400">✕</span>
+                                <span>{skill}</span>
+                              </span>
+                            ))}
+                          </div>
                         ) : (
                           <span className="text-xs text-emerald-600 font-medium font-sans">All calibrated core skills matched!</span>
                         )}

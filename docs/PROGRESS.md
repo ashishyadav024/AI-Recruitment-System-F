@@ -46,10 +46,18 @@ The platform implements a sequential 6-round hiring pipeline with backend-enforc
 
 ## 3. Current Round Status
 
-### Round 1: Resume Screening (ATS) — `PASSED & FUNCTIONAL`
-- **Location:** [src/components/pipeline/ApplicationOverview.tsx](file:///c:/Users/ACER/OneDrive/Desktop/AI-Recruitment-System/src/components/pipeline/ApplicationOverview.tsx)
-- **Current Implementation:** Text extraction via PyMuPDF/python-docx in [backend/services/resume_extractor.py](file:///c:/Users/ACER/OneDrive/Desktop/AI-Recruitment-System/backend/services/resume_extractor.py). Evaluation is performed in the client using keyword and regex matching against `ROLE_SKILL_PROFILES`.
-- **Score:** Match ratio ($0 - 100$). Automatically advances candidate and unlocks Round 2 when score $\ge 60$.
+### Round 1: Resume Screening (ATS) — `PASSED & FUNCTIONAL (STEP B COMPLETE)`
+- **Location:** [backend/services/ats_service.py](file:///c:/Users/ACER/OneDrive/Desktop/AI-Recruitment-System/backend/services/ats_service.py), [backend/api/pipeline_routes.py](file:///c:/Users/ACER/OneDrive/Desktop/AI-Recruitment-System/backend/api/pipeline_routes.py), [src/components/pipeline/ApplicationOverview.tsx](file:///c:/Users/ACER/OneDrive/Desktop/AI-Recruitment-System/src/components/pipeline/ApplicationOverview.tsx), [src/components/pipeline/PipelineBuilder.tsx](file:///c:/Users/ACER/OneDrive/Desktop/AI-Recruitment-System/src/components/pipeline/PipelineBuilder.tsx)
+- **Implementation Status:**
+  - **Server-Side Scoring Only:** `POST /api/applications/{application_id}/screen` computes ATS scores exclusively on the server. Client-side score submission is guarded and rejected with HTTP 400.
+  - **Role Requirements Management:** Recruiter can customize job descriptions, must-have skills, and nice-to-have skills per role via SQLite (`role_requirements` table). Auto-generates structured requirements with LLM if none exist.
+  - **LLM Semantic Analysis & Verbatim Quote Verification:** Evaluates skills into `matched`, `partially_matched`, and `missing`. For each match, LLM produces a $\le 15$-word quote which is programmatically verified against the resume text. Matches with fake or missing quotes are dropped to missing.
+  - **Deterministic Formula Scoring:** 75% weight on Must-Haves, 25% weight on Nice-To-Haves. LLMs never invent score numbers. Cutoff (60.0%) and gating are strictly preserved.
+  - **PII Scrubbing & Fairness:** Names, emails, phones, URLs, photo references, and demographic attributes (age, DOB, gender, marital status) are scrubbed before LLM prompt assembly.
+  - **Prompt Injection Defense:** Delimited input with boundary tags and anti-hijacking system instructions. Heuristic scanner flags suspicious instruction override phrases and locks application score at 0% for recruiter review.
+  - **Offline & Graceful Fallback:** When LLM is unreachable, applications are placed in `pending_evaluation` status (no fake scoring). Allows recruiter re-run or explicit labeled `keyword_fallback`.
+  - **Audit UI & Transparency:** Recruiter candidate view and pipeline page display "Found in resume" with verified quotes, dropped reasons, PII scrubbing stats, and evaluation method badges.
+  - **Test Suite:** [backend/test_ats_backend_llm.py](file:///c:/Users/ACER/OneDrive/Desktop/AI-Recruitment-System/backend/test_ats_backend_llm.py) verifies all 6 security, gating, evidence, and scoring rules.
 
 ### Round 2: Aptitude Test — `PASSED & FUNCTIONAL`
 - **Location:** [backend/services/aptitude_service.py](file:///c:/Users/ACER/OneDrive/Desktop/AI-Recruitment-System/backend/services/aptitude_service.py), [backend/api/aptitude_routes.py](file:///c:/Users/ACER/OneDrive/Desktop/AI-Recruitment-System/backend/api/aptitude_routes.py), [src/components/pipeline/AptitudeInstructionsPage.tsx](file:///c:/Users/ACER/OneDrive/Desktop/AI-Recruitment-System/src/components/pipeline/AptitudeInstructionsPage.tsx), [src/components/pipeline/AptitudeTestPage.tsx](file:///c:/Users/ACER/OneDrive/Desktop/AI-Recruitment-System/src/components/pipeline/AptitudeTestPage.tsx), [src/components/pipeline/AptitudeTestModal.tsx](file:///c:/Users/ACER/OneDrive/Desktop/AI-Recruitment-System/src/components/pipeline/AptitudeTestModal.tsx).
@@ -83,9 +91,10 @@ An evidence-based codebase audit confirmed:
 - Build a robust `backend/services/llm_service.py` that encapsulates Groq API interactions with structured JSON output, retry policies, rate limit handling, and graceful offline fallbacks.
 - Implement AI-assisted dynamic MCQ generation to expand the aptitude question pool while maintaining deterministic exact-match grading for question keys.
 
-### Step B: Backend ATS Resume Screening with LLM Semantic Extraction
-- Move ATS evaluation from frontend `includes()` substring matching to a dedicated backend route (`POST /api/resume/evaluate`).
-- Use LLM to extract verified technical skills, evaluate candidate project depth against real job descriptions with explicit evidence citations, and return transparent gap analyses.
+### Step B: Backend ATS Resume Screening with LLM Semantic Extraction — `COMPLETED`
+- Moved ATS evaluation to dedicated backend endpoint `POST /api/applications/{application_id}/screen`.
+- Programmatic quote validation (max 15 words) with hallucination dropping.
+- PII scrubbing (contact and demographic removal), anti-prompt injection defense, role requirements management, deterministic 75/25 scoring, and transparent recruiter audit UI.
 
 ### Step C: Technical Interview Fix & Live LLM Interview Conductor
 - Eliminate the premature 1.2s frontend abort timeout in `src/services/interviewService.ts`.

@@ -8,11 +8,13 @@ from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from repositories.pipeline_repository import PipelineRepository
+from services.ats_service import ATSService, RoleRequirementsManager
 
 logger = logging.getLogger(__name__)
 
 pipeline_router = APIRouter(prefix="/api", tags=["Pipelines & Sequential Gating"])
 repo = PipelineRepository()
+ats_service = ATSService()
 
 
 # ─────────────────────────────────────────────────────────────
@@ -72,6 +74,18 @@ class RecruiterOverrideInput(BaseModel):
 class RestoreApplicationInput(BaseModel):
     candidate_email: str
     job_role: Optional[str] = None
+
+
+class ScreenResumeInput(BaseModel):
+    job_role: Optional[str] = None
+    allow_keyword_fallback: bool = False
+
+
+class RoleRequirementsInput(BaseModel):
+    job_description: Optional[str] = ""
+    must_have_skills: List[str]
+    nice_to_have_skills: List[str]
+    experience_expectations: Optional[str] = ""
 
 
 # ─────────────────────────────────────────────────────────────
@@ -229,6 +243,19 @@ async def submit_round_score(application_id: str, round_id: str, payload: Normal
     Submit normalized score (0-100) for a round attempt.
     Automatically evaluates cutoff threshold and unlocks next round if passed.
     """
+    # Guard: Prevent client-side score submission for Round 1 (Resume Screening)
+    app = repo.get_application(application_id)
+    if app:
+        pipeline = repo.get_pipeline_by_role(app.get("job_role", ""))
+        if pipeline:
+            round_doc = next((r for r in pipeline.get("rounds", []) if r.get("round_id") == round_id), None)
+            if round_doc and (round_doc.get("order") == 1 or round_doc.get("round_type") == "resume_screening"):
+                logger.warning(f"🚫 Blocked client-side score submission for Round 1 (App: {application_id})")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Client-side score submission for Round 1 (Resume Screening) is prohibited. Resume evaluation must be performed server-side via POST /api/applications/{application_id}/screen"
+                )
+
     attempt = repo.get_attempt_for_round(application_id, round_id)
     if not attempt:
         # Auto-create attempt if not already started
@@ -286,4 +313,77 @@ async def recruiter_override(application_id: str, payload: RecruiterOverrideInpu
         "success": True,
         "message": f"Override '{payload.action}' executed successfully",
         "override": result
+    }
+
+
+# ─────────────────────────────────────────────────────────────
+# Step B: LLM Resume Screening & Role Requirements Endpoints
+# ─────────────────────────────────────────────────────────────
+
+@pipeline_router.post("/applications/{application_id}/screen")
+async def screen_candidate_resume(application_id: str, payload: Optional[ScreenResumeInput] = None):
+    """
+    POST /api/applications/{application_id}/screen
+    Evaluates candidate stored resume text and role strictly on the server using LLM analysis.
+    Verifies evidence quotes, flags prompt injection, redacts PII, and deterministically computes score.
+    """
+    job_role = payload.job_role if payload else None
+    allow_keyword = payload.allow_keyword_fallback if payload else False
+
+    try:
+        res = ats_service.screen_application(
+            application_id=application_id,
+            target_role=job_role,
+            allow_keyword_fallback=allow_keyword
+        )
+        return {
+            "success": True,
+            **res
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error during ATS resume screening for {application_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"ATS screening error: {str(e)}")
+
+
+@pipeline_router.post("/candidate-applications/{application_id}/screen")
+async def screen_candidate_resume_alias(application_id: str, payload: Optional[ScreenResumeInput] = None):
+    """Alias for candidate application resume screening"""
+    return await screen_candidate_resume(application_id, payload)
+
+
+@pipeline_router.get("/role-requirements")
+async def list_role_requirements():
+    """List all role descriptions and requirements configured"""
+    return {
+        "success": True,
+        "requirements": ats_service.req_manager.list_all_requirements()
+    }
+
+
+@pipeline_router.get("/role-requirements/{job_role}")
+async def get_role_requirements(job_role: str):
+    """Get or auto-generate role requirements for a job role"""
+    reqs = ats_service.req_manager.get_requirements(job_role, ats_service.llm_client)
+    return {
+        "success": True,
+        "requirements": reqs
+    }
+
+
+@pipeline_router.post("/role-requirements/{job_role}")
+async def save_role_requirements(job_role: str, payload: RoleRequirementsInput):
+    """Save recruiter customized job description, must-haves, and nice-to-haves"""
+    saved = ats_service.req_manager.save_requirements(
+        job_role=job_role,
+        job_description=payload.job_description or "",
+        must_have_skills=payload.must_have_skills,
+        nice_to_have_skills=payload.nice_to_have_skills,
+        experience_expectations=payload.experience_expectations or ""
+    )
+    return {
+        "success": True,
+        "message": f"Requirements updated for '{job_role}'",
+        "requirements": saved
     }
