@@ -514,11 +514,11 @@ class PipelineService {
    * Retrieve Candidate Progress Stepper (Server-backed + Local Fallback)
    * Enforces sequential gating: Round 1 unlocked, Round N unlocked ONLY IF Round N-1 is passed!
    */
-  async getStepperProgress(applicationId: string): Promise<CandidateStepperProgress> {
+  async getStepperProgress(applicationId: string, isRecruiter: boolean = false): Promise<CandidateStepperProgress> {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 1200);
-      const res = await fetch(`${FASTAPI_BASE_URL}/api/candidate-applications/${applicationId}/status`, {
+      const res = await fetch(`${FASTAPI_BASE_URL}/api/candidate-applications/${applicationId}/status?is_recruiter=${isRecruiter ? 'true' : 'false'}`, {
         signal: controller.signal
       });
       clearTimeout(timeoutId);
@@ -1205,27 +1205,33 @@ class PipelineService {
   async screenApplication(
     applicationId: string,
     jobRole?: string,
-    allowKeywordFallback: boolean = false
+    allowKeywordFallback: boolean = false,
+    isRecruiter: boolean = false
   ): Promise<{
     success: boolean;
     score?: number;
     passed?: boolean;
     cutoff?: number;
+    is_borderline?: boolean;
+    borderline_margin?: number;
     evaluation_method?: string;
     model?: string;
     status?: string;
     message?: string;
+    rejection_message?: any;
+    on_hold_message?: any;
     matched_skills?: string[];
     missing_skills?: string[];
     matched_details?: Array<{ skill: string; category: string; status: string; evidence_quote?: string; verified: boolean }>;
-    missing_details?: Array<{ skill: string; category: string; status: string; dropped_reason?: string }>;
+    missing_details?: Array<{ skill: string; category: string; status: string; dropped_reason?: string; unverified_quote?: string }>;
     score_breakdown?: any;
     stepper?: any;
     flagged?: boolean;
     error?: string;
   }> {
     try {
-      const res = await fetch(`${FASTAPI_BASE_URL}/api/applications/${encodeURIComponent(applicationId)}/screen`, {
+      const url = `${FASTAPI_BASE_URL}/api/applications/${encodeURIComponent(applicationId)}/screen?is_recruiter=${isRecruiter ? 'true' : 'false'}`;
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

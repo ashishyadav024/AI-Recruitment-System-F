@@ -173,6 +173,7 @@ DEFAULT_ROUNDS_CONFIG = [
         "order": 1,
         "duration_minutes": 15,
         "cutoff_score": 60.0,
+        "borderline_margin": 10.0,
         "weight": 10.0,
         "on_fail_action": OnFailAction.REJECT.value,
         "is_active": True

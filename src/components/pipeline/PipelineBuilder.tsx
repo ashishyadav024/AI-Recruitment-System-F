@@ -28,7 +28,8 @@ import {
   X,
   Quote,
   RefreshCw,
-  FileText
+  FileText,
+  Calculator
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -561,7 +562,7 @@ export const PipelineBuilder: React.FC = () => {
                     </div>
 
                     {/* Right: Round Parameters Config Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-lg border border-slate-100 dark:border-slate-800 text-xs">
+                    <div className={`grid grid-cols-2 ${round.round_type === 'resume_screening' ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-3 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-lg border border-slate-100 dark:border-slate-800 text-xs`}>
                       {/* Duration */}
                       <div className="flex flex-col gap-1">
                         <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
@@ -633,6 +634,24 @@ export const PipelineBuilder: React.FC = () => {
                           <option value="hold">Hold for Review</option>
                         </select>
                       </div>
+
+                      {/* Borderline Margin (Hold Margin) */}
+                      {round.round_type === 'resume_screening' && (
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1" title="Scores within this margin below cutoff are held for recruiter review (default 10)">
+                            <span>Hold Margin</span>
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={30}
+                            value={round.borderline_margin ?? 10}
+                            onChange={(e) => handleUpdateRound(idx, 'borderline_margin', parseFloat(e.target.value) || 0)}
+                            className="h-8 px-2 bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded text-xs font-mono font-semibold text-amber-700 dark:text-amber-400"
+                            placeholder="10"
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1106,6 +1125,15 @@ export const PipelineBuilder: React.FC = () => {
                   const missingDetails = (round1Details.missing_details as Array<any>) || [];
                   const piiStats = round1Details.pii_redacted_stats as Record<string, number> | undefined;
                   const isPending = round1Item?.status === 'in_progress' && round1Score === null;
+                  const scoreBreakdown = round1Details.score_breakdown as Record<string, any> | undefined;
+                  const borderlineMargin = Number(round1Details.borderline_margin ?? 10.0);
+                  const isBorderline = Boolean(
+                    round1Details.is_borderline ||
+                    round1Item?.status === 'on_hold' ||
+                    selectedAppProgress.application.status === 'on_hold'
+                  );
+                  const rejectionMsg = round1Details.rejection_message as Record<string, any> | undefined;
+                  const onHoldMsg = round1Details.on_hold_message as string | undefined;
 
                   return (
                     <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col gap-5">
@@ -1122,6 +1150,10 @@ export const PipelineBuilder: React.FC = () => {
                               {isSecurityFlagged ? (
                                 <Badge className="bg-red-100 text-red-800 dark:bg-red-950/70 dark:text-red-300 border-red-300 text-[10px]">
                                   SECURITY FLAGGED
+                                </Badge>
+                              ) : isBorderline ? (
+                                <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border-amber-300 text-[10px]">
+                                  ON HOLD (BORDERLINE REVIEW)
                                 </Badge>
                               ) : isPending ? (
                                 <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border-amber-300 text-[10px]">
@@ -1179,6 +1211,59 @@ export const PipelineBuilder: React.FC = () => {
                         </div>
                       </div>
 
+                      {/* Borderline Recruiter Review Banner */}
+                      {isBorderline && (
+                        <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                            <div className="text-xs">
+                              <span className="font-bold text-amber-900 dark:text-amber-200 block mb-0.5">
+                                Borderline Application — On Hold for Recruiter Review
+                              </span>
+                              <p className="text-amber-800 dark:text-amber-300">
+                                Score of {round1Score !== null ? `${round1Score.toFixed(1)}%` : 'N/A'} is within {borderlineMargin} points of cutoff ({round1Cutoff}%). Candidate sees: <em>"Your application is under review"</em>.
+                              </p>
+                              {onHoldMsg && (
+                                <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1 italic">
+                                  {onHoldMsg}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setOverrideTarget({
+                                  applicationId: selectedAppProgress.application.application_id,
+                                  roundNumber: 1,
+                                  action: 'reject'
+                                });
+                                setOverrideReason('Manual rejection following borderline review');
+                              }}
+                              className="h-8 text-xs text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/50"
+                            >
+                              Reject
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setOverrideTarget({
+                                  applicationId: selectedAppProgress.application.application_id,
+                                  roundNumber: 1,
+                                  action: 'promote'
+                                });
+                                setOverrideReason('Approved borderline Round 1 candidate upon recruiter review');
+                              }}
+                              className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                            >
+                              Approve & Unlock Round 2
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Security Warning Banner */}
                       {isSecurityFlagged && (
                         <div className="p-3.5 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
@@ -1232,7 +1317,7 @@ export const PipelineBuilder: React.FC = () => {
                         </div>
 
                         <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col gap-1">
-                          <span className="text-[10px] uppercase font-semibold text-slate-400">Missing Competencies</span>
+                          <span className="text-[10px] uppercase font-semibold text-slate-400">Not found in resume</span>
                           <span className="text-base font-bold text-red-600 dark:text-red-400 font-mono">
                             {missingDetails.length} Skills
                           </span>
@@ -1251,6 +1336,91 @@ export const PipelineBuilder: React.FC = () => {
                           </span>
                         </div>
                       </div>
+
+                      {/* Score Transparency: How this score was calculated */}
+                      {scoreBreakdown && (
+                        <div className="p-4 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col gap-3">
+                          <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                              <Calculator className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                              <span>How this score was calculated</span>
+                            </span>
+                            <span className="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400">
+                              Formula Score: {scoreBreakdown.final_score}%
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                            <div className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 flex flex-col gap-1.5">
+                              <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200">
+                                <span>Must-Have Requirements</span>
+                                <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                                  Weight: {scoreBreakdown.weights?.must_have_weight || 75}%
+                                </Badge>
+                              </div>
+                              <div className="grid grid-cols-4 gap-1 text-[11px] font-mono text-center pt-1">
+                                <div className="p-1 rounded bg-slate-50 dark:bg-slate-800">
+                                  <div className="text-slate-400 text-[10px]">Total</div>
+                                  <div className="font-bold">{scoreBreakdown.must_haves?.total || 0}</div>
+                                </div>
+                                <div className="p-1 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                  <div className="text-[10px]">Matched</div>
+                                  <div className="font-bold">{scoreBreakdown.must_haves?.matched || 0}</div>
+                                </div>
+                                <div className="p-1 rounded bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                                  <div className="text-[10px]">Partial (0.5)</div>
+                                  <div className="font-bold">{scoreBreakdown.must_haves?.partial || 0}</div>
+                                </div>
+                                <div className="p-1 rounded bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                                  <div className="text-[10px]">Missing</div>
+                                  <div className="font-bold">{scoreBreakdown.must_haves?.missing || 0}</div>
+                                </div>
+                              </div>
+                              <div className="text-[10px] text-slate-500 pt-1 flex justify-between">
+                                <span>Points earned:</span>
+                                <span className="font-bold font-mono text-slate-700 dark:text-slate-300">{scoreBreakdown.must_haves?.points_earned || 0} / {scoreBreakdown.weights?.must_have_weight || 75} pts</span>
+                              </div>
+                            </div>
+
+                            <div className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 flex flex-col gap-1.5">
+                              <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200">
+                                <span>Nice-To-Have Requirements</span>
+                                <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-700 border-purple-200">
+                                  Weight: {scoreBreakdown.weights?.nice_to_have_weight || 25}%
+                                </Badge>
+                              </div>
+                              <div className="grid grid-cols-4 gap-1 text-[11px] font-mono text-center pt-1">
+                                <div className="p-1 rounded bg-slate-50 dark:bg-slate-800">
+                                  <div className="text-slate-400 text-[10px]">Total</div>
+                                  <div className="font-bold">{scoreBreakdown.nice_to_haves?.total || 0}</div>
+                                </div>
+                                <div className="p-1 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                  <div className="text-[10px]">Matched</div>
+                                  <div className="font-bold">{scoreBreakdown.nice_to_haves?.matched || 0}</div>
+                                </div>
+                                <div className="p-1 rounded bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                                  <div className="text-[10px]">Partial (0.5)</div>
+                                  <div className="font-bold">{scoreBreakdown.nice_to_haves?.partial || 0}</div>
+                                </div>
+                                <div className="p-1 rounded bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                                  <div className="text-[10px]">Missing</div>
+                                  <div className="font-bold">{scoreBreakdown.nice_to_haves?.missing || 0}</div>
+                                </div>
+                              </div>
+                              <div className="text-[10px] text-slate-500 pt-1 flex justify-between">
+                                <span>Points earned:</span>
+                                <span className="font-bold font-mono text-slate-700 dark:text-slate-300">{scoreBreakdown.nice_to_haves?.points_earned || 0} / {scoreBreakdown.weights?.nice_to_have_weight || 25} pts</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {scoreBreakdown.formula_text && (
+                            <div className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded font-mono text-[10.5px] text-slate-700 dark:text-slate-300 overflow-x-auto">
+                              {scoreBreakdown.formula_text}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Verified Evidence & Missing Skills Audit */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1313,7 +1483,7 @@ export const PipelineBuilder: React.FC = () => {
                           <div className="flex items-center justify-between pb-2 border-b border-red-100 dark:border-red-900/40">
                             <span className="text-xs font-bold text-red-900 dark:text-red-300 flex items-center gap-1.5">
                               <XCircle className="w-4 h-4 text-red-600" />
-                              <span>Missing Competencies ({missingDetails.length})</span>
+                              <span>Not found in resume ({missingDetails.length})</span>
                             </span>
                             <span className="text-[10px] text-red-700 dark:text-red-400 font-medium">
                               Not found / evidence dropped

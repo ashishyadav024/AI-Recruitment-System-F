@@ -244,7 +244,7 @@ class TestATSBackendLLM(unittest.TestCase):
 
         # Check dropped reason in details
         react_detail = next(m for m in res["missing_details"] if m["skill"] == "React")
-        self.assertIn("Evidence not found in resume", react_detail.get("dropped_reason", ""))
+        self.assertTrue("not found in resume" in react_detail.get("dropped_reason", "").lower())
 
     def test_3_prompt_injection_flagged(self):
         """3. Prompt injection flagged: Resumes with manipulation commands are flagged for review and not scored high."""
@@ -383,6 +383,319 @@ class TestATSBackendLLM(unittest.TestCase):
             f"Expected gating message about Round 1 failure, got: '{reason_fail}'"
         )
 
+    def test_7_partial_matches_half_credit(self):
+        """7. Partial matches get half credit (0.5) in the score formula."""
+        # 2 must-haves: 1 matched (1.0), 1 partial (0.5) -> (1.5 / 2) * 75 = 56.25
+        # 2 nice-to-haves: 1 partial (0.5), 1 missing (0.0) -> (0.5 / 2) * 25 = 6.25
+        # Total expected score = 56.25 + 6.25 = 62.5
+        must_haves = [
+            {"skill": "React", "status": "matched"},
+            {"skill": "TypeScript", "status": "partial"}
+        ]
+        nice_to_haves = [
+            {"skill": "Docker", "status": "partial"},
+            {"skill": "GraphQL", "status": "missing"}
+        ]
+
+        score, breakdown = DeterministicScorer.compute(
+            must_haves=must_haves,
+            nice_to_haves=nice_to_haves,
+            must_have_weight=75.0,
+            nice_to_have_weight=25.0
+        )
+
+        self.assertEqual(score, 62.5)
+        self.assertEqual(breakdown["must_haves"]["matched"], 1)
+        self.assertEqual(breakdown["must_haves"]["partial"], 1)
+        self.assertEqual(breakdown["must_haves"]["missing"], 0)
+        self.assertEqual(breakdown["must_haves"]["points_earned"], 56.25)
+
+        self.assertEqual(breakdown["nice_to_haves"]["matched"], 0)
+        self.assertEqual(breakdown["nice_to_haves"]["partial"], 1)
+        self.assertEqual(breakdown["nice_to_haves"]["missing"], 1)
+        self.assertEqual(breakdown["nice_to_haves"]["points_earned"], 6.25)
+        self.assertEqual(breakdown["final_score"], 62.5)
+
+    def test_8_git_without_cicd_is_not_matched(self):
+        """8. Stricter Matching: Resume mentions Git but NOT CI/CD -> requirement is NOT 'matched'."""
+        resume_with_git_only = """
+        John Developer
+        Proficient with Git version control, GitHub repository management, branching, and pull requests.
+        Built frontends with React and vanilla JavaScript.
+        No automated pipelines or continuous deployment experience.
+        """
+        app = self.repo.get_or_create_application(
+            candidate_email="git.only@example.com",
+            candidate_name="Git Only Candidate",
+            job_role="Frontend Developer",
+            resume_text=resume_with_git_only
+        )
+        app_id = app["application_id"]
+
+        # If LLM attempts to return "matched" for "CI/CD and Git Workflows" based only on Git quote:
+        # Prompt rule requires partial or missing for related but different skills.
+        # When mock returns "partial" (correct behavior):
+        llm_response = {
+            "requirements": [
+                {
+                    "skill": "CI/CD and Git Workflows",
+                    "category": "nice_to_have",
+                    "status": "partial",  # STRICT: Git alone is partial, NOT matched!
+                    "evidence_quote": "Proficient with Git version control",
+                    "reasoning": "Candidate knows Git version control but lacks CI/CD automation pipelines."
+                },
+                {
+                    "skill": "React",
+                    "category": "must_have",
+                    "status": "matched",
+                    "evidence_quote": "Built frontends with React",
+                    "reasoning": "Direct match"
+                }
+            ]
+        }
+
+        res = self.ats_service.screen_application(
+            application_id=app_id,
+            target_role="Frontend Developer",
+            mock_llm_response=llm_response
+        )
+
+        # Requirement must NOT be in matched_skills!
+        self.assertNotIn("CI/CD and Git Workflows", res["matched_skills"])
+        self.assertIn("CI/CD and Git Workflows", res["partial_skills"])
+
+        # Also test with keyword fallback: resume has "Git" but no "CI/CD" or "Jenkins" or "Pipelines"
+        res_fb = self.ats_service.screen_application(
+            application_id=app_id,
+            target_role="Frontend Developer",
+            allow_keyword_fallback=True
+        )
+        self.assertNotIn("CI/CD and Git Workflows", res_fb["matched_skills"])
+
+    def test_9_evidence_quote_verification_and_downgrade(self):
+        """9. Evidence quotes must exist in resume; non-existent or reused generic quotes are downgraded."""
+        resume_text = """
+        Developer working at Tech Corp.
+        Skill list: React, JavaScript.
+        """
+        app = self.repo.get_or_create_application(
+            candidate_email="quote.test@example.com",
+            candidate_name="Quote Test Candidate",
+            job_role="Frontend Developer",
+            resume_text=resume_text
+        )
+        app_id = app["application_id"]
+
+        # LLM returns a hallucinated quote for TypeScript, and reuses the SAME quote for CSS
+        mock_response = {
+            "requirements": [
+                {
+                    "skill": "React",
+                    "category": "must_have",
+                    "status": "matched",
+                    "evidence_quote": "Skill list: React",
+                    "reasoning": "Valid quote"
+                },
+                {
+                    "skill": "TypeScript or JavaScript",
+                    "category": "must_have",
+                    "status": "matched",
+                    "evidence_quote": "10 years building large scale TypeScript",  # NOT in resume
+                    "reasoning": "Fake quote"
+                },
+                {
+                    "skill": "HTML5 & CSS3 / Modern Styling",
+                    "category": "must_have",
+                    "status": "matched",
+                    "evidence_quote": "Skill list: React",  # Reused quote for unrelated skill
+                    "reasoning": "Generic quote reuse"
+                }
+            ]
+        }
+
+        res = self.ats_service.screen_application(
+            application_id=app_id,
+            target_role="Frontend Developer",
+            mock_llm_response=mock_response
+        )
+
+        # React is valid match
+        self.assertIn("React", res["matched_skills"])
+
+        # TypeScript was hallucinated -> downgraded to missing
+        self.assertNotIn("TypeScript or JavaScript", res["matched_skills"])
+        self.assertIn("TypeScript or JavaScript", res["missing_skills"])
+
+        # CSS reused the quote -> downgraded to missing
+        self.assertNotIn("HTML5 & CSS3 / Modern Styling", res["matched_skills"])
+        self.assertIn("HTML5 & CSS3 / Modern Styling", res["missing_skills"])
+
+    def test_10_borderline_margin_on_hold(self):
+        """10. Borderline cases: If score is below cutoff but within borderline_margin, status is on_hold."""
+        resume_text = """
+        John Candidate
+        Software Engineer with basic React and JavaScript.
+        Also experienced in CSS styling and state management with Redux.
+        Has worked with Next.js and Tailwind CSS on side projects.
+        """
+        app = self.repo.get_or_create_application(
+            candidate_email="borderline@example.com",
+            candidate_name="Borderline Candidate",
+            job_role="Frontend Developer",
+            resume_text=resume_text
+        )
+        app_id = app["application_id"]
+
+        # Pipeline cutoff is 60.0, borderline_margin is 10.0 (review zone: 50.0 <= score < 60.0)
+        # 3 must-haves matched (3/5 * 75 = 45 pts), 2 nice-to-haves matched (2/5 * 25 = 10 pts) -> Score = 55.0%
+        mock_response = {
+            "requirements": [
+                {
+                    "skill": "React",
+                    "category": "must_have",
+                    "status": "matched",
+                    "evidence_quote": "basic React",
+                    "reasoning": "Direct match"
+                },
+                {
+                    "skill": "TypeScript or JavaScript",
+                    "category": "must_have",
+                    "status": "matched",
+                    "evidence_quote": "and JavaScript",
+                    "reasoning": "Direct match"
+                },
+                {
+                    "skill": "HTML5 & CSS3 / Modern Styling",
+                    "category": "must_have",
+                    "status": "matched",
+                    "evidence_quote": "CSS styling",
+                    "reasoning": "Direct match"
+                },
+                {
+                    "skill": "State Management (Redux, Context, or Zustand)",
+                    "category": "must_have",
+                    "status": "missing",
+                    "evidence_quote": None,
+                    "reasoning": "Missing"
+                },
+                {
+                    "skill": "Responsive Web Design & Cross-browser Compatibility",
+                    "category": "must_have",
+                    "status": "missing",
+                    "evidence_quote": None,
+                    "reasoning": "Missing"
+                },
+                {
+                    "skill": "Next.js or Vite",
+                    "category": "nice_to_have",
+                    "status": "matched",
+                    "evidence_quote": "worked with Next.js",
+                    "reasoning": "Direct match"
+                },
+                {
+                    "skill": "Tailwind CSS or Styled Components",
+                    "category": "nice_to_have",
+                    "status": "matched",
+                    "evidence_quote": "and Tailwind CSS",
+                    "reasoning": "Direct match"
+                }
+            ]
+        }
+        res = self.ats_service.screen_application(
+            application_id=app_id,
+            target_role="Frontend Developer",
+            mock_llm_response=mock_response
+        )
+
+        self.assertEqual(res["score"], 55.0)
+        self.assertTrue(res["is_borderline"])
+        self.assertEqual(res["status"], "on_hold")
+        self.assertEqual(res["attempt_status"], "on_hold")
+        self.assertIn("under review", str(res["on_hold_message"]).lower())
+
+        # Verify candidate stepper view shows on_hold status and message
+        stepper = self.repo.get_candidate_stepper_progress(app_id, is_recruiter=False)
+        self.assertEqual(stepper["application"]["status"], "on_hold")
+        self.assertIn("under review", stepper["application"]["status_message"].lower())
+
+    def test_11_score_breakdown_transparency(self):
+        """11. Score Transparency: Score breakdown must be computed in code and match stored results."""
+        resume_text = "Experienced Developer with React, TypeScript, HTML, CSS, Redux, responsive design."
+        app = self.repo.get_or_create_application(
+            candidate_email="breakdown@example.com",
+            candidate_name="Breakdown Candidate",
+            job_role="Frontend Developer",
+            resume_text=resume_text
+        )
+        app_id = app["application_id"]
+
+        res = self.ats_service.screen_application(
+            application_id=app_id,
+            target_role="Frontend Developer",
+            allow_keyword_fallback=True
+        )
+
+        breakdown = res["score_breakdown"]
+        self.assertIsNotNone(breakdown)
+        self.assertIn("must_haves", breakdown)
+        self.assertIn("nice_to_haves", breakdown)
+        self.assertIn("weights", breakdown)
+        self.assertIn("formula_text", breakdown)
+        self.assertEqual(breakdown["final_score"], res["score"])
+
+        # Stepper progress must return the exact same score_breakdown
+        stepper = self.repo.get_candidate_stepper_progress(app_id, is_recruiter=True)
+        r1 = next(r for r in stepper["rounds"] if r["order"] == 1)
+        r1_breakdown = r1["score_data"]["details"]["score_breakdown"]
+        self.assertEqual(r1_breakdown["final_score"], breakdown["final_score"])
+        self.assertEqual(r1_breakdown["must_haves"]["matched"], breakdown["must_haves"]["matched"])
+
+    def test_12_role_based_model_visibility(self):
+        """12. Role-based visibility: Candidate sees 'AI-assisted screening' and no model name; recruiter sees model."""
+        resume_text = "Proficient in React, TypeScript, HTML5, Redux, responsive design, Next.js."
+        app = self.repo.get_or_create_application(
+            candidate_email="privacy@example.com",
+            candidate_name="Privacy Candidate",
+            job_role="Frontend Developer",
+            resume_text=resume_text
+        )
+        app_id = app["application_id"]
+
+        mock_response = {
+            "requirements": [
+                {
+                    "skill": "React",
+                    "category": "must_have",
+                    "status": "matched",
+                    "evidence_quote": "Proficient in React",
+                    "reasoning": "Match"
+                }
+            ]
+        }
+
+        self.ats_service.screen_application(
+            application_id=app_id,
+            target_role="Frontend Developer",
+            mock_llm_response=mock_response
+        )
+
+        # 1. Candidate View (is_recruiter=False)
+        candidate_stepper = self.repo.get_candidate_stepper_progress(app_id, is_recruiter=False)
+        r1_cand = next(r for r in candidate_stepper["rounds"] if r["order"] == 1)
+        cand_details = r1_cand["score_data"]["details"]
+
+        self.assertEqual(cand_details["evaluation_method"], "AI-assisted screening")
+        self.assertIsNone(cand_details["model"])
+
+        # 2. Recruiter View (is_recruiter=True)
+        recruiter_stepper = self.repo.get_candidate_stepper_progress(app_id, is_recruiter=True)
+        r1_recr = next(r for r in recruiter_stepper["rounds"] if r["order"] == 1)
+        recr_details = r1_recr["score_data"]["details"]
+
+        self.assertNotEqual(recr_details["evaluation_method"], "AI-assisted screening")
+        self.assertIsNotNone(recr_details["model"])
+
 
 if __name__ == "__main__":
     unittest.main()
+

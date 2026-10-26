@@ -36,7 +36,36 @@ export interface RoundConfig {
   cutoff_score: number; // 0-100 (Default: 60)
   weight: number; // percentage in cumulative score
   on_fail_action: OnFailAction;
+  borderline_margin?: number; // margin below cutoff for recruiter hold (Default: 10)
   is_active: boolean;
+}
+
+export interface ATSScoreBreakdown {
+  must_have_weight: number;
+  must_have_count: number;
+  must_have_matched: number;
+  must_have_partial: number;
+  must_have_missing: number;
+  must_have_earned?: number;
+  must_have_points: number;
+  must_have_pct?: number;
+  nice_to_have_weight: number;
+  nice_to_have_count: number;
+  nice_to_have_matched: number;
+  nice_to_have_partial: number;
+  nice_to_have_missing: number;
+  nice_to_have_earned?: number;
+  nice_to_have_points: number;
+  nice_to_have_pct?: number;
+  formula_text?: string;
+  final_score: number;
+}
+
+export interface ATSRejectionMessage {
+  title: string;
+  message: string;
+  missing_must_haves: string[];
+  suggestions: string[];
 }
 
 export interface PipelineConfig {

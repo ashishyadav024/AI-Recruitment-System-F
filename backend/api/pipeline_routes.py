@@ -31,6 +31,7 @@ class RoundConfigInput(BaseModel):
     cutoff_score: float = 60.0
     weight: float = 16.6
     on_fail_action: str = "reject"  # "reject" or "hold"
+    borderline_margin: float = 10.0
     is_active: bool = True
 
 
@@ -160,15 +161,37 @@ async def restore_application(payload: RestoreApplicationInput):
 
 
 @pipeline_router.get("/candidate-applications/{application_id}/status")
-async def get_candidate_stepper_status(application_id: str):
+async def get_candidate_stepper_status(application_id: str, is_recruiter: bool = Query(False)):
     """
     Candidate Progress Stepper Data:
     Returns the full sequential progression of rounds with statuses:
-    passed, current/unlocked, locked, failed.
+    passed, current/unlocked, locked, failed, on_hold.
+    Role-based visibility:
+    - Recruiters see model name and evaluation_method.
+    - Candidates see 'AI-assisted screening' and model name is hidden.
     """
     stepper = repo.get_candidate_stepper_progress(application_id)
     if not stepper:
         raise HTTPException(status_code=404, detail="Candidate application not found")
+
+    if not is_recruiter and stepper.get("rounds"):
+        # Sanitize candidate view: hide model and set evaluation_method to "AI-assisted screening"
+        for r in stepper["rounds"]:
+            score_data = r.get("score_data")
+            if score_data and isinstance(score_data, dict):
+                details = score_data.get("details")
+                if details and isinstance(details, dict):
+                    if details.get("model"):
+                        details["model"] = None
+                    if details.get("evaluation_method"):
+                        details["evaluation_method"] = "AI-assisted screening"
+            meta = r.get("metadata")
+            if meta and isinstance(meta, dict):
+                if meta.get("model"):
+                    meta["model"] = None
+                if meta.get("evaluation_method"):
+                    meta["evaluation_method"] = "AI-assisted screening"
+
     return {
         "success": True,
         "data": stepper
@@ -321,11 +344,18 @@ async def recruiter_override(application_id: str, payload: RecruiterOverrideInpu
 # ─────────────────────────────────────────────────────────────
 
 @pipeline_router.post("/applications/{application_id}/screen")
-async def screen_candidate_resume(application_id: str, payload: Optional[ScreenResumeInput] = None):
+async def screen_candidate_resume(
+    application_id: str,
+    payload: Optional[ScreenResumeInput] = None,
+    is_recruiter: bool = Query(False)
+):
     """
     POST /api/applications/{application_id}/screen
     Evaluates candidate stored resume text and role strictly on the server using LLM analysis.
     Verifies evidence quotes, flags prompt injection, redacts PII, and deterministically computes score.
+    Role-based visibility:
+    - Recruiters see model name and evaluation_method.
+    - Candidates see 'AI-assisted screening' and model name is hidden.
     """
     job_role = payload.job_role if payload else None
     allow_keyword = payload.allow_keyword_fallback if payload else False
@@ -336,6 +366,17 @@ async def screen_candidate_resume(application_id: str, payload: Optional[ScreenR
             target_role=job_role,
             allow_keyword_fallback=allow_keyword
         )
+        if not is_recruiter:
+            res["model"] = None
+            res["evaluation_method"] = "AI-assisted screening"
+            if res.get("stepper") and res["stepper"].get("rounds"):
+                for r in res["stepper"]["rounds"]:
+                    sd = r.get("score_data")
+                    if sd and isinstance(sd, dict):
+                        dt = sd.get("details")
+                        if dt and isinstance(dt, dict):
+                            dt["model"] = None
+                            dt["evaluation_method"] = "AI-assisted screening"
         return {
             "success": True,
             **res
@@ -348,9 +389,13 @@ async def screen_candidate_resume(application_id: str, payload: Optional[ScreenR
 
 
 @pipeline_router.post("/candidate-applications/{application_id}/screen")
-async def screen_candidate_resume_alias(application_id: str, payload: Optional[ScreenResumeInput] = None):
+async def screen_candidate_resume_alias(
+    application_id: str,
+    payload: Optional[ScreenResumeInput] = None,
+    is_recruiter: bool = Query(False)
+):
     """Alias for candidate application resume screening"""
-    return await screen_candidate_resume(application_id, payload)
+    return await screen_candidate_resume(application_id, payload, is_recruiter)
 
 
 @pipeline_router.get("/role-requirements")

@@ -51,8 +51,9 @@ def detect_file_type(content: bytes, filename: str) -> str:
         raise ResumeExtractionError("The uploaded file is empty. Please upload a valid resume.", status_code=400)
 
     # Magic Bytes Inspection
-    is_pdf_magic = content.startswith(b"%PDF-")
-    is_zip_magic = content.startswith(b"PK\x03\x04")
+    content_bytes = content.encode("latin1", errors="ignore") if isinstance(content, str) else content
+    is_pdf_magic = content_bytes.startswith(b"%PDF-")
+    is_zip_magic = content_bytes.startswith(b"PK\x03\x04")
 
     if ext == ".pdf":
         if not is_pdf_magic:
@@ -66,7 +67,7 @@ def detect_file_type(content: bytes, filename: str) -> str:
 
     elif ext == ".txt":
         # Check that txt does not contain binary null bytes
-        if b"\x00" in content[:1024]:
+        if b"\x00" in content_bytes[:1024]:
             raise ResumeExtractionError("The uploaded .txt file contains binary characters.", status_code=400)
         return "txt"
 
@@ -252,15 +253,16 @@ def process_resume_file(filename: str, content: bytes) -> Dict[str, Any]:
         )
 
     # 2. File Type Detection
-    file_type = detect_file_type(content, filename)
+    content_bytes = content.encode("latin1", errors="ignore") if isinstance(content, str) else content
+    file_type = detect_file_type(content_bytes, filename)
 
     # 3. Extraction
     if file_type == "pdf":
-        extracted_text = extract_from_pdf(content)
+        extracted_text = extract_from_pdf(content_bytes)
     elif file_type == "docx":
-        extracted_text = extract_from_docx(content)
+        extracted_text = extract_from_docx(content_bytes)
     elif file_type == "txt":
-        extracted_text = extract_from_txt(content)
+        extracted_text = extract_from_txt(content_bytes)
     else:
         raise ResumeExtractionError("Unsupported file type.", status_code=400)
 
@@ -270,7 +272,7 @@ def process_resume_file(filename: str, content: bytes) -> Dict[str, Any]:
     saved_path = os.path.join(UPLOAD_DIR, unique_filename)
     try:
         with open(saved_path, "wb") as f:
-            f.write(content)
+            f.write(content_bytes)
     except Exception as e:
         logger.warning(f"Failed to save original resume to disk: {e}")
 

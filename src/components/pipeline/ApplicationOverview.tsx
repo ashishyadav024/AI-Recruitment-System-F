@@ -33,7 +33,8 @@ import {
   Loader2,
   AlertCircle,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  Calculator
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,8 +69,36 @@ export interface ATSResult {
   model?: string;
   status?: string;
   matchedDetails?: Array<{ skill: string; category: string; status: string; evidence_quote?: string; verified: boolean }>;
-  missingDetails?: Array<{ skill: string; category: string; status: string; dropped_reason?: string }>;
+  missingDetails?: Array<{ skill: string; category: string; status: string; dropped_reason?: string; unverified_quote?: string }>;
   flagged?: boolean;
+  scoreBreakdown?: {
+    must_have_weight: number;
+    must_have_count: number;
+    must_have_matched: number;
+    must_have_partial: number;
+    must_have_missing: number;
+    must_have_points: number;
+    nice_to_have_weight: number;
+    nice_to_have_count: number;
+    nice_to_have_matched: number;
+    nice_to_have_partial: number;
+    nice_to_have_missing: number;
+    nice_to_have_points: number;
+    formula_text?: string;
+    final_score: number;
+  };
+  rejectionMessage?: {
+    title: string;
+    message: string;
+    missing_must_haves: string[];
+    suggestions: string[];
+  };
+  onHoldMessage?: {
+    title: string;
+    message: string;
+  };
+  isBorderline?: boolean;
+  borderlineMargin?: number;
 }
 
 const ROLE_SKILL_PROFILES: Record<string, { label: string; keywords: string[] }[]> = {
@@ -349,7 +378,12 @@ export const ApplicationOverview: React.FC = () => {
         status: res.status,
         matchedDetails: res.matched_details,
         missingDetails: res.missing_details,
-        flagged: res.flagged
+        flagged: res.flagged,
+        scoreBreakdown: res.score_breakdown,
+        rejectionMessage: res.rejection_message,
+        onHoldMessage: res.on_hold_message,
+        isBorderline: res.is_borderline,
+        borderlineMargin: res.borderline_margin
       };
 
       localStorage.setItem(`ats_result_${appId}`, JSON.stringify(evaluation));
@@ -383,7 +417,7 @@ export const ApplicationOverview: React.FC = () => {
           // Check Round 1 (Resume Screening)
           const round1 = stepper.rounds.find((r) => r.order === 1);
           if (round1) {
-            if (round1.status === "passed" || round1.status === "failed" || round1.score_data || round1.status === "pending_evaluation") {
+            if (round1.status === "passed" || round1.status === "failed" || round1.status === "on_hold" || round1.score_data || round1.status === "pending_evaluation") {
               const cached = localStorage.getItem(`ats_result_${appId}`);
               if (cached) {
                 try {
@@ -404,10 +438,15 @@ export const ApplicationOverview: React.FC = () => {
                   evaluatedAt: sd.details?.evaluated_at || new Date().toISOString(),
                   evaluationMethod: sd.details?.evaluation_method,
                   model: sd.details?.model,
-                  status: sd.details?.status,
+                  status: sd.details?.status || round1.status,
                   matchedDetails: sd.details?.matched_details,
                   missingDetails: sd.details?.missing_details,
-                  flagged: sd.details?.flagged_for_review
+                  flagged: sd.details?.flagged_for_review,
+                  scoreBreakdown: sd.details?.score_breakdown,
+                  rejectionMessage: sd.details?.rejection_message,
+                  onHoldMessage: sd.details?.on_hold_message,
+                  isBorderline: sd.details?.is_borderline,
+                  borderlineMargin: sd.details?.borderline_margin
                 });
               } else if (round1.status === "pending_evaluation") {
                 setAtsResult({
@@ -1678,26 +1717,21 @@ export const ApplicationOverview: React.FC = () => {
                           className={`text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 ${
                             atsResult.passed
                               ? "bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700"
-                              : atsResult.onFailAction === "hold"
+                              : (atsResult.isBorderline || atsResult.status === "on_hold" || progress.application.status === "on_hold" || atsResult.onFailAction === "hold")
                               ? "bg-amber-100/80 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700"
-                              : "bg-red-100/80 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700"
                           }`}
                         >
                           <Bot className="w-3.5 h-3.5" />
                           <span>Round 1 • Automatic Resume Screening</span>
                         </Badge>
 
-                        {atsResult.evaluationMethod && (
-                          <Badge
-                            variant="secondary"
-                            className="text-[10px] font-mono px-2 py-0.5 rounded-full"
-                          >
-                            {atsResult.evaluationMethod === "llm_verified" && `AI Screened • ${atsResult.model || "LLM"}`}
-                            {atsResult.evaluationMethod === "keyword_fallback" && `Keyword Fallback • ${atsResult.model || "keyword_v1"}`}
-                            {atsResult.evaluationMethod === "llm_unavailable_pending" && "Pending AI Evaluation"}
-                            {atsResult.evaluationMethod === "flagged_injection_defense" && "Security Flagged"}
-                          </Badge>
-                        )}
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] font-sans px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium"
+                        >
+                          AI-assisted screening
+                        </Badge>
 
                         <span className="text-xs font-sans text-slate-500 dark:text-slate-400">
                           Evaluated automatically against role requirements
@@ -1710,13 +1744,17 @@ export const ApplicationOverview: React.FC = () => {
                           <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-full">
                             <Clock className="w-3.5 h-3.5" /> Pending Evaluation
                           </span>
+                        ) : (atsResult.isBorderline || atsResult.status === "on_hold" || progress.application.status === "on_hold") ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-full">
+                            <Clock className="w-3.5 h-3.5" /> Under Review
+                          </span>
                         ) : atsResult.passed ? (
                           <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Passed Cutoff
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-bold text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 px-2 py-0.5 rounded-full">
-                            <XCircle className="w-3.5 h-3.5" /> Below Cutoff
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full">
+                            <XCircle className="w-3.5 h-3.5" /> Not Selected
                           </span>
                         )}
                       </CardTitle>
@@ -1732,9 +1770,11 @@ export const ApplicationOverview: React.FC = () => {
                           <span className={`text-2xl font-bold font-sans tabular-nums ${
                             atsResult.status === "pending_evaluation"
                               ? "text-blue-600 dark:text-blue-400 text-lg"
+                              : (atsResult.isBorderline || atsResult.status === "on_hold" || progress.application.status === "on_hold")
+                              ? "text-amber-600 dark:text-amber-400"
                               : atsResult.passed
                               ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-red-600 dark:text-red-400"
+                              : "text-slate-700 dark:text-slate-300"
                           }`}>
                             {atsResult.status === "pending_evaluation" ? "Pending" : `${atsResult.score}%`}
                           </span>
@@ -1779,6 +1819,67 @@ export const ApplicationOverview: React.FC = () => {
                     </div>
                   )}
 
+                  {/* Score Transparency: How this score was calculated */}
+                  {atsResult.scoreBreakdown && (
+                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                          <Calculator className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>How this score was calculated</span>
+                        </h5>
+                        <span className="text-[11px] font-mono font-semibold text-slate-700 dark:text-slate-300">
+                          Formula Score: {atsResult.scoreBreakdown.final_score}%
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        {/* Must-Haves Breakdown */}
+                        <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+                          <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200">
+                            <span>Must-Have Skills</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono font-bold">
+                              {atsResult.scoreBreakdown.must_have_weight}% Weight
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                            Total: <span className="font-semibold text-slate-900 dark:text-slate-100">{atsResult.scoreBreakdown.must_have_count}</span> skills &bull;{" "}
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">{atsResult.scoreBreakdown.must_have_matched} matched</span> (1.0x),{" "}
+                            <span className="text-amber-600 dark:text-amber-400 font-medium">{atsResult.scoreBreakdown.must_have_partial} partial</span> (0.5x),{" "}
+                            <span className="text-slate-500 dark:text-slate-400 font-medium">{atsResult.scoreBreakdown.must_have_missing} missing</span> (0x)
+                          </p>
+                          <p className="text-[11px] font-mono text-slate-700 dark:text-slate-300">
+                            Points: <span className="font-bold text-indigo-600 dark:text-indigo-400">{atsResult.scoreBreakdown.must_have_points}</span> / {atsResult.scoreBreakdown.must_have_weight} pts
+                          </p>
+                        </div>
+
+                        {/* Nice-To-Haves Breakdown */}
+                        <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+                          <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200">
+                            <span>Nice-To-Have Skills</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono font-bold">
+                              {atsResult.scoreBreakdown.nice_to_have_weight}% Weight
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                            Total: <span className="font-semibold text-slate-900 dark:text-slate-100">{atsResult.scoreBreakdown.nice_to_have_count}</span> skills &bull;{" "}
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">{atsResult.scoreBreakdown.nice_to_have_matched} matched</span> (1.0x),{" "}
+                            <span className="text-amber-600 dark:text-amber-400 font-medium">{atsResult.scoreBreakdown.nice_to_have_partial} partial</span> (0.5x),{" "}
+                            <span className="text-slate-500 dark:text-slate-400 font-medium">{atsResult.scoreBreakdown.nice_to_have_missing} missing</span> (0x)
+                          </p>
+                          <p className="text-[11px] font-mono text-slate-700 dark:text-slate-300">
+                            Points: <span className="font-bold text-indigo-600 dark:text-indigo-400">{atsResult.scoreBreakdown.nice_to_have_points}</span> / {atsResult.scoreBreakdown.nice_to_have_weight} pts
+                          </p>
+                        </div>
+                      </div>
+
+                      {atsResult.scoreBreakdown.formula_text && (
+                        <p className="text-[10px] font-mono text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 p-2 rounded-md border border-slate-200/70 dark:border-slate-800">
+                          Formula: {atsResult.scoreBreakdown.formula_text}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {/* Skills Breakdown Grid: Matched & Missing */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Matched Skills */}
@@ -1805,11 +1906,18 @@ export const ApplicationOverview: React.FC = () => {
                                   <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                                   <span>{item.skill}</span>
                                 </div>
-                                {item.category && (
-                                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-mono font-semibold">
-                                    {item.category === "must_have" ? "Must-Have" : "Nice-To-Have"}
-                                  </span>
-                                )}
+                                <div className="flex items-center gap-1.5">
+                                  {item.status === "partial" && (
+                                    <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 font-mono font-semibold">
+                                      Partial (0.5x)
+                                    </span>
+                                  )}
+                                  {item.category && (
+                                    <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-mono font-semibold">
+                                      {item.category === "must_have" ? "Must-Have" : "Nice-To-Have"}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                               {item.evidence_quote && (
                                 <p className="text-[11px] font-sans text-emerald-700 dark:text-emerald-300 italic pl-5">
@@ -1844,7 +1952,7 @@ export const ApplicationOverview: React.FC = () => {
                           <span>Missing Skills ({atsResult.missingSkills.length})</span>
                         </h4>
                         <span className="text-[11px] font-sans tabular-nums font-medium text-slate-500 dark:text-slate-400">
-                          Role requirements not found
+                          Not found in resume
                         </span>
                       </div>
 
@@ -1919,32 +2027,72 @@ export const ApplicationOverview: React.FC = () => {
                         </Button>
                       )}
                     </div>
-                  ) : (
-                    <div className={`p-4 rounded-xl border flex items-start gap-3 ${
-                      atsResult.onFailAction === "hold"
-                        ? "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200"
-                        : "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-900 dark:text-red-200"
-                    }`}>
-                      <AlertTriangle className={`w-5 h-5 shrink-0 mt-0.5 ${
-                        atsResult.onFailAction === "hold" ? "text-amber-600" : "text-red-600"
-                      }`} />
+                  ) : (atsResult.isBorderline || atsResult.status === "on_hold" || progress.application.status === "on_hold" || atsResult.onFailAction === "hold") ? (
+                    <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 flex items-start gap-3">
+                      <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <h5 className="text-xs font-bold font-sans uppercase tracking-wider">
-                          {atsResult.onFailAction === "hold"
-                            ? "Application Held for Recruiter Review"
-                            : "Application Terminated — Cutoff Threshold Not Met"}
+                        <h5 className="text-xs font-bold font-sans uppercase tracking-wider text-amber-900 dark:text-amber-100">
+                          Your application is under review
                         </h5>
-                        <p className="text-xs font-sans leading-relaxed">
-                          {atsResult.onFailAction === "hold" ? (
-                            <>
-                              Your ATS match score of <span className="font-bold tabular-nums">{atsResult.score}%</span> is below the <span className="font-bold tabular-nums">{atsResult.cutoff}%</span> cutoff. Per the recruiter's configuration for this role, your application has been placed <span className="font-semibold">on hold for manual review</span>. The recruitment team will evaluate your background before unlocking further rounds.
-                            </>
-                          ) : (
-                            <>
-                              Your ATS match score of <span className="font-bold tabular-nums">{atsResult.score}%</span> did not meet the role cutoff of <span className="font-bold tabular-nums">{atsResult.cutoff}%</span>. Based on automated screening rules configured for this position, the application is <span className="font-semibold">closed and not selected</span> to proceed to Round 2.
-                            </>
-                          )}
+                        <p className="text-xs font-sans leading-relaxed text-amber-800 dark:text-amber-300">
+                          Your ATS match score of <span className="font-bold tabular-nums">{atsResult.score}%</span> is within the review margin of the <span className="font-bold tabular-nums">{atsResult.cutoff}%</span> cutoff. Your application has been placed on hold for manual recruiter review. Our hiring team will review your qualifications and update your status.
                         </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <h5 className="text-xs font-bold font-sans uppercase tracking-wider text-slate-900 dark:text-slate-100">
+                            Not selected for the next round
+                          </h5>
+                          <p className="text-xs font-sans leading-relaxed text-slate-600 dark:text-slate-400">
+                            Thank you for taking the time to apply. At this stage, your technical qualifications did not align closely enough with the core requirements for this position. We encourage you to strengthen the competencies highlighted below and apply again in the future.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Missing Must-Have Skills */}
+                      {((atsResult.rejectionMessage?.missing_must_haves && atsResult.rejectionMessage.missing_must_haves.length > 0) ||
+                        (atsResult.missingDetails && atsResult.missingDetails.filter(d => d.category === "must_have").length > 0)) && (
+                        <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
+                          <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                            Key missing must-have competencies:
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {(atsResult.rejectionMessage?.missing_must_haves ||
+                              atsResult.missingDetails?.filter(d => d.category === "must_have").map(d => d.skill) ||
+                              []
+                            ).map((skill, sIdx) => (
+                              <span
+                                key={sIdx}
+                                className="px-2 py-0.5 rounded text-[11px] font-medium bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Actionable Suggestions */}
+                      <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1">
+                        <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                          Suggestions for future applications:
+                        </span>
+                        <ul className="text-xs text-slate-600 dark:text-slate-400 list-disc list-inside space-y-0.5 pl-1">
+                          {(atsResult.rejectionMessage?.suggestions && atsResult.rejectionMessage.suggestions.length > 0
+                            ? atsResult.rejectionMessage.suggestions
+                            : [
+                                "Highlight direct, project-backed experience with core tools and frameworks directly in your portfolio.",
+                                "Include quantifiable outcomes (e.g. system throughput, performance gains) alongside listed competencies.",
+                                "Ensure key technologies are explicitly named in your work history rather than broad task summaries."
+                              ]
+                          ).map((sugg, sIdx) => (
+                            <li key={sIdx}>{sugg}</li>
+                          ))}
+                        </ul>
                       </div>
                     </div>
                   )}

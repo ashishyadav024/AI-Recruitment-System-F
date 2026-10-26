@@ -354,6 +354,7 @@ class PipelineRepository:
                 "order": r["order"],
                 "duration_minutes": r["duration_minutes"],
                 "cutoff_score": float(r["cutoff_score"]),
+                "borderline_margin": float(r.get("borderline_margin", 10.0)),
                 "weight": float(r["weight"]),
                 "on_fail_action": r["on_fail_action"],
                 "is_active": r["is_active"],
@@ -466,6 +467,7 @@ class PipelineRepository:
                 "order": idx,
                 "duration_minutes": int(r.get("duration_minutes", 30)),
                 "cutoff_score": float(r.get("cutoff_score", 60.0)),
+                "borderline_margin": float(r.get("borderline_margin", 10.0)),
                 "weight": float(r.get("weight", 16.6)),
                 "on_fail_action": r.get("on_fail_action", OnFailAction.REJECT.value),
                 "is_active": bool(r.get("is_active", True)),
@@ -675,10 +677,11 @@ class PipelineRepository:
 
         return None
 
-    def get_candidate_stepper_progress(self, application_id: str) -> Optional[Dict[str, Any]]:
+    def get_candidate_stepper_progress(self, application_id: str, is_recruiter: bool = False) -> Optional[Dict[str, Any]]:
         """
         Build complete Candidate Progress Stepper structure:
         Evaluates sequential gating for each round in order (passed, current/unlocked, locked, failed).
+        Hides model name and evaluation method from candidate views (is_recruiter=False).
         """
         app = self.get_application(application_id)
         if not app:
@@ -720,12 +723,21 @@ class PipelineRepository:
 
             if attempt:
                 status = attempt.get("status", RoundStatus.IN_PROGRESS.value)
+                raw_details = attempt.get("details") or {}
+                if not is_recruiter and raw_details:
+                    # Sanitize candidate view: hide model name and show "AI-assisted screening"
+                    details_copy = dict(raw_details)
+                    details_copy["evaluation_method"] = "AI-assisted screening"
+                    details_copy["model"] = None
+                else:
+                    details_copy = raw_details
+
                 score_data = {
                     "score": attempt.get("score"),
                     "passed": attempt.get("passed"),
                     "cutoff": r.get("cutoff_score", 60.0),
                     "feedback": attempt.get("feedback"),
-                    "details": attempt.get("details") or {},
+                    "details": details_copy,
                     "started_at": attempt.get("started_at"),
                     "ended_at": attempt.get("ended_at")
                 }
@@ -752,6 +764,7 @@ class PipelineRepository:
                 "description": r["description"],
                 "duration_minutes": r["duration_minutes"],
                 "cutoff_score": r["cutoff_score"],
+                "borderline_margin": r.get("borderline_margin", 10.0),
                 "weight": r["weight"],
                 "on_fail_action": r["on_fail_action"],
                 "is_active": r["is_active"],
@@ -1030,13 +1043,17 @@ class PipelineRepository:
                 app_update["status_message"] = "Congratulations! All pipeline rounds completed successfully."
         else:
             # Failed cutoff
+            borderline_margin = float(round_doc.get("borderline_margin", 10.0))
+            is_borderline = (cutoff - borderline_margin) <= normalized_score < cutoff
             on_fail_action = round_doc.get("on_fail_action", OnFailAction.REJECT.value)
-            if on_fail_action == OnFailAction.HOLD.value:
+
+            if is_borderline or on_fail_action == OnFailAction.HOLD.value:
                 app_update["status"] = ApplicationStatus.ON_HOLD.value
-                app_update["status_message"] = f"On hold for recruiter review at Round {round_order} ({round_doc.get('title')}). Score: {normalized_score}/100."
+                app_update["status_message"] = "Your application is under review"
+                attempt_update["status"] = "on_hold"
             else:
                 app_update["status"] = ApplicationStatus.NOT_SELECTED.value
-                app_update["status_message"] = f"Not selected at Round {round_order} ({round_doc.get('title')}). Score: {normalized_score}/100 (Cutoff: {cutoff})."
+                app_update["status_message"] = f"Not selected for the next round. Score: {normalized_score}/100 (Cutoff: {cutoff})."
 
         # Update in Mongo or Memory
         if self.is_mongo_available():
