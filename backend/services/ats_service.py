@@ -310,29 +310,39 @@ Respond ONLY with a valid JSON object matching this schema:
 }}
 No markdown formatting, no preambles, pure JSON only."""
 
-        try:
-            response = client.chat.completions.create(
-                model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
-                messages=[
-                    {"role": "system", "content": "You are a JSON-only job profile generator."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.2,
-                max_tokens=600
-            )
-            raw = response.choices[0].message.content.strip()
-            # Strip markdown json codeblock if present
-            if raw.startswith("```json"):
-                raw = raw[7:]
-            if raw.startswith("```"):
-                raw = raw[3:]
-            if raw.endswith("```"):
-                raw = raw[:-3]
-            data = json.loads(raw.strip())
-            return data
-        except Exception as e:
-            logger.warning(f"Failed to generate role requirements via LLM: {e}")
-            return None
+        models_to_try = [
+            os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+            "openai/gpt-oss-120b",
+            "openai/gpt-oss-20b",
+            "qwen/qwen3.8-27b"
+        ]
+        seen = set()
+        models = [m for m in models_to_try if not (m in seen or seen.add(m))]
+
+        for model_name in models:
+            try:
+                response = client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": "You are a JSON-only job profile generator."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.2,
+                    max_tokens=600
+                )
+                raw = response.choices[0].message.content.strip()
+                if raw.startswith("```json"):
+                    raw = raw[7:]
+                if raw.startswith("```"):
+                    raw = raw[3:]
+                if raw.endswith("```"):
+                    raw = raw[:-3]
+                data = json.loads(raw.strip())
+                return data
+            except Exception as e:
+                logger.warning(f"Failed to generate role requirements via {model_name}: {e}")
+                continue
+        return None
 
 
 # =====================================================================
@@ -782,7 +792,7 @@ class ATSService:
             model_used = "mock-llm-test"
         elif self.llm_client:
             try:
-                llm_result = self._call_llm_for_screening(
+                llm_result, model_used = self._call_llm_for_screening(
                     redacted_resume=redacted_resume,
                     job_role=job_role,
                     must_haves=must_haves,
@@ -1048,23 +1058,40 @@ Analyze the resume against each requirement. Output ONLY a valid JSON object mat
 }}
 Return raw JSON only. No markdown formatting."""
 
-        response = self.llm_client.chat.completions.create(
-            model=self.groq_model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.0,
-            max_tokens=1500
-        )
-        content = response.choices[0].message.content.strip()
-        if content.startswith("```json"):
-            content = content[7:]
-        if content.startswith("```"):
-            content = content[3:]
-        if content.endswith("```"):
-            content = content[:-3]
-        return json.loads(content.strip())
+        models_to_try = [
+            self.groq_model,
+            "openai/gpt-oss-120b",
+            "openai/gpt-oss-20b",
+            "qwen/qwen3.8-27b"
+        ]
+        seen = set()
+        models = [m for m in models_to_try if not (m in seen or seen.add(m))]
+
+        last_error = None
+        for model_name in models:
+            try:
+                response = self.llm_client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.0,
+                    max_tokens=1500
+                )
+                content = response.choices[0].message.content.strip()
+                if content.startswith("```json"):
+                    content = content[7:]
+                if content.startswith("```"):
+                    content = content[3:]
+                if content.endswith("```"):
+                    content = content[:-3]
+                return json.loads(content.strip()), model_name
+            except Exception as e:
+                logger.warning(f"Resume screening LLM call failed with {model_name}: {e}")
+                last_error = e
+                continue
+        raise last_error or RuntimeError("All candidate LLM models failed")
 
     def _run_keyword_fallback(
         self,
